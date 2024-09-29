@@ -6,7 +6,6 @@ $(document).ready(function() {
     const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
 
     // Inicializar Flatpickr con selección de rango de fechas
-// Inicializar Flatpickr con selección de rango de fechas
 flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y", // Cambiado a MM-DD-YYYY
@@ -115,7 +114,7 @@ flatpickr("#fecha", {
             return;
         }
         jugadaCount++;
-        const fila = 
+        const fila =` 
             <tr>
                 <td>${jugadaCount}</td>
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
@@ -125,7 +124,7 @@ flatpickr("#fecha", {
                 <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="Ej: 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
-        ;
+        `;
         $("#tablaJugadas").append(fila);
     }
 
