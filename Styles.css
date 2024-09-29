@@ -1,0 +1,282 @@
+/* Estilos Básicos */
+:root {
+    --color-fondo: #0a0a0a; /* Fondo oscuro */
+    --color-neon-cian: #00ffff;
+    --color-neon-morado: #ff00ff;
+    --color-neon-verde: #39ff14;
+    --color-texto: #ffffff;
+    --color-placeholder: #cccccc; /* Color tenue para placeholders */
+}
+
+body {
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    font-family: 'Montserrat', 'Poppins', sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Contenedor Principal */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(10, 10, 10, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+}
+
+/* Títulos */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--color-neon-cian);
+    text-shadow: 0 0 10px var(--color-neon-cian);
+}
+
+/* Selección de Fecha */
+.glow-input {
+    box-shadow: 0 0 10px var(--color-neon-cian);
+    transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+.glow-input:focus {
+    border-color: var(--color-neon-morado);
+    box-shadow: 0 0 15px var(--color-neon-morado);
+    outline: none;
+}
+
+/* Selección de Tracks */
+.form-check-label {
+    color: var(--color-texto);
+}
+
+/* Estilos del Accordion */
+.accordion-button {
+    background-color: #1e1e1e;
+    color: var(--color-neon-cian);
+    border: 2px solid var(--color-neon-cian);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: var(--color-neon-cian);
+    color: #000;
+}
+
+.accordion-body {
+    background-color: #1e1e1e;
+    color: var(--color-texto);
+    border: 1px solid var(--color-neon-cian);
+}
+
+/* Indicador de Hora Límite */
+.cutoff-time {
+    font-size: 0.9em;
+    color: #aaaaaa; /* Color tenue */
+}
+
+/* Tabla de Jugadas */
+.table-dark {
+    box-shadow: 0 0 10px var(--color-neon-cian);
+}
+
+.table-bordered th, .table-bordered td {
+    border: 1px solid var(--color-neon-cian);
+}
+
+.table-dark th {
+    background-color: #1e1e1e;
+    color: var(--color-neon-cian);
+    text-shadow: 0 0 5px var(--color-neon-cian);
+}
+
+/* Botones */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--color-neon-cian);
+    color: #000;
+    box-shadow: 0 0 10px var(--color-neon-cian);
+}
+
+.btn-primary:hover {
+    background-color: #00cccc;
+    box-shadow: 0 0 20px var(--color-neon-cian);
+    transform: scale(1.05);
+}
+
+.btn-danger {
+    background-color: #ff0044;
+    color: #fff;
+    box-shadow: 0 0 10px #ff0044;
+    min-width: 150px; /* Incremento de ancho */
+}
+
+.btn-danger:hover {
+    background-color: #cc0033;
+    box-shadow: 0 0 20px #ff0044;
+    transform: scale(1.05);
+}
+
+.btn-success {
+    background-color: var(--color-neon-verde);
+    color: #000;
+    box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+    animation: pulse 2s infinite;
+}
+
+.btn-success:hover {
+    transform: scale(1.02);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+    }
+    50% {
+        box-shadow: 0 0 20px var(--color-neon-verde), 0 0 30px var(--color-neon-verde);
+    }
+    100% {
+        box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+    }
+}
+
+/* Botones Alineados */
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button-group .btn {
+    flex: 1;
+}
+
+/* Modal */
+.modal-content {
+    background-color: #0a0a0a; /* Fondo oscuro */
+    color: #ffffff; /* Texto blanco */
+    box-shadow: 0 0 20px var(--color-neon-cian);
+}
+
+.modal-header, .modal-footer {
+    border-bottom: 1px solid var(--color-neon-cian);
+    border-top: 1px solid var(--color-neon-cian);
+}
+
+.modal-title {
+    color: var(--color-neon-cian);
+}
+
+.btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* QR Code */
+#qrcode {
+    margin: 0 auto;
+}
+
+/* Placeholder con límite de apuesta */
+input::placeholder {
+    color: var(--color-placeholder);
+    opacity: 1; /* Firefox */
+}
+
+input:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: var(--color-placeholder);
+}
+
+input::-ms-input-placeholder { /* Microsoft Edge */
+    color: var(--color-placeholder);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        font-size: 16px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .accordion-button {
+        font-size: 1em;
+    }
+}
+    /* Estilos para impresión */
+@media print {
+  /* Ocultar todo el contenido por defecto */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Mostrar solo el ticket */
+  #preTicket, #preTicket * {
+    visibility: visible;
+  }
+
+  /* Posicionar el ticket en la parte superior */
+  #preTicket {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+    #preTicket {
+    background-color: #0a0a0a; /* Fondo oscuro */
+    color: #ffffff; /* Texto blanco */
+}
+
+  /* Opcional: Ajustar tamaño de fuente si es necesario */
+  #preTicket {
+    font-size: 12pt;
+  }
+}
+
+#preTicket {
+    background-color: #0a0a0a; /* Fondo oscuro */
+    color: #ffffff; /* Texto blanco */
+    padding: 20px;
+    border-radius: 10px;
+    /* Otros estilos necesarios */
+}
+
+#preTicket h4 {
+    color: #00ffff; /* Color de título */
+    text-shadow: 0 0 5px #00ffff;
+}
+
+#preTicket table {
+    background-color: #1e1e1e;
+}
+
+#preTicket th, #preTicket td {
+    border: 1px solid #00ffff;
+    color: #ffffff;
+}
+
+/* Clase para resaltar campos duplicados */
+.duplicado {
+    background-color: #ffff99; /* Fondo amarillo claro */
+    border: 2px solid #ffeb3b; /* Borde amarillo más oscuro */
+}
+
+
+}
