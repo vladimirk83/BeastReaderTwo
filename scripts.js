@@ -361,7 +361,7 @@ for (let fechaSeleccionadaStr of fechasArray) {
                 const [horas, minutos] = horaLimiteStr.split(":");
                 horaLimite.setHours(parseInt(horas), parseInt(minutos) - 5, 0, 0); // Restamos 5 minutos
                 if (horaActual > horaLimite) {
-                    alert(El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.);
+                    alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`);
                     return;
                 }
             }
@@ -407,7 +407,7 @@ for (let fechaSeleccionadaStr of fechasArray) {
 
     if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
         jugadasValidas = false;
-        alert(La jugada con modalidad "${modalidad}" requiere al menos un track seleccionado correspondiente.);
+        alert(`La jugada con modalidad "${modalidad}" requiere al menos un track seleccionado correspondiente.`);
         return false; // Salir del bucle
     }
 
@@ -432,7 +432,7 @@ for (let fechaSeleccionadaStr of fechasArray) {
                 const combo = parseFloat($(this).find(".combo").val()) || 0;
                 if (straight <= 0 && box <= 0 && combo <= 0) {
                     jugadasValidas = false;
-                    alert(Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.);
+                    alert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`);
                     return false;
                 }
             }           
@@ -440,17 +440,17 @@ for (let fechaSeleccionadaStr of fechasArray) {
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
-                    alert(El monto en Straight excede el límite para ${modalidad}.);
+                    alert(`El monto en Straight excede el límite para ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
                     jugadasValidas = false;
-                    alert(El monto en Box excede el límite para ${modalidad}.);
+                    alert(`El monto en Box excede el límite para ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].combo !== undefined && parseFloat($(this).find(".combo").val()) > (limitesApuesta[modalidad].combo || Infinity)) {
                     jugadasValidas = false;
-                    alert(El monto en Combo excede el límite para ${modalidad}.);
+                    alert(`El monto en Combo excede el límite para ${modalidad}.`);
                     return false;
                 }
             }
@@ -504,7 +504,7 @@ new QRCode(document.getElementById("qrcode"), {
 });
 
 // Mostrar las fechas de apuesta en el ticket
-$("#ticketFecha").text(${fecha});
+$("#ticketFecha").text(`${fecha}`);
 console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());        
         // Mostrar el modal usando Bootstrap 5
         ticketModal.show();
