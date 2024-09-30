@@ -6,6 +6,7 @@ $(document).ready(function() {
     const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
 
     // Inicializar Flatpickr con selección de rango de fechas
+// Inicializar Flatpickr con selección de rango de fechas
 flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y", // Cambiado a MM-DD-YYYY
@@ -114,7 +115,7 @@ flatpickr("#fecha", {
             return;
         }
         jugadaCount++;
-        const fila =` 
+        const fila = `
             <tr>
                 <td>${jugadaCount}</td>
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
@@ -472,7 +473,7 @@ for (let fechaSeleccionadaStr of fechasArray) {
             const comboVal = $(this).find(".combo").val();
             const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
             const total = parseFloat($(this).find(".total").text()) || 0;
-            const fila = 
+            const fila = `
                 <tr>
                     <td>${$(this).find("td").first().text()}</td>
                     <td>${num}</td>
@@ -482,7 +483,7 @@ for (let fechaSeleccionadaStr of fechasArray) {
                     <td>${combo !== "-" ? combo.toFixed(2) : "-"}</td>
                     <td>${total.toFixed(2)}</td>
                 </tr>
-            ;
+            `;
             $("#ticketJugadas").append(fila);
         });
         $("#ticketTotal").text($("#totalJugadas").text());
@@ -618,67 +619,17 @@ $("#confirmarTicket").click(function() {
                 cierreStr = horariosCierre["Venezuela"][track];
             }
             if (cierreStr) {
-                const cierre = new Date(1970-01-01T${cierreStr}:00);
+                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
                 cierre.setMinutes(cierre.getMinutes() - 5); // 5 minutos antes
                 const horas = cierre.getHours().toString().padStart(2, '0');
                 const minutos = cierre.getMinutes().toString().padStart(2, '0');
-                const horaLimite = ${horas}:${minutos};
-                $(this).text(Hora límite: ${horaLimite});
+                const horaLimite = `${horas}:${minutos}`;
+                $(this).text(`Hora límite: ${horaLimite}`);
             }
         });
-       }
+    }
 
-// Función para resaltar números duplicados
-function resaltarDuplicados() {
-    // Obtener todos los campos de número apostado
-    const camposNumeros = document.querySelectorAll('.numeroApostado');
-    const valores = {};
-    const duplicados = new Set();
-
-    // Recopilar valores y detectar duplicados
-    camposNumeros.forEach(campo => {
-        const valor = campo.value.trim();
-        if (valor) {
-            if (valores[valor]) {
-                duplicados.add(valor);
-            } else {
-                valores[valor] = true;
-            }
-        }
-    });
-
-    // Aplicar o remover la clase .duplicado
-    camposNumeros.forEach(campo => {
-        if (duplicados.has(campo.value.trim())) {
-            campo.classList.add('duplicado');
-        } else {
-            campo.classList.remove('duplicado');
-        }
-    });
-}
-
-// Función para agregar listeners a los campos de número apostado
-function agregarListenersNumeroApostado() {
-    const camposNumeros = document.querySelectorAll('.numeroApostado');
-    camposNumeros.forEach(campo => {
-        campo.removeEventListener('input', resaltarDuplicados); // Evitar duplicar listeners
-        campo.addEventListener('input', resaltarDuplicados);
-    });
-}
-
-// Agregar listeners al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    agregarListenersNumeroApostado();
-    resaltarDuplicados(); // Resaltar duplicados al cargar, si los hay
-
-    // Agregar listener al botón de agregar jugada
-    const btnAgregarJugada = document.getElementById('agregarJugada');
-    btnAgregarJugada.addEventListener('click', () => {
-        setTimeout(() => {
-            agregarListenersNumeroApostado();
-            resaltarDuplicados();
-        }, 100); // Esperar a que se agregue la nueva jugada
-    });
-});    
     // Llamar a la función para mostrar las horas límite al cargar la página
     mostrarHorasLimite();
+
+});
