@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Flatpickr CSS -->
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons (Opcional) -->
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
@@ -16,9 +16,9 @@
 </head>
 <body>
     <div class="container my-5">
-        <h2 class="text-center mb-4"> Beast Reader (Cricket) East New York </h2>
+        <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
         <form id="lotteryForm">
-            <!-- Selección de Fecha y Hora -->
+            <!-- Selección de Fecha -->
             <div class="row mb-3">
                 <div class="col-md-4 col-sm-6">
                     <label for="fecha" class="form-label">Fechas de Apuesta:</label>
@@ -38,14 +38,13 @@
                         </h2>
                         <div id="collapseUSA" class="accordion-collapse collapse" aria-labelledby="headingUSA" data-bs-parent="#tracksAccordion">
                             <div class="accordion-body">
-                                <!-- Agrega aquí todos los tracks de USA -->
                                 <!-- New York Mid Day -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <input class="form-check-input track-checkbox" type="checkbox" value="New York Mid Day" id="trackNYMidDay">
                                         <label class="form-check-label" for="trackNYMidDay">New York Mid Day</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="New York Mid Day">14:25</span>
+                                    <span class="cutoff-time" data-track="New York Mid Day"></span>
                                 </div>
                                 <!-- New York Evening -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -53,7 +52,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="New York Evening" id="trackNYEvening">
                                         <label class="form-check-label" for="trackNYEvening">New York Evening</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="New York Evening">22:25</span>
+                                    <span class="cutoff-time" data-track="New York Evening"></span>
                                 </div>
                                 <!-- Georgia Mid Day -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -61,7 +60,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Mid Day" id="trackGeorgiaMidDay">
                                         <label class="form-check-label" for="trackGeorgiaMidDay">Georgia Mid Day</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Georgia Mid Day">12:20</span>
+                                    <span class="cutoff-time" data-track="Georgia Mid Day"></span>
                                 </div>
                                 <!-- Georgia Evening -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -69,7 +68,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Evening" id="trackGeorgiaEvening">
                                         <label class="form-check-label" for="trackGeorgiaEvening">Georgia Evening</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Georgia Evening">18:45</span>
+                                    <span class="cutoff-time" data-track="Georgia Evening"></span>
                                 </div>
                                 <!-- New Jersey Mid Day -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -77,7 +76,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="New Jersey Mid Day" id="trackNJMidDay">
                                         <label class="form-check-label" for="trackNJMidDay">New Jersey Mid Day</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="New Jersey Mid Day">12:54</span>
+                                    <span class="cutoff-time" data-track="New Jersey Mid Day"></span>
                                 </div>
                                 <!-- New Jersey Evening -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -85,7 +84,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="New Jersey Evening" id="trackNJEvening">
                                         <label class="form-check-label" for="trackNJEvening">New Jersey Evening</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="New Jersey Evening">22:50</span>
+                                    <span class="cutoff-time" data-track="New Jersey Evening"></span>
                                 </div>
                                 <!-- Florida Mid Day -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -93,7 +92,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Florida Mid Day" id="trackFloridaMidDay">
                                         <label class="form-check-label" for="trackFloridaMidDay">Florida Mid Day</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Florida Mid Day">13:25</span>
+                                    <span class="cutoff-time" data-track="Florida Mid Day"></span>
                                 </div>
                                 <!-- Florida Evening -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -101,7 +100,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Florida Evening" id="trackFloridaEvening">
                                         <label class="form-check-label" for="trackFloridaEvening">Florida Evening</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Florida Evening">21:30</span>
+                                    <span class="cutoff-time" data-track="Florida Evening"></span>
                                 </div>
                                 <!-- Connecticut Mid Day -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -109,7 +108,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Connecticut Mid Day" id="trackConnecticutMidDay">
                                         <label class="form-check-label" for="trackConnecticutMidDay">Connecticut Mid Day</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Connecticut Mid Day">13:35</span>
+                                    <span class="cutoff-time" data-track="Connecticut Mid Day"></span>
                                 </div>
                                 <!-- Connecticut Evening -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -117,7 +116,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Connecticut Evening" id="trackConnecticutEvening">
                                         <label class="form-check-label" for="trackConnecticutEvening">Connecticut Evening</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Connecticut Evening">22:20</span>
+                                    <span class="cutoff-time" data-track="Connecticut Evening"></span>
                                 </div>
                                 <!-- Georgia Night -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -125,7 +124,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Night" id="trackGeorgiaNight">
                                         <label class="form-check-label" for="trackGeorgiaNight">Georgia Night</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Georgia Night">23:20</span>
+                                    <span class="cutoff-time" data-track="Georgia Night"></span>
                                 </div>
                                 <!-- Pensilvania AM -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -133,7 +132,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Pensilvania AM" id="trackPennsylvaniaAM">
                                         <label class="form-check-label" for="trackPennsylvaniaAM">Pensilvania AM</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Pensilvania AM">12:55</span>
+                                    <span class="cutoff-time" data-track="Pensilvania AM"></span>
                                 </div>
                                 <!-- Pensilvania PM -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -141,7 +140,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Pensilvania PM" id="trackPennsylvaniaPM">
                                         <label class="form-check-label" for="trackPennsylvaniaPM">Pensilvania PM</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Pensilvania PM">18:20</span>
+                                    <span class="cutoff-time" data-track="Pensilvania PM"></span>
                                 </div>
                                 <!-- Venezuela -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -149,7 +148,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Venezuela" id="trackVenezuela">
                                         <label class="form-check-label" for="trackVenezuela">Venezuela</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Venezuela">19:00</span>
+                                    <span class="cutoff-time" data-track="Venezuela"></span>
                                 </div>
                             </div>
                         </div>
@@ -163,14 +162,13 @@
                         </h2>
                         <div id="collapseSD" class="accordion-collapse collapse" aria-labelledby="headingSD" data-bs-parent="#tracksAccordion">
                             <div class="accordion-body">
-                                <!-- Agrega aquí todos los tracks de Santo Domingo -->
                                 <!-- Real -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Real" id="trackReal">
                                         <label class="form-check-label" for="trackReal">Real</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Real">12:45</span>
+                                    <span class="cutoff-time" data-track="Real"></span>
                                 </div>
                                 <!-- Gana mas -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -178,7 +176,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Gana mas" id="trackGanamas">
                                         <label class="form-check-label" for="trackGanamas">Gana más</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Gana mas">14:25</span>
+                                    <span class="cutoff-time" data-track="Gana mas"></span>
                                 </div>
                                 <!-- Loteka -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -186,7 +184,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Loteka" id="trackLoteka">
                                         <label class="form-check-label" for="trackLoteka">Loteka</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Loteka">19:30</span>
+                                    <span class="cutoff-time" data-track="Loteka"></span>
                                 </div>
                                 <!-- Nacional -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -194,7 +192,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Nacional" id="trackNacional">
                                         <label class="form-check-label" for="trackNacional">Nacional</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Nacional">20:30</span>
+                                    <span class="cutoff-time" data-track="Nacional"></span>
                                 </div>
                                 <!-- Quiniela Pale -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -202,7 +200,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Quiniela Pale" id="trackQuinielaPale">
                                         <label class="form-check-label" for="trackQuinielaPale">Quiniela Pale</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Quiniela Pale">20:30</span>
+                                    <span class="cutoff-time" data-track="Quiniela Pale"></span>
                                 </div>
                                 <!-- Primera Día -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -210,7 +208,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Primera Día" id="trackPrimeraDia">
                                         <label class="form-check-label" for="trackPrimeraDia">Primera Día</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Primera Día">11:50</span>
+                                    <span class="cutoff-time" data-track="Primera Día"></span>
                                 </div>
                                 <!-- Suerte Día -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -218,7 +216,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Suerte Día" id="trackSuerteDia">
                                         <label class="form-check-label" for="trackSuerteDia">Suerte Día</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Suerte Día">12:20</span>
+                                    <span class="cutoff-time" data-track="Suerte Día"></span>
                                 </div>
                                 <!-- Lotería Real -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -226,7 +224,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Lotería Real" id="trackLoteriaReal">
                                         <label class="form-check-label" for="trackLoteriaReal">Lotería Real</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Lotería Real">12:50</span>
+                                    <span class="cutoff-time" data-track="Lotería Real"></span>
                                 </div>
                                 <!-- Suerte Tarde -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -234,7 +232,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Suerte Tarde" id="trackSuerteTarde">
                                         <label class="form-check-label" for="trackSuerteTarde">Suerte Tarde</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Suerte Tarde">17:50</span>
+                                    <span class="cutoff-time" data-track="Suerte Tarde"></span>
                                 </div>
                                 <!-- Lotedom -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -242,7 +240,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Lotedom" id="trackLotedom">
                                         <label class="form-check-label" for="trackLotedom">Lotedom</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Lotedom">17:50</span>
+                                    <span class="cutoff-time" data-track="Lotedom"></span>
                                 </div>
                                 <!-- Primera Noche -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -250,7 +248,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Primera Noche" id="trackPrimeraNoche">
                                         <label class="form-check-label" for="trackPrimeraNoche">Primera Noche</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Primera Noche">19:50</span>
+                                    <span class="cutoff-time" data-track="Primera Noche"></span>
                                 </div>
                                 <!-- Panamá -->
                                 <div class="form-check d-flex justify-content-between align-items-center mb-2">
@@ -258,7 +256,7 @@
                                         <input class="form-check-input track-checkbox" type="checkbox" value="Panama" id="trackPanama">
                                         <label class="form-check-label" for="trackPanama">Panamá</label>
                                     </div>
-                                    <span class="cutoff-time" data-track="Panama">16:00</span>
+                                    <span class="cutoff-time" data-track="Panama"></span>
                                 </div>
                                 <!-- Agrega otros tracks si es necesario -->
                             </div>
@@ -316,7 +314,7 @@
                     </div>
                     <div class="modal-body">
                         <div id="preTicket" class="p-3">
-                            <h4 class="text-center mb-3"> East New York Cricket </h4>
+                            <h4 class="text-center mb-3">East New York Cricket</h4>
                             <p><strong>Fechas de Apuesta:</strong> <span id="ticketFecha"></span></p>
                             <p><strong>Tracks Seleccionados:</strong> <span id="ticketTracks"></span></p>
                             <table class="table table-dark table-bordered">
@@ -341,9 +339,9 @@
                             <div class="ticket-number my-3">
                                 Número de Ticket: <span id="numeroTicket"></span>
                             </div>
-<div class="transaction-date my-3">
-        Fecha y Hora de Transacción: <span id="ticketTransaccion"></span>
-    </div>                            
+                            <div class="transaction-date my-3">
+                                Fecha y Hora de Transacción: <span id="ticketTransaccion"></span>
+                            </div>
                             <div class="barcode text-center">
                                 <div id="qrcode"></div>
                             </div>
@@ -367,19 +365,18 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <!-- QRCode.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <!-- Day.js -->
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <!-- Day.js Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/customParseFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/arraySupport.js"></script>
     <script>
-  // Registrar plugins de Day.js
-  dayjs.extend(window.dayjs_plugin_customParseFormat);
-  dayjs.extend(window.dayjs_plugin_arraySupport);
-</script>
-
+        // Registrar plugins de Day.js
+        dayjs.extend(dayjs_plugin_customParseFormat);
+        dayjs.extend(dayjs_plugin_arraySupport);
+    </script>
     <!-- html2canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom JS -->
     <script src="scripts.js"></script>
 </body>
