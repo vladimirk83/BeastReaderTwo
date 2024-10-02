@@ -1,5 +1,3 @@
-CODIGO CSS:
-
 /* Estilos Básicos */
 :root {
     --color-fondo: #0a0a0a; /* Fondo oscuro */
@@ -8,6 +6,9 @@ CODIGO CSS:
     --color-neon-verde: #39ff14;
     --color-texto: #ffffff;
     --color-placeholder: #cccccc; /* Color tenue para placeholders */
+    --color-fondo-acordeon: #1e1e1e; /* Fondo para acordeón */
+    --color-fondo-acordeon-activo: #00ffff; /* Fondo activo para acordeón */
+    --color-texto-acordeon: #ffffff; /* Color de texto para acordeón */
 }
 
 body {
@@ -55,20 +56,39 @@ h2 {
 
 /* Estilos del Accordion */
 .accordion-button {
-    background-color: #1e1e1e;
-    color: var(--color-neon-cian);
+    background-color: var(--color-fondo-acordeon);
+    color: var(--color-texto-acordeon);
     border: 2px solid var(--color-neon-cian);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .accordion-button:not(.collapsed) {
-    background-color: var(--color-neon-cian);
+    background-color: var(--color-fondo-acordeon-activo);
     color: #000;
+}
+
+.accordion-button:hover {
+    background-color: #2a2a2a;
+    color: var(--color-neon-cian);
 }
 
 .accordion-body {
     background-color: #1e1e1e;
     color: var(--color-texto);
     border: 1px solid var(--color-neon-cian);
+}
+
+.accordion-header {
+    background-color: var(--color-fondo-acordeon);
+}
+
+.accordion-item {
+    background-color: var(--color-fondo-acordeon);
+    border: none;
+}
+
+.accordion-button::after {
+    filter: brightness(0) invert(1);
 }
 
 /* Indicador de Hora Límite */
@@ -221,35 +241,36 @@ input::-ms-input-placeholder { /* Microsoft Edge */
         font-size: 1em;
     }
 }
-    /* Estilos para impresión */
+
+/* Estilos para impresión */
 @media print {
-  /* Ocultar todo el contenido por defecto */
-  body * {
-    visibility: hidden;
-  }
+    /* Ocultar todo el contenido por defecto */
+    body * {
+        visibility: hidden;
+    }
 
-  /* Mostrar solo el ticket */
-  #preTicket, #preTicket * {
-    visibility: visible;
-  }
+    /* Mostrar solo el ticket */
+    #preTicket, #preTicket * {
+        visibility: visible;
+    }
 
-  /* Posicionar el ticket en la parte superior */
-  #preTicket {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
+    /* Posicionar el ticket en la parte superior */
+    #preTicket {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
 
     #preTicket {
-    background-color: #0a0a0a; /* Fondo oscuro */
-    color: #ffffff; /* Texto blanco */
-}
+        background-color: #0a0a0a; /* Fondo oscuro */
+        color: #ffffff; /* Texto blanco */
+    }
 
-  /* Opcional: Ajustar tamaño de fuente si es necesario */
-  #preTicket {
-    font-size: 12pt;
-  }
+    /* Opcional: Ajustar tamaño de fuente si es necesario */
+    #preTicket {
+        font-size: 12pt;
+    }
 }
 
 #preTicket {
@@ -274,5 +295,8 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     color: #ffffff;
 }
 
-
+/* Clase para resaltar campos duplicados */
+.duplicado {
+    background-color: #ffff99; /* Fondo amarillo claro */
+    border: 2px solid #ffeb3b; /* Borde amarillo más oscuro */
 }
