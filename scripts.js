@@ -593,6 +593,11 @@ $(document).ready(function() {
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
             const track = $(this).data("track");
+
+            if (track === 'Venezuela') {
+               $(this).hide(); // Oculta el elemento del DOM
+               return;
+            }             
             let cierreStr = "";
             if (horariosCierre.USA[track]) {
                 cierreStr = horariosCierre.USA[track];
