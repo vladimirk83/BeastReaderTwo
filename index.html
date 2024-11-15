@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+< <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -13,6 +13,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="styles.css" rel="stylesheet">
+    <style>
+        /* Asegurar que el contenido del modal se ajuste bien en móviles */
+        @media (max-width: 576px) {
+            #preTicket {
+                padding: 1rem;
+            }
+            .table-responsive {
+                overflow-x: auto;
+            }
+            .cutoff-time {
+                font-size: 0.875rem;
+            }
+            .ticket-number, .transaction-date {
+                font-size: 0.9rem;
+            }
+        }
+        /* Estilos adicionales para mejorar la visualización en móviles */
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        /* Asegurar que el QR code no sea demasiado grande en móviles */
+        #qrcode {
+            width: 100px !important;
+            height: 100px !important;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container my-5">
@@ -306,7 +334,7 @@
         </form>
         <!-- Modal para Previsualizar Ticket -->
         <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content bg-dark text-white">
                     <div class="modal-header">
                         <h5 class="modal-title" id="ticketModalLabel">Previsualización del Ticket</h5>
@@ -317,22 +345,24 @@
                             <h4 class="text-center mb-3">East New York Cricket</h4>
                             <p><strong>Fechas de Apuesta:</strong> <span id="ticketFecha"></span></p>
                             <p><strong>Tracks Seleccionados:</strong> <span id="ticketTracks"></span></p>
-                            <table class="table table-dark table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Número Apostado</th>
-                                        <th>Tipo de Juego</th>
-                                        <th>Straight ($)</th>
-                                        <th>Box ($)</th>
-                                        <th>Combo ($)</th>
-                                        <th>Total ($)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ticketJugadas">
-                                    <!-- Jugadas -->
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Número Apostado</th>
+                                            <th>Tipo de Juego</th>
+                                            <th>Straight ($)</th>
+                                            <th>Box ($)</th>
+                                            <th>Combo ($)</th>
+                                            <th>Total ($)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ticketJugadas">
+                                        <!-- Jugadas -->
+                                    </tbody>
+                                </table>
+                            </div>
                             <div class="total-section">
                                 Total de Jugadas: $<span id="ticketTotal">0.00</span>
                             </div>
