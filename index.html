@@ -16,17 +16,13 @@
     <style>
         /* Asegurar que el contenido del modal se ajuste bien en móviles */
         @media (max-width: 576px) {
+            /* Hacer el modal más ancho en móviles */
+            .modal-dialog {
+                max-width: 95%;
+                margin: 1.75rem auto;
+            }
             #preTicket {
                 padding: 1rem;
-            }
-            .table-responsive {
-                overflow-x: auto;
-            }
-            .cutoff-time {
-                font-size: 0.875rem;
-            }
-            .ticket-number, .transaction-date {
-                font-size: 0.9rem;
             }
             /* Reducir el tamaño de fuente de la tabla */
             #preTicket table {
@@ -40,6 +36,13 @@
                 width: 80px !important;
                 height: 80px !important;
                 margin: 0 auto;
+            }
+            /* Ajustar textos adicionales */
+            .cutoff-time {
+                font-size: 0.75rem;
+            }
+            .ticket-number, .transaction-date {
+                font-size: 0.85rem;
             }
         }
         /* Estilos adicionales para mejorar la visualización en móviles */
@@ -362,7 +365,7 @@
             </form>
             <!-- Modal para Previsualizar Ticket -->
             <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
                     <div class="modal-content bg-dark text-white">
                         <div class="modal-header">
                             <h5 class="modal-title" id="ticketModalLabel">Previsualización del Ticket</h5>
