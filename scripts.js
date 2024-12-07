@@ -4,12 +4,9 @@ let fechaTransaccion = '';
 
 $(document).ready(function() {
 
-    // Define la URL de tu API de SheetDB  
-    const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
-    const BACKEND_API_URL = 'https://loteria-backend-j1r3.onrender.com/api'; // Asegúrate de definir esta variable
-    const token = localStorage.getItem('token');
-    const userRole = localStorage.getItem('userRole') || 'user';
-    console.log('User Role:', userRole);
+    // Define las URLs de tu API de SheetDB para tickets y jugadas
+    const SHEETDB_API_URL_TICKETS = 'https://sheetdb.io/api/v1/gect4lbs5bwvr/tickets'; // Reemplaza con tu URL real para tickets
+    const SHEETDB_API_URL_JUGADAS = 'https://sheetdb.io/api/v1/gect4lbs5bwvr/jugadas'; // Reemplaza con tu URL real para jugadas
 
     // Inicializar Flatpickr con selección de múltiples fechas
     flatpickr("#fecha", {
@@ -29,8 +26,6 @@ $(document).ready(function() {
     let selectedTracks = 0;
     let selectedDays = 0;
     let totalJugadasGlobal = 0;
-    let ticketData = {};
-    let ticketId = null;
 
     // Horarios de cierre por track (excluyendo "Venezuela")
     const horariosCierre = {
@@ -181,9 +176,7 @@ $(document).ready(function() {
         let total = 0;
         $(".total").each(function() {
             total += parseFloat($(this).text()) || 0;
-        }
-
-        );
+        });
 
         // Si no hay días seleccionados, el total es 0
         if (selectedDays === 0) {
@@ -695,55 +688,91 @@ $(document).ready(function() {
         $("#ticketFecha").text(fecha);
         console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());
 
-        // Preparar datos para enviar al backend y SheetDB
+        // Preparar datos para enviar a SheetDB
         const ticketData = {
             numeroTicket: numeroTicket,
             fechaTransaccion: fechaTransaccion,
             fechasApuesta: fecha,
             tracks: tracksTexto,
-            jugadas: jugadasArray,
             totalTicket: $("#totalJugadas").text()
         };
 
-        // Almacenar el ticket en el backend
-        $.ajax({
-            url: `${BACKEND_API_URL}/tickets/store-ticket`,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify(ticketData),
-            success: function(response) {
-                if (response.ticketId) {
-                    // Guardar el ID del ticket en localStorage
-                    localStorage.setItem('ticketId', response.ticketId);
-                    // Mostrar el modal
-                    ticketModal.show();
-                    // Mostrar u ocultar secciones según el rol del usuario
-                    if (userRole === 'user') {
-                        $('#confirmarPagoFormContainer').show();
-                        $('#confirmarTicketContainer').hide();
-                    } else {
-                        $('#confirmarPagoFormContainer').hide();
-                        $('#confirmarTicketContainer').show();
-                        $('#confirmarTicket').show();
-                    }
-                } else {
-                    showAlert('Error al almacenar los datos del ticket. Por favor, inténtalo de nuevo.', 'danger');
-                }
-            },
-            error: function(error) {
-                console.error('Error al almacenar los datos del ticket:', error);
-                const errorMsg = error.responseJSON && error.responseJSON.error ? error.responseJSON.error : 'Error al almacenar los datos del ticket. Por favor, inténtalo de nuevo.';
-                showAlert(errorMsg, 'danger');
-            }
-        });
+        // Preparar datos para las jugadas
+        const jugadasData = jugadasArray.map(jugada => ({
+            "Ticket Number": numeroTicket,
+            "Bet Number": jugada.numero,
+            "Game Mode": jugada.modalidad,
+            "Straight ($)": jugada.straight.toFixed(2),
+            "Box ($)": jugada.box !== "-" ? jugada.box : "",
+            "Combo ($)": jugada.combo !== "-" ? jugada.combo.toFixed(2) : "",
+            "Total ($)": jugada.total.toFixed(2),
+            "Payment Method": "-", // Puedes ajustar esto según necesites
+            "Jugada Number": generarNumeroUnico(),
+            "Timestamp": new Date().toISOString()
+        }));
+
+        // Enviar los datos a SheetDB
+        guardarTicket(ticketData);
+        guardarJugadas(jugadasData);
     });
 
     /**
+     * Guarda el ticket en SheetDB.
+     * @param {Object} ticketData - Datos del ticket.
+     */
+    function guardarTicket(ticketData) {
+        $.ajax({
+            url: SHEETDB_API_URL_TICKETS,
+            method: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([ticketData]), // SheetDB espera un array de objetos
+            success: function(response) {
+                console.log('Ticket almacenado en SheetDB:', response);
+                // Mostrar el modal después de almacenar el ticket
+                ticketModal.show();
+                // Mostrar u ocultar secciones según el rol del usuario
+                if (localStorage.getItem('userRole') === 'admin') {
+                    $('#confirmarPagoFormContainer').hide();
+                    $('#confirmarTicketContainer').show();
+                    $('#confirmarTicket').show();
+                } else {
+                    $('#confirmarPagoFormContainer').show();
+                    $('#confirmarTicketContainer').hide();
+                }
+            },
+            error: function(error) {
+                console.error('Error al almacenar el ticket en SheetDB:', error);
+                showAlert('Error al almacenar los datos del ticket. Por favor, inténtalo de nuevo.', 'danger');
+            }
+        });
+    }
+
+    /**
+     * Guarda las jugadas en SheetDB.
+     * @param {Array} jugadasData - Array de objetos con los datos de las jugadas.
+     */
+    function guardarJugadas(jugadasData) {
+        $.ajax({
+            url: SHEETDB_API_URL_JUGADAS,
+            method: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(jugadasData), // SheetDB espera un array de objetos
+            success: function(response) {
+                console.log('Jugadas almacenadas en SheetDB:', response);
+                // Puedes agregar más lógica aquí si es necesario
+            },
+            error: function(error) {
+                console.error('Error al almacenar las jugadas en SheetDB:', error);
+                showAlert('Error al almacenar las jugadas. Por favor, inténtalo de nuevo.', 'danger');
+            }
+        });
+    }
+
+    /**
      * Evento para confirmar el pago manual.
+     * Ahora, en lugar de enviar al backend, simplemente registramos la confirmación en SheetDB.
      */
     $("#confirmarPagoForm").submit(function(event) {
         event.preventDefault();
@@ -751,49 +780,45 @@ $(document).ready(function() {
 
         const codigoTransaccion = $("#codigoTransaccion").val().trim();
         const archivoComprobante = $("#comprobantePago")[0].files[0];
-        const ticketId = localStorage.getItem('ticketId');
+        const numeroTicket = $("#numeroTicket").text();
 
         if (!codigoTransaccion) {
             showAlert("Por favor, ingresa el código de transacción.", "warning");
             return;
         }
 
-        if (archivoComprobante) {
-            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg'];
-            if (!tiposPermitidos.includes(archivoComprobante.type)) {
-                showAlert("El comprobante debe ser una imagen en formato JPG o PNG.", "danger");
-                return;
-            }
-        }
+        // Opcional: Puedes subir el comprobante a un servicio de almacenamiento y guardar la URL en SheetDB
+        // Aquí, simplemente registramos la confirmación sin el comprobante
 
-        const formData = new FormData();
-        formData.append('ticketId', ticketId);
-        formData.append('codigoTransaccion', codigoTransaccion);
-        if (archivoComprobante) {
-            formData.append('comprobantePago', archivoComprobante);
-        }
+        const jugadaData = {
+            "Ticket Number": numeroTicket,
+            "Bet Number": "-", // No aplicable
+            "Game Mode": "-", // No aplicable
+            "Straight ($)": "-", // No aplicable
+            "Box ($)": "-", // No aplicable
+            "Combo ($)": "-", // No aplicable
+            "Total ($)": "-", // No aplicable
+            "Payment Method": "Pago Manual",
+            "Jugada Number": generarNumeroUnico(),
+            "Timestamp": new Date().toISOString()
+        };
+
+        // Puedes agregar más información según necesites
 
         $.ajax({
-            url: `${BACKEND_API_URL}/tickets/confirmar-pago-manual`,
+            url: SHEETDB_API_URL_JUGADAS,
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            data: formData,
-            processData: false,
-            contentType: false,
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([jugadaData]),
             success: function(response) {
-                if (response.success) {
-                    showAlert("Pago confirmado exitosamente.", "success");
-                    confirmarYGuardarTicket('Pago Manual');
-                } else {
-                    showAlert(`Error al confirmar el pago: ${response.error}`, "danger");
-                }
+                console.log('Confirmación de pago almacenada en SheetDB:', response);
+                showAlert("Pago confirmado exitosamente.", "success");
+                // Opcional: Puedes cerrar el modal o actualizar la interfaz según necesites
             },
             error: function(error) {
-                console.error('Error al confirmar el pago manual:', error);
-                const errorMsg = error.responseJSON && error.responseJSON.error ? error.responseJSON.error : 'Error al confirmar el pago. Por favor, inténtalo de nuevo.';
-                showAlert(errorMsg, 'danger');
+                console.error('Error al confirmar el pago en SheetDB:', error);
+                showAlert('Error al confirmar el pago. Por favor, inténtalo de nuevo.', "danger");
             }
         });
     });
@@ -806,7 +831,7 @@ $(document).ready(function() {
         if (archivo) {
             const lector = new FileReader();
             lector.onload = function(e) {
-                $("#previsualizacionComprobante").html(`<img src="${e.target.result}" alt="Comprobante de Pago">`);
+                $("#previsualizacionComprobante").html(`<img src="${e.target.result}" alt="Comprobante de Pago" class="img-fluid">`);
             }
             lector.readAsDataURL(archivo);
         } else {
@@ -816,158 +841,45 @@ $(document).ready(function() {
 
     /**
      * Evento para confirmar y generar el ticket final.
+     * En esta versión, simplemente mostramos una alerta y procedemos a imprimir.
      */
     $("#confirmarTicket").click(function() {
         $("#ticketAlerts").empty();
 
-        const ticketId = localStorage.getItem('ticketId');
-        const userRole = localStorage.getItem('userRole') || 'user';
+        // Puedes agregar lógica adicional aquí si es necesario
+        showAlert("Ticket generado exitosamente.", "success");
 
-        if (userRole === 'user') {
-            showAlert("Por favor, confirma tu pago antes de generar el ticket.", "warning");
-            return;
-        }
+        // Imprimir el ticket
+        window.print();
 
-        confirmarYGuardarTicket('Efectivo');
+        // Capturar el ticket como imagen y descargarlo
+        html2canvas(document.querySelector("#preTicket")).then(canvas => {
+            const imgData = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'ticket.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Cerrar el modal y reiniciar el formulario
+        ticketModal.hide();
+        resetForm();
+
+        // Limpiar datos locales si es necesario
     });
 
     /**
      * Confirma y guarda el ticket después de validar el pago.
-     * @param {String} metodoPago - Método de pago utilizado.
+     * Ahora, esta función no es necesaria ya que no hay backend.
+     * Puedes eliminarla o dejarla vacía.
      */
+    /*
     function confirmarYGuardarTicket(metodoPago) {
-        const ticketId = localStorage.getItem('ticketId');
-        const userRole = localStorage.getItem('userRole') || 'user';
-
-        $.ajax({
-            url: `${BACKEND_API_URL}/tickets/validate-ticket`,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify({ ticketId: ticketId, userRole: userRole }),
-            success: function(response) {
-                console.log('Validación del ticket:', response);
-                if (response.valid || userRole !== 'user') {
-                    const numeroTicket = generarNumeroUnico();
-                    $("#numeroTicket").text(numeroTicket);
-                    const fechaTransaccion = dayjs().format('MM-DD-YYYY hh:mm A');
-                    $("#ticketTransaccion").text(fechaTransaccion);
-
-                    $("#qrcode").empty();
-                    new QRCode(document.getElementById("qrcode"), {
-                        text: numeroTicket,
-                        width: 128,
-                        height: 128,
-                    });
-
-                    const ticketNumber = numeroTicket;
-                    const transactionDateTime = fechaTransaccion;
-                    const betDates = $("#ticketFecha").text();
-                    const tracks = $("#ticketTracks").text();
-                    const totalTicket = $("#totalJugadas").text();
-                    const timestamp = new Date().toISOString();
-
-                    // Preparar datos para enviar
-                    const jugadasData = [];
-                    $("#ticketJugadas tr").each(function() {
-                        const jugadaNumber = generarNumeroUnico();
-                        const jugadaData = {
-                            "Ticket Number": ticketNumber,
-                            "Transaction DateTime": transactionDateTime,
-                            "Bet Dates": betDates,
-                            "Tracks": tracks,
-                            "Bet Number": $(this).find("td").eq(1).text(),
-                            "Game Mode": $(this).find("td").eq(2).text(),
-                            "Straight ($)": $(this).find("td").eq(3).text(),
-                            "Box ($)": $(this).find("td").eq(4).text() !== "-" ? $(this).find("td").eq(4).text() : "",
-                            "Combo ($)": $(this).find("td").eq(5).text() !== "-" ? $(this).find("td").eq(5).text() : "",
-                            "Total ($)": $(this).find("td").eq(6).text(),
-                            "Payment Method": metodoPago,
-                            "Jugada Number": jugadaNumber,
-                            "Timestamp": timestamp
-                        };
-                        jugadasData.push(jugadaData);
-                    });
-
-                    // Enviar datos a SheetDB y Backend
-                    enviarFormulario(jugadasData);
-                } else {
-                    showAlert('El pago no ha sido completado o el ticket no es válido.', 'danger');
-                }
-            },
-            error: function(error) {
-                console.error('Error al validar el ticket en el servidor:', error);
-                showAlert('Error al validar el ticket. Por favor, inténtalo de nuevo.', 'danger');
-            }
-        });
+        // No se necesita en esta versión
     }
-
-    /**
-     * Envía los datos de las jugadas a SheetDB y al backend.
-     * @param {Array} datos - Array de objetos con los datos de las jugadas.
-     */
-    function enviarFormulario(datos) {
-        const sheetDBRequest = $.ajax({
-            url: SHEETDB_API_URL,
-            method: "POST",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify(datos)
-        });
-
-        const backendRequest = $.ajax({
-            url: `${BACKEND_API_URL}/jugadas/save-jugadas`,
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify(datos)
-        });
-
-        $.when(sheetDBRequest, backendRequest).done(function(sheetDBResponse, backendResponse) {
-            console.log("Datos enviados a ambos destinos:");
-            console.log("SheetDB:", sheetDBResponse);
-            console.log("Backend:", backendResponse);
-
-            showAlert("Ticket guardado y enviado exitosamente.", "success");
-
-            // Imprimir el ticket
-            window.print();
-
-            // Capturar el ticket como imagen y descargarlo
-            html2canvas(document.querySelector("#preTicket")).then(canvas => {
-                const imgData = canvas.toDataURL("image/png");
-                const link = document.createElement('a');
-                link.href = imgData;
-                link.download = 'ticket.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
-            // Cerrar el modal y reiniciar el formulario
-            ticketModal.hide();
-            resetForm();
-
-            // Limpiar datos locales
-            localStorage.removeItem('ticketId');
-            const newURL = window.location.origin + window.location.pathname;
-            window.history.replaceState({}, document.title, newURL);
-
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            console.error("Error al enviar datos:", textStatus, errorThrown);
-            let errorMsg = "Hubo un problema al enviar los datos. Por favor, inténtalo de nuevo.";
-            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-                errorMsg = jqXHR.responseJSON.error;
-            }
-            showAlert(errorMsg, "danger");
-        });
-    }
+    */
 
     /**
      * Evento para reiniciar el formulario.
