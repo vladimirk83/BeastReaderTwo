@@ -6,6 +6,10 @@ $(document).ready(function() {
 
     // Define la URL de tu API de SheetDB  
     const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
+    const BACKEND_API_URL = 'https://loteria-backend-j1r3.onrender.com/api'; // Asegúrate de definir esta variable
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole') || 'user';
+    console.log('User Role:', userRole);
 
     // Inicializar Flatpickr con selección de múltiples fechas
     flatpickr("#fecha", {
@@ -24,6 +28,9 @@ $(document).ready(function() {
     let jugadaCount = 0;
     let selectedTracks = 0;
     let selectedDays = 0;
+    let totalJugadasGlobal = 0;
+    let ticketData = {};
+    let ticketId = null;
 
     // Horarios de cierre por track (excluyendo "Venezuela")
     const horariosCierre = {
@@ -46,8 +53,8 @@ $(document).ready(function() {
             "Real": "12:45",
             "Gana mas": "14:25",
             "Loteka": "19:30",
-            "Nacional": "20:30", // Domingos a las 17:50
-            "Quiniela Pale": "20:30", // Domingos a las 15:30
+            "Nacional": "20:30",
+            "Quiniela Pale": "20:30",
             "Primera Día": "11:50",
             "Suerte Día": "12:20",
             "Lotería Real": "12:50",
@@ -55,11 +62,10 @@ $(document).ready(function() {
             "Lotedom": "17:50",
             "Primera Noche": "19:50",
             "Panama": "16:00",
-            // Horarios especiales para domingos
             "Quiniela Pale Domingo": "15:30",
             "Nacional Domingo": "17:50"
         }
-        // "Venezuela" no se incluye para que siempre esté disponible
+        // "Venezuela" no se incluye aquí para que siempre esté disponible
     };
 
     // Límites de apuestas por modalidad
@@ -79,6 +85,7 @@ $(document).ready(function() {
      * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
      * @param {Array} tracks - Array de tracks seleccionados.
      * @param {String} numero - Número apostado.
+     * @param {jQuery} fila - Fila de la jugada.
      * @returns {String} - Modalidad de juego.
      */
     function determinarModalidad(tracks, numero, fila) {
@@ -174,7 +181,9 @@ $(document).ready(function() {
         let total = 0;
         $(".total").each(function() {
             total += parseFloat($(this).text()) || 0;
-        });
+        }
+
+        );
 
         // Si no hay días seleccionados, el total es 0
         if (selectedDays === 0) {
@@ -399,9 +408,9 @@ $(document).ready(function() {
             const track = $(this).data("track");
 
             if (track === 'Venezuela') {
-               $(this).hide(); // Oculta el elemento del DOM
+               $(this).text(`Disponible siempre`);
                return;
-            }             
+            }
             let cierreStr = "";
             if (horariosCierre.USA[track]) {
                 cierreStr = horariosCierre.USA[track];
@@ -409,7 +418,6 @@ $(document).ready(function() {
             else if (horariosCierre["Santo Domingo"][track]) {
                 cierreStr = horariosCierre["Santo Domingo"][track];
             }
-            // "Venezuela" no está incluido aquí
 
             if (cierreStr) {
                 // Usar backticks para crear una cadena de texto correcta
@@ -1055,7 +1063,25 @@ $(document).ready(function() {
         actualizarEstadoTracks();
     }, 60000); // 60000 ms = 1 minuto
 
+    /**
+     * Evento delegado para detectar cambios en los checkboxes de tracks
+     */
+    $(".track-checkbox").change(function() {
+        const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
+        // Excluir "Venezuela" del conteo de tracks para el cálculo del total
+        selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
+
+        calcularTotal();
+    });
+
     // Inicializar las horas límite al cargar la página
     mostrarHorasLimite();
+
+    /**
+     * Evento delegado para detectar cambios en los campos de número apostado y resaltar duplicados
+     */
+    $("#tablaJugadas").on("input", ".numeroApostado", function() {
+        resaltarDuplicados();
+    });
 
 });
