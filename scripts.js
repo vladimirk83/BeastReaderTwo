@@ -61,8 +61,8 @@ $(document).ready(function() {
             "Panama": "16:00",
             "Quiniela Pale Domingo": "15:30",
             "Nacional Domingo": "17:50"
-        },
-        // Venezuela no debe tener hora de cierre, asi que no la incluimos en horariosCierre
+        }
+        // Se elimina la sección de Venezuela para que nunca tenga hora de cierre
     };
 
     const limitesApuesta = {
@@ -333,13 +333,15 @@ $(document).ready(function() {
             if (fechaSeleccionada.getTime() === fechaActualSinHora.getTime()) {
                 const horaActual = new Date();
                 for (let track of tracks) {
-                    if (track === 'Venezuela') continue; // Venezuela siempre disponible
+                    if (track === 'Venezuela') continue;
 
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":");
                         const horaLimite = new Date();
-                        // Ahora validamos 10 minutos antes del cierre
+                        // Ajustar validación al cliente: 
+                        // aquí sigue comprobando 5 minutos antes, pero deberías también usar 10 si deseas coherencia.
+                        // Sin embargo, este chequeo es solo al generar ticket; puedes cambiarlo a 10 también:
                         horaLimite.setHours(parseInt(horas), parseInt(minutos) - 10, 0, 0);
                         if (horaActual > horaLimite) {
                             showAlert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`, "danger");
@@ -744,7 +746,7 @@ $(document).ready(function() {
         $(".track-checkbox").prop('disabled', false).closest('label').removeClass('closed-track');
     }
 
-    // Ahora actualizamos el estado de los tracks para deshabilitarlos 10 minutos antes del cierre
+    // Actualiza el estado de los tracks, deshabilitándolos 10 minutos antes de la hora de cierre
     function actualizarEstadoTracks() {
         const fechaVal = $("#fecha").val();
         if (!fechaVal) return;
@@ -757,6 +759,7 @@ $(document).ready(function() {
         const fechaActual = new Date();
         const esMismoDia = fechaSeleccionada.toDateString() === fechaActual.toDateString();
 
+        // Si no es el mismo día, no deshabilitar ningún track
         if (!esMismoDia) {
             $(".track-checkbox").prop('disabled', false).closest('label').removeClass('closed-track');
             return;
@@ -765,10 +768,9 @@ $(document).ready(function() {
         const ahora = new Date();
         const ahoraMiliseconds = ahora.getHours() * 60 + ahora.getMinutes();
 
-        // Recorremos los horarios de cierre
         for (let region in horariosCierre) {
             for (let track in horariosCierre[region]) {
-                // Si es Venezuela, siempre habilitado
+                // Venezuela siempre disponible
                 if (track === 'Venezuela') {
                     $(`.track-checkbox[value="${track}"]`).prop('disabled', false).closest('label').removeClass('closed-track');
                     continue;
@@ -777,11 +779,9 @@ $(document).ready(function() {
                 const horaCierreStr = horariosCierre[region][track];
                 const [horaCierre, minutoCierre] = horaCierreStr.split(":").map(Number);
                 const horaCierreMiliseconds = horaCierre * 60 + minutoCierre;
-
-                // Restamos 10 minutos a la hora de cierre
+                // Restar 10 minutos
                 const horaCierreConAnticipo = horaCierreMiliseconds - 10;
 
-                // Si la hora actual es mayor o igual a la hora de cierre anticipada, deshabilitamos
                 if (ahoraMiliseconds >= horaCierreConAnticipo) {
                     $(`.track-checkbox[value="${track}"]`).prop('disabled', true).prop('checked', false).closest('label').addClass('closed-track');
                 } else {
@@ -823,14 +823,13 @@ $(document).ready(function() {
 
             if (cierreStr) {
                 const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                // Restamos 10 minutos para mostrar la hora límite
-                cierre.setMinutes(cierre.getMinutes() - 10);
+                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos para mostrar la hora límite
                 const horas = cierre.getHours().toString().padStart(2, '0');
                 const minutos = cierre.getMinutes().toString().padStart(2, '0');
                 const horaLimite = `${horas}:${minutos}`;
                 $(this).text(`Hora límite: ${horaLimite}`);
             } else {
-                // Si no hay hora de cierre, caso Venezuela
+                // Si no hay hora de cierre, por ejemplo Venezuela
                 $(this).text(`Disponible siempre`);
             }
         });
