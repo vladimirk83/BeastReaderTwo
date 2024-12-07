@@ -1,4 +1,4 @@
- // scripts.js
+  // scripts.js
 
 let fechaTransaccion = '';
 
