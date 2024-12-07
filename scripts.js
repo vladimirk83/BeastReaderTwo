@@ -716,7 +716,7 @@ $(document).ready(function() {
      */
     function guardarJugadas(jugadasData) {
         $.ajax({
-            url: SHEETDB_API_URL,
+            url: SHEETDB_API_URL, // Usar la URL base sin añadir /tickets o /jugadas
             method: 'POST',
             dataType: 'json',
             contentType: 'application/json',
@@ -859,7 +859,7 @@ $(document).ready(function() {
     $("#resetForm").click(function() { resetForm(); });
 
     /**
-     * Muestra las horas límite y actualiza el estado de los tracks.
+     * Muestra las horas límite para cada track en la interfaz.
      */
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
