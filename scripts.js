@@ -4,9 +4,8 @@ let fechaTransaccion = '';
 
 $(document).ready(function() {
 
-    // Define las URLs de tu API de SheetDB para tickets y jugadas
-    const SHEETDB_API_URL_TICKETS = 'https://sheetdb.io/api/v1/gect4lbs5bwvr/tickets'; // Reemplaza con tu URL real para tickets
-    const SHEETDB_API_URL_JUGADAS = 'https://sheetdb.io/api/v1/gect4lbs5bwvr/jugadas'; // Reemplaza con tu URL real para jugadas
+    // Define la URL de tu API de SheetDB  
+    const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
 
     // Inicializar Flatpickr con selección de múltiples fechas
     flatpickr("#fecha", {
@@ -689,64 +688,27 @@ $(document).ready(function() {
         console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());
 
         // Preparar datos para enviar a SheetDB
-        const ticketData = {
-            numeroTicket: numeroTicket,
-            fechaTransaccion: fechaTransaccion,
-            fechasApuesta: fecha,
-            tracks: tracksTexto,
-            totalTicket: $("#totalJugadas").text()
-        };
-
-        // Preparar datos para las jugadas
+        const timestamp = new Date().toISOString();
         const jugadasData = jugadasArray.map(jugada => ({
-            "Ticket Number": numeroTicket,
-            "Bet Number": jugada.numero,
-            "Game Mode": jugada.modalidad,
-            "Straight ($)": jugada.straight.toFixed(2),
-            "Box ($)": jugada.box !== "-" ? jugada.box : "",
-            "Combo ($)": jugada.combo !== "-" ? jugada.combo.toFixed(2) : "",
-            "Total ($)": jugada.total.toFixed(2),
-            "Payment Method": "-", // Puedes ajustar esto según necesites
-            "Jugada Number": generarNumeroUnico(),
-            "Timestamp": new Date().toISOString()
+            "numeroTicket": numeroTicket,
+            "fechaTransaccion": fechaTransaccion,
+            "fechasApuesta": fecha,
+            "tracks": tracksTexto,
+            "totalTicket": $("#totalJugadas").text(),
+            "numeroJugada": generarNumeroUnico(),
+            "numeroApostado": jugada.numero,
+            "modalidad": jugada.modalidad,
+            "straight": jugada.straight.toFixed(2),
+            "box": jugada.box !== "-" ? jugada.box : "",
+            "combo": jugada.combo !== "-" ? jugada.combo.toFixed(2) : "",
+            "total": jugada.total.toFixed(2),
+            "paymentMethod": "-", // Se actualizará al confirmar el pago
+            "timestamp": timestamp
         }));
 
         // Enviar los datos a SheetDB
-        guardarTicket(ticketData);
         guardarJugadas(jugadasData);
     });
-
-    /**
-     * Guarda el ticket en SheetDB.
-     * @param {Object} ticketData - Datos del ticket.
-     */
-    function guardarTicket(ticketData) {
-        $.ajax({
-            url: SHEETDB_API_URL_TICKETS,
-            method: 'POST',
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify([ticketData]), // SheetDB espera un array de objetos
-            success: function(response) {
-                console.log('Ticket almacenado en SheetDB:', response);
-                // Mostrar el modal después de almacenar el ticket
-                ticketModal.show();
-                // Mostrar u ocultar secciones según el rol del usuario
-                if (localStorage.getItem('userRole') === 'admin') {
-                    $('#confirmarPagoFormContainer').hide();
-                    $('#confirmarTicketContainer').show();
-                    $('#confirmarTicket').show();
-                } else {
-                    $('#confirmarPagoFormContainer').show();
-                    $('#confirmarTicketContainer').hide();
-                }
-            },
-            error: function(error) {
-                console.error('Error al almacenar el ticket en SheetDB:', error);
-                showAlert('Error al almacenar los datos del ticket. Por favor, inténtalo de nuevo.', 'danger');
-            }
-        });
-    }
 
     /**
      * Guarda las jugadas en SheetDB.
@@ -754,14 +716,25 @@ $(document).ready(function() {
      */
     function guardarJugadas(jugadasData) {
         $.ajax({
-            url: SHEETDB_API_URL_JUGADAS,
+            url: SHEETDB_API_URL,
             method: 'POST',
             dataType: 'json',
             contentType: 'application/json',
             data: JSON.stringify(jugadasData), // SheetDB espera un array de objetos
             success: function(response) {
                 console.log('Jugadas almacenadas en SheetDB:', response);
-                // Puedes agregar más lógica aquí si es necesario
+                // Mostrar el modal después de almacenar las jugadas
+                ticketModal.show();
+                // Mostrar u ocultar secciones según el rol del usuario
+                const userRole = localStorage.getItem('userRole') || 'user';
+                if (userRole === 'admin') {
+                    $('#confirmarPagoFormContainer').hide();
+                    $('#confirmarTicketContainer').show();
+                    $('#confirmarTicket').show();
+                } else {
+                    $('#confirmarPagoFormContainer').show();
+                    $('#confirmarTicketContainer').hide();
+                }
             },
             error: function(error) {
                 console.error('Error al almacenar las jugadas en SheetDB:', error);
@@ -772,7 +745,7 @@ $(document).ready(function() {
 
     /**
      * Evento para confirmar el pago manual.
-     * Ahora, en lugar de enviar al backend, simplemente registramos la confirmación en SheetDB.
+     * Ahora, en lugar de enviar al backend, simplemente actualizamos las jugadas en SheetDB con el método de pago.
      */
     $("#confirmarPagoForm").submit(function(event) {
         event.preventDefault();
@@ -790,34 +763,46 @@ $(document).ready(function() {
         // Opcional: Puedes subir el comprobante a un servicio de almacenamiento y guardar la URL en SheetDB
         // Aquí, simplemente registramos la confirmación sin el comprobante
 
-        const jugadaData = {
-            "Ticket Number": numeroTicket,
-            "Bet Number": "-", // No aplicable
-            "Game Mode": "-", // No aplicable
-            "Straight ($)": "-", // No aplicable
-            "Box ($)": "-", // No aplicable
-            "Combo ($)": "-", // No aplicable
-            "Total ($)": "-", // No aplicable
-            "Payment Method": "Pago Manual",
-            "Jugada Number": generarNumeroUnico(),
-            "Timestamp": new Date().toISOString()
-        };
-
-        // Puedes agregar más información según necesites
-
+        // Obtener todas las jugadas correspondientes al numeroTicket
         $.ajax({
-            url: SHEETDB_API_URL_JUGADAS,
-            method: 'POST',
+            url: `${SHEETDB_API_URL}?numeroTicket=${numeroTicket}`,
+            method: 'GET',
             dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify([jugadaData]),
             success: function(response) {
-                console.log('Confirmación de pago almacenada en SheetDB:', response);
-                showAlert("Pago confirmado exitosamente.", "success");
-                // Opcional: Puedes cerrar el modal o actualizar la interfaz según necesites
+                if (response.length === 0) {
+                    showAlert("No se encontraron jugadas para este ticket.", "danger");
+                    return;
+                }
+
+                // Actualizar cada jugada con el método de pago
+                const actualizarJugadas = response.map(jugada => {
+                    return {
+                        "id": jugada.id, // Necesario para actualizar
+                        "paymentMethod": "Pago Manual"
+                    };
+                });
+
+                // Enviar actualizaciones a SheetDB
+                const updateRequests = actualizarJugadas.map(jugada => {
+                    return $.ajax({
+                        url: `${SHEETDB_API_URL}/${jugada.id}`,
+                        method: 'PATCH',
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ "paymentMethod": jugada.paymentMethod })
+                    });
+                });
+
+                $.when.apply($, updateRequests).done(function() {
+                    showAlert("Pago confirmado exitosamente.", "success");
+                    // Opcional: Puedes cerrar el modal o actualizar la interfaz según necesites
+                }).fail(function(error) {
+                    console.error('Error al confirmar el pago en SheetDB:', error);
+                    showAlert('Error al confirmar el pago. Por favor, inténtalo de nuevo.', "danger");
+                });
             },
             error: function(error) {
-                console.error('Error al confirmar el pago en SheetDB:', error);
+                console.error('Error al obtener las jugadas de SheetDB:', error);
                 showAlert('Error al confirmar el pago. Por favor, inténtalo de nuevo.', "danger");
             }
         });
@@ -866,20 +851,7 @@ $(document).ready(function() {
         // Cerrar el modal y reiniciar el formulario
         ticketModal.hide();
         resetForm();
-
-        // Limpiar datos locales si es necesario
     });
-
-    /**
-     * Confirma y guarda el ticket después de validar el pago.
-     * Ahora, esta función no es necesaria ya que no hay backend.
-     * Puedes eliminarla o dejarla vacía.
-     */
-    /*
-    function confirmarYGuardarTicket(metodoPago) {
-        // No se necesita en esta versión
-    }
-    */
 
     /**
      * Evento para reiniciar el formulario.
