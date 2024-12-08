@@ -620,6 +620,43 @@ $(document).ready(function() {
     });
 
     /**
+     * Evento para confirmar e imprimir el ticket.
+     * Captura el contenido del ticket, lo descarga como imagen y abre el diálogo de impresión.
+     */
+    $("#confirmarTicket").click(function() {
+        // Seleccionar el contenido del ticket
+        const ticketElement = document.getElementById("preTicket");
+
+        // Usar html2canvas para capturar el ticket como imagen
+        html2canvas(ticketElement).then(canvas => {
+            // Convertir el canvas a una URL de imagen
+            const imgData = canvas.toDataURL("image/png");
+
+            // Crear un enlace para descargar la imagen
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = `ticket_${$("#numeroTicket").text()}.png`;
+
+            // Añadir el enlace al DOM, hacer clic y luego removerlo
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Imprimir el ticket
+            window.print();
+
+            // Cerrar el modal
+            ticketModal.hide();
+
+            // Reiniciar el formulario
+            resetForm();
+        }).catch(error => {
+            console.error("Error al capturar el ticket:", error);
+            alert("Hubo un problema al generar el ticket. Por favor, inténtalo de nuevo.");
+        });
+    });
+
+    /**
      * Genera un número único de 8 dígitos.
      * @returns {String} - Número único.
      */
