@@ -7,7 +7,7 @@ $(document).ready(function() {
     // Define la URL de tu API de SheetDB  
     const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
 
-    // Inicializar Flatpickr con selección de múltiples fechas
+    // Inicializar Flatpickr con selección de rango de fechas
     flatpickr("#fecha", {
         mode: "multiple",
         dateFormat: "m-d-Y", // Formato MM-DD-YYYY
@@ -15,18 +15,15 @@ $(document).ready(function() {
         allowInput: true,
         onChange: function(selectedDates, dateStr, instance) {
             selectedDays = selectedDates.length;
-            console.log("Días seleccionados:", selectedDays);
             calcularTotal();
-            actualizarEstadoTracks(); // Actualizar estado de tracks cada vez que cambie la fecha
         },
     });
 
     let jugadaCount = 0;
     let selectedTracks = 0;
     let selectedDays = 0;
-    let totalJugadasGlobal = 0;
 
-    // Horarios de cierre por track (excluyendo "Venezuela")
+    // Horarios de cierre por track
     const horariosCierre = {
         "USA": {
             "New York Mid Day": "14:25",
@@ -42,13 +39,14 @@ $(document).ready(function() {
             "Georgia Night": "23:20",
             "Pensilvania AM": "12:55",
             "Pensilvania PM": "18:20"
+            // Nota: "Venezuela" se excluye aquí
         },
         "Santo Domingo": {
             "Real": "12:45",
             "Gana mas": "14:25",
             "Loteka": "19:30",
-            "Nacional": "20:30",
-            "Quiniela Pale": "20:30",
+            "Nacional": "20:30", // Domingos a las 17:50
+            "Quiniela Pale": "20:30", // Domingos a las 15:30
             "Primera Día": "11:50",
             "Suerte Día": "12:20",
             "Lotería Real": "12:50",
@@ -56,10 +54,13 @@ $(document).ready(function() {
             "Lotedom": "17:50",
             "Primera Noche": "19:50",
             "Panama": "16:00",
+            // Horarios especiales para domingos
             "Quiniela Pale Domingo": "15:30",
             "Nacional Domingo": "17:50"
+        },
+        "Venezuela": {
+            "Venezuela": "19:00" // Asumiendo un horario de cierre para Venezuela
         }
-        // "Venezuela" no se incluye aquí para que siempre esté disponible
     };
 
     // Límites de apuestas por modalidad
@@ -69,20 +70,18 @@ $(document).ready(function() {
         "Venezuela": { "straight": 100 },
         "Venezuela-Pale": { "straight": 100 },
         "Pulito": { "straight": 100 },
-        "Pulito-Combinado": { "straight": 100 },
-        "RD-Quiniela": { "straight": 100 },
-        "RD-Pale": { "straight": 20 },
-        "Combo": { "combo": 50 }
+        "RD-Quiniela": { "straight": 100 }, // Actualizado a $100
+        "RD-Pale": { "straight": 20 }, // Se mantiene en $20
+        "Combo": { "combo": 50 } // Añadido
     };
 
     /**
      * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
      * @param {Array} tracks - Array de tracks seleccionados.
      * @param {String} numero - Número apostado.
-     * @param {jQuery} fila - Fila de la jugada.
      * @returns {String} - Modalidad de juego.
      */
-    function determinarModalidad(tracks, numero, fila) {
+    function determinarModalidad(tracks, numero) {
         let modalidad = "-";
 
         const esUSA = tracks.some(track => Object.keys(horariosCierre.USA).includes(track));
@@ -90,27 +89,17 @@ $(document).ready(function() {
         const incluyeVenezuela = tracks.includes("Venezuela");
 
         const longitud = numero.length;
-        const boxValue = fila.find(".box").val().trim();
-        const acceptableBoxValues = ["1", "2", "3"];
-        const acceptableBoxCombinations = ["1,2", "2,3", "1,3", "1,2,3"];
+        const boxValue = parseInt(fila.find(".box").val()) || 0;
 
-        if (incluyeVenezuela && esUSA) {
-            if (longitud === 2) {
-                modalidad = "Venezuela";
-            } else if (longitud === 4) {
-                modalidad = "Venezuela-Pale";
-            }
+        if (incluyeVenezuela && esUSA && longitud === 2) {
+            modalidad = "Venezuela";
         } else if (esUSA && !esSD) {
             if (longitud === 4) {
                 modalidad = "Win 4";
             } else if (longitud === 3) {
                 modalidad = "Peak 3";
-            } else if (longitud === 2) {
-                if (acceptableBoxValues.includes(boxValue)) {
-                    modalidad = "Pulito";
-                } else if (acceptableBoxCombinations.includes(boxValue)) {
-                    modalidad = "Pulito-Combinado";
-                }
+            } else if (longitud === 2 && [1, 2, 3].includes(boxValue)) {
+                modalidad = "Pulito";
             }
         } else if (esSD && !esUSA) {
             if (longitud === 2) {
@@ -128,7 +117,7 @@ $(document).ready(function() {
      */
     function agregarJugada() {
         if (jugadaCount >= 100) {
-            showAlert("Has alcanzado el máximo de 100 jugadas.", "danger");
+            alert("Has alcanzado el máximo de 100 jugadas.");
             return;
         }
         jugadaCount++;
@@ -138,35 +127,16 @@ $(document).ready(function() {
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
                 <td class="tipoJuego">-</td>
                 <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="Ej: 5"></td>
-                <td><input type="text" class="form-control box" placeholder="1,2,3"></td>
+                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3"></td>
                 <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="Ej: 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
         `;
-
         $("#tablaJugadas").append(fila);
-        agregarListenersNumeroApostado();
-        resaltarDuplicados();
-        $("#tablaJugadas tr:last .numeroApostado").focus();
     }
 
     // Agregar una jugada inicial
     agregarJugada();
-
-    /**
-     * Muestra una alerta en la interfaz.
-     * @param {String} message - Mensaje de la alerta.
-     * @param {String} type - Tipo de alerta (e.g., 'success', 'danger', 'warning').
-     */
-    function showAlert(message, type) {
-        const alertHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-            </div>
-        `;
-        $("#ticketAlerts").append(alertHTML);
-    }
 
     /**
      * Calcula el total de todas las jugadas considerando los tracks y días seleccionados.
@@ -202,14 +172,13 @@ $(document).ready(function() {
 
         const combinaciones = calcularCombinaciones(numero);
         let straight = parseFloat(fila.find(".straight").val()) || 0;
-        let boxVal = fila.find(".box").val().trim();
-        let box = parseFloat(boxVal) || 0;
+        let box = parseFloat(fila.find(".box").val()) || 0;
         let combo = parseFloat(fila.find(".combo").val()) || 0;
 
         // Aplicar límites según modalidad
         if (limitesApuesta[modalidad]) {
             straight = Math.min(straight, limitesApuesta[modalidad].straight || straight);
-            if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && modalidad !== "Pulito-Combinado") {
+            if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito") {
                 box = Math.min(box, limitesApuesta[modalidad].box || box);
             }
             if (limitesApuesta[modalidad].combo !== undefined) {
@@ -219,17 +188,16 @@ $(document).ready(function() {
 
         // Calcular total según modalidad
         let total = 0;
-        if (modalidad === "Pulito" || modalidad === "Pulito-Combinado") {
-            const boxValues = boxVal.split(",").filter(value => value !== "");
-            const countBoxValues = boxValues.length;
-            total = straight * countBoxValues;
+        if (modalidad === "Pulito") {
+            total = straight; // No sumar box
         } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
             total = straight;
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
             total = straight + box + (combo * combinaciones);
-        } else if (modalidad === "Combo") {
-            total = combo;
+        } else if (modalidad === "Combo") { // Añadido
+            total = combo; // Solo sumar combo
         } else {
+            // Modalidad no reconocida
             total = straight + box + combo;
         }
 
@@ -258,20 +226,41 @@ $(document).ready(function() {
     }
 
     /**
-     * Evento delegado para detectar cambios en los campos de entrada de jugadas.
-     * Utiliza event delegation para manejar dinámicamente las filas agregadas.
+     * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
+     * @param {Array} tracks - Array de tracks seleccionados.
+     * @param {String} numero - Número apostado.
+     * @returns {String} - Modalidad de juego.
      */
-    $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
-        const fila = $(this).closest("tr");
-        const num = fila.find(".numeroApostado").val();
-        const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        const modalidad = determinarModalidad(tracks, num, fila);
-        fila.find(".tipoJuego").text(modalidad);
-        actualizarPlaceholders(modalidad, fila);
-        calcularTotalJugada(fila);
-        calcularTotal();
-        resaltarDuplicados();
-    });
+    function determinarModalidad(tracks, numero) {
+        let modalidad = "-";
+
+        const esUSA = tracks.some(track => Object.keys(horariosCierre.USA).includes(track));
+        const esSD = tracks.some(track => Object.keys(horariosCierre["Santo Domingo"]).includes(track));
+        const incluyeVenezuela = tracks.includes("Venezuela");
+
+        const longitud = numero.length;
+        const boxValue = parseInt($(".box").val()) || 0; // Asegurarse de obtener el valor correcto
+
+        if (incluyeVenezuela && esUSA && longitud === 2) {
+            modalidad = "Venezuela";
+        } else if (esUSA && !esSD) {
+            if (longitud === 4) {
+                modalidad = "Win 4";
+            } else if (longitud === 3) {
+                modalidad = "Peak 3";
+            } else if (longitud === 2 && [1, 2, 3].includes(boxValue)) {
+                modalidad = "Pulito";
+            }
+        } else if (esSD && !esUSA) {
+            if (longitud === 2) {
+                modalidad = "RD-Quiniela";
+            } else if (longitud === 4) {
+                modalidad = "RD-Pale";
+            }
+        }
+
+        return modalidad;
+    }
 
     /**
      * Actualiza los placeholders y el estado de los campos según la modalidad de juego.
@@ -285,8 +274,8 @@ $(document).ready(function() {
             fila.find(".straight").attr("placeholder", "Ej: 5.00").prop('disabled', false);
         }
 
-        if (modalidad === "Pulito" || modalidad === "Pulito-Combinado") {
-            fila.find(".box").attr("placeholder", "1,2,3").prop('disabled', false);
+        if (modalidad === "Pulito") {
+            fila.find(".box").attr("placeholder", "1, 2 o 3").prop('disabled', false);
             fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
             fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
@@ -294,7 +283,7 @@ $(document).ready(function() {
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
             fila.find(".box").attr("placeholder", `Máximo $${limitesApuesta[modalidad].box}`).prop('disabled', false);
             fila.find(".combo").attr("placeholder", `Máximo $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
-        } else if (modalidad === "Combo") {
+        } else if (modalidad === "Combo") { // Añadido
             fila.find(".straight").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".combo").attr("placeholder", `Máximo $${limitesApuesta.Combo.combo}`).prop('disabled', false);
@@ -303,6 +292,46 @@ $(document).ready(function() {
             fila.find(".box").attr("placeholder", "Ej: 2.50").prop('disabled', false);
             fila.find(".combo").attr("placeholder", "Ej: 3.00").prop('disabled', false);
         }
+    }
+
+    /**
+     * Genera un número único de 8 dígitos.
+     * @returns {String} - Número único.
+     */
+    function generarNumeroUnico() {
+        return Math.floor(10000000 + Math.random() * 90000000).toString();
+    }
+
+    /**
+     * Muestra las horas límite para cada track en la interfaz.
+     */
+    function mostrarHorasLimite() {
+        $(".cutoff-time").each(function() {
+            const track = $(this).data("track");
+
+            if (track === 'Venezuela') {
+               $(this).hide(); // Oculta el elemento del DOM
+               return;
+            }             
+            let cierreStr = "";
+            if (horariosCierre.USA[track]) {
+                cierreStr = horariosCierre.USA[track];
+            }
+            else if (horariosCierre["Santo Domingo"][track]) {
+                cierreStr = horariosCierre["Santo Domingo"][track];
+            } 
+            else if (horariosCierre.Venezuela[track]) {
+                cierreStr = horariosCierre.Venezuela[track];
+            }
+            if (cierreStr) {
+                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
+                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos en lugar de 5
+                const horas = cierre.getHours().toString().padStart(2, '0');
+                const minutos = cierre.getMinutes().toString().padStart(2, '0');
+                const horaLimite = `${horas}:${minutos}`;
+                $(this).text(`Hora límite: ${horaLimite}`);
+            }
+        });
     }
 
     /**
@@ -336,21 +365,6 @@ $(document).ready(function() {
     }
 
     /**
-     * Agrega listeners para resaltar duplicados en los campos de número apostado.
-     */
-    function agregarListenersNumeroApostado() {
-        const camposNumeros = document.querySelectorAll('.numeroApostado');
-        camposNumeros.forEach(campo => {
-            campo.removeEventListener('input', resaltarDuplicados);
-            campo.addEventListener('input', resaltarDuplicados);
-        });
-    }
-
-    // Agregar listeners y resaltar duplicados al cargar la página
-    agregarListenersNumeroApostado();
-    resaltarDuplicados();
-
-    /**
      * Reinicia el formulario a su estado inicial.
      */
     function resetForm() {
@@ -361,22 +375,66 @@ $(document).ready(function() {
         selectedDays = 0;
         agregarJugada();
         $("#totalJugadas").text("0.00");
-        resaltarDuplicados();
         mostrarHorasLimite();
-        $("#ticketAlerts").empty();
-        $(".track-checkbox").prop('disabled', false).closest('label').removeClass('closed-track');
+        resaltarDuplicados();
     }
+
+    /**
+     * Calcula el total de apuestas por jugada y actualiza el total general.
+     * @param {jQuery} fila - Fila de la jugada.
+     */
+    function calcularTotalJugadaAndUpdate(fila) {
+        calcularTotalJugada(fila);
+        calcularTotal();
+    }
+
+    // Evento para agregar más jugadas
+    $("#agregarJugada").click(function() {
+        agregarJugada();
+    });
+
+    // Evento para eliminar la última jugada
+    $("#eliminarJugada").click(function() {
+        if (jugadaCount === 0) {
+            alert("No hay jugadas para eliminar.");
+            return;
+        }
+        // Remover la última fila
+        $("#tablaJugadas tr:last").remove();
+        jugadaCount--;
+        // Actualizar el número de jugadas
+        $("#tablaJugadas tr").each(function(index) {
+            $(this).find("td:first").text(index + 1);
+        });
+        calcularTotal();
+    });
+
+    /**
+     * Evento delegado para detectar cambios en los campos de entrada de jugadas.
+     * Utiliza event delegation para manejar dinámicamente las filas agregadas.
+     */
+    $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
+        const fila = $(this).closest("tr");
+        const num = fila.find(".numeroApostado").val();
+        const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
+        const modalidad = determinarModalidad(tracks, num);
+        fila.find(".tipoJuego").text(modalidad);
+        actualizarPlaceholders(modalidad, fila);
+        calcularTotalJugadaAndUpdate(fila);
+        resaltarDuplicados();
+    });
+
+    // Evento delegado para detectar cambios en los checkboxes de tracks
+    $(".track-checkbox").change(function() {
+        const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
+        // Excluir "Venezuela" del conteo de tracks para el cálculo del total
+        selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
+
+        calcularTotal();
+    });
 
     // Inicializar Bootstrap Modal
     var ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
-
-    /**
-     * Genera un número único de 8 dígitos.
-     * @returns {String} - Número único.
-     */
-    function generarNumeroUnico() {
-        return Math.floor(10000000 + Math.random() * 90000000).toString();
-    }
 
     /**
      * Obtiene la hora límite de cierre para un track específico.
@@ -393,111 +451,25 @@ $(document).ready(function() {
     }
 
     /**
-     * Muestra las horas límite para cada track en la interfaz.
-     */
-    function mostrarHorasLimite() {
-        $(".cutoff-time").each(function() {
-            const track = $(this).data("track");
-
-            if (track === 'Venezuela') {
-               $(this).text(`Disponible siempre`);
-               return;
-            }
-            let cierreStr = "";
-            if (horariosCierre.USA[track]) {
-                cierreStr = horariosCierre.USA[track];
-            }
-            else if (horariosCierre["Santo Domingo"][track]) {
-                cierreStr = horariosCierre["Santo Domingo"][track];
-            }
-
-            if (cierreStr) {
-                // Usar backticks para crear una cadena de texto correcta
-                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos
-                const horas = cierre.getHours().toString().padStart(2, '0');
-                const minutos = cierre.getMinutes().toString().padStart(2, '0');
-                const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Hora límite: ${horaLimite}`);
-            }
-        });
-    }
-
-    /**
-     * Actualiza el estado de los tracks, deshabilitándolos 10 minutos antes de la hora de cierre.
-     */
-    function actualizarEstadoTracks() {
-        const fechaVal = $("#fecha").val();
-        if (!fechaVal) return;
-        const fechaSeleccionadaStr = fechaVal.split(", ")[0];
-        if (!fechaSeleccionadaStr) return;
-
-        const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
-        const fechaSeleccionada = new Date(yearSel, monthSel - 1, daySel);
-
-        const fechaActual = new Date();
-        const esMismoDia = fechaSeleccionada.toDateString() === fechaActual.toDateString();
-
-        // Si no es el mismo día, habilitar todos los tracks
-        if (!esMismoDia) {
-            $(".track-checkbox").prop('disabled', false).closest('label').removeClass('closed-track');
-            return;
-        }
-
-        const ahora = new Date();
-        const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
-
-        for (let region in horariosCierre) {
-            for (let track in horariosCierre[region]) {
-                // "Venezuela" nunca se deshabilita
-                if (track === 'Venezuela') {
-                    $(`.track-checkbox[value="${track}"]`).prop('disabled', false).closest('label').removeClass('closed-track');
-                    continue;
-                }
-
-                const horaCierreStr = horariosCierre[region][track];
-                const [horaCierre, minutoCierre] = horaCierreStr.split(":").map(Number);
-                const horaCierreMinutos = horaCierre * 60 + minutoCierre;
-
-                // 10 minutos antes del cierre
-                const horaLimite = horaCierreMinutos - 10;
-
-                if (ahoraMinutos >= horaLimite) {
-                    $(`.track-checkbox[value="${track}"]`)
-                        .prop('disabled', true)
-                        .prop('checked', false)
-                        .closest('label').addClass('closed-track');
-                } else {
-                    $(`.track-checkbox[value="${track}"]`)
-                        .prop('disabled', false)
-                        .closest('label').removeClass('closed-track');
-                }
-            }
-        }
-    }
-
-    /**
      * Evento para generar el ticket después de validar el formulario.
      */
     $("#generarTicket").click(function() {
-        $("#ticketAlerts").empty();
-
         // Validar formulario
         const fecha = $("#fecha").val();
         if (!fecha) {
-            showAlert("Por favor, selecciona una fecha.", "warning");
+            alert("Por favor, selecciona una fecha.");
             return;
         }
         const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
         if (!tracks || tracks.length === 0) {
-            showAlert("Por favor, selecciona al menos un track.", "warning");
+            alert("Por favor, selecciona al menos un track.");
             return;
         }
 
         // Validar que si se seleccionó el track "Venezuela", se haya seleccionado al menos un track de USA
         const tracksUSASeleccionados = tracks.filter(track => Object.keys(horariosCierre.USA).includes(track));
         if (tracks.includes("Venezuela") && tracksUSASeleccionados.length === 0) {
-            showAlert("Para jugar en la modalidad 'Venezuela', debes seleccionar al menos un track de USA además de 'Venezuela'.", "warning");
+            alert("Para jugar en la modalidad 'Venezuela', debes seleccionar al menos un track de USA además de 'Venezuela'.");
             return;
         }
 
@@ -511,7 +483,6 @@ $(document).ready(function() {
 
         // Validar cada fecha seleccionada
         for (let fechaSeleccionadaStr of fechasArray) {
-            // Extraer los componentes de la fecha seleccionada
             const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
             const fechaSeleccionada = new Date(yearSel, monthSel - 1, daySel);
 
@@ -524,11 +495,10 @@ $(document).ready(function() {
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":").map(Number);
-                        // Ajustar la validación a 10 minutos antes
-                        const horaLimite = new Date();
-                        horaLimite.setHours(horas, minutos - 10, 0, 0);
-                        if (horaActual > horaLimite) {
-                            showAlert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`, "danger");
+                        const cierre = new Date();
+                        cierre.setHours(horas, minutos - 10, 0, 0); // Restamos 10 minutos en lugar de 5
+                        if (horaActual > cierre) {
+                            alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`);
                             return;
                         }
                     }
@@ -538,129 +508,107 @@ $(document).ready(function() {
 
         // Validar jugadas
         let jugadasValidas = true;
-        const jugadasArray = [];
         $("#tablaJugadas tr").each(function() {
             const numero = $(this).find(".numeroApostado").val();
             const modalidad = $(this).find(".tipoJuego").text();
             if (!numero || (numero.length < 2 || numero.length > 4)) {
                 jugadasValidas = false;
-                showAlert("Por favor, ingresa números apostados válidos (2, 3 o 4 dígitos).", "danger");
+                alert("Por favor, ingresa números apostados válidos (2, 3 o 4 dígitos).");
                 return false; // Salir del each
             }
             if (modalidad === "-") {
                 jugadasValidas = false;
-                showAlert("Por favor, selecciona una modalidad de juego válida.", "danger");
+                alert("Por favor, selecciona una modalidad de juego válida.");
                 return false;
             }
 
-            // Verificar que la jugada tiene al menos un track seleccionado correspondiente a su modalidad
             let tracksRequeridos = [];
-
-            if (["Win 4", "Peak 3", "Pulito", "Pulito-Combinado", "Venezuela"].includes(modalidad)) {
-                // Modalidades que requieren tracks de USA
+            if (["Win 4", "Peak 3", "Pulito", "Venezuela"].includes(modalidad)) {
                 tracksRequeridos = Object.keys(horariosCierre.USA);
             } else if (["RD-Quiniela", "RD-Pale"].includes(modalidad)) {
-                // Modalidades que requieren tracks de Santo Domingo
                 tracksRequeridos = Object.keys(horariosCierre["Santo Domingo"]);
             } else {
-                // Modalidad no reconocida o no requiere validación específica
                 tracksRequeridos = [];
             }
 
-            // Verificar si al menos uno de los tracks requeridos está seleccionado
             const tracksSeleccionadosParaModalidad = tracks.filter(track => tracksRequeridos.includes(track));
 
             if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
                 jugadasValidas = false;
-                showAlert(`La jugada con modalidad "${modalidad}" requiere al menos un track seleccionado correspondiente.`, "danger");
+                alert(`La jugada con modalidad "${modalidad}" requiere al menos un track seleccionado correspondiente.`);
                 return false; // Salir del each
             }
 
-            // Validaciones específicas por modalidad
-            if (["Venezuela", "Venezuela-Pale", "Pulito", "Pulito-Combinado", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
+            if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
                 if (straight <= 0) {
                     jugadasValidas = false;
-                    showAlert("Por favor, ingresa al menos una apuesta en Straight.", "danger");
+                    alert("Por favor, ingresa al menos una apuesta en Straight.");
                     return false;
                 }
-                if (modalidad === "Pulito" || modalidad === "Pulito-Combinado") {
-                    const box = $(this).find(".box").val().trim();
-                    const acceptableBoxValues = ["1", "2", "3"];
-                    const acceptableBoxCombinations = ["1,2", "2,3", "1,3", "1,2,3"];
-                    const allAcceptableValues = acceptableBoxValues.concat(acceptableBoxCombinations);
-                    if (!allAcceptableValues.includes(box)) {
+                if (modalidad === "Pulito") {
+                    const box = parseInt($(this).find(".box").val());
+                    if (![1, 2, 3].includes(box)) {
                         jugadasValidas = false;
-                        showAlert("En la modalidad Pulito o Pulito-Combinado, el campo 'Box' debe ser 1, 2, 3, 1,2, 2,3, 1,3 o 1,2,3.", "danger");
+                        alert("En la modalidad Pulito, el campo 'Box' debe ser 1, 2 o 3.");
                         return false;
                     }
                 }
             } else if (["Win 4", "Peak 3"].includes(modalidad)) {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
-                const boxVal = $(this).find(".box").val();
-                const box = boxVal !== "" ? parseFloat(boxVal) : 0;
+                const box = parseFloat($(this).find(".box").val()) || 0;
                 const combo = parseFloat($(this).find(".combo").val()) || 0;
                 if (straight <= 0 && box <= 0 && combo <= 0) {
                     jugadasValidas = false;
-                    showAlert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`, "danger");
+                    alert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`);
                     return false;
                 }
             }
 
-            // Validar límites
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
-                    showAlert(`El monto en Straight excede el límite para ${modalidad}.`, "danger");
+                    alert(`El monto en Straight excede el límite para ${modalidad}.`);
                     return false;
                 }
-                if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && modalidad !== "Pulito-Combinado" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
+                if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
                     jugadasValidas = false;
-                    showAlert(`El monto en Box excede el límite para ${modalidad}.`, "danger");
+                    alert(`El monto en Box excede el límite para ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].combo !== undefined && parseFloat($(this).find(".combo").val()) > (limitesApuesta[modalidad].combo || Infinity)) {
                     jugadasValidas = false;
-                    showAlert(`El monto en Combo excede el límite para ${modalidad}.`, "danger");
+                    alert(`El monto en Combo excede el límite para ${modalidad}.`);
                     return false;
                 }
             }
-
-            // Agregar jugada al array
-            const straight = parseFloat($(this).find(".straight").val()) || 0;
-            const boxVal = $(this).find(".box").val();
-            const box = boxVal !== "" ? boxVal : "-";
-            const comboVal = $(this).find(".combo").val();
-            const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
-            const total = parseFloat($(this).find(".total").text()) || 0;
-            jugadasArray.push({
-                numero: numero,
-                modalidad: modalidad,
-                straight: straight,
-                box: box,
-                combo: combo,
-                total: total
-            });
         });
 
         if (!jugadasValidas) {
             return;
         }
 
-        // Preparar datos para el ticket
         const tracksTexto = tracks.join(", ");
         $("#ticketTracks").text(tracksTexto);
         $("#ticketJugadas").empty();
-        jugadasArray.forEach((jugada, index) => {
+        $("#tablaJugadas tr").each(function() {
+            const num = $(this).find(".numeroApostado").val();
+            const modalidad = $(this).find(".tipoJuego").text();
+            const straight = parseFloat($(this).find(".straight").val()) || 0;
+            const boxVal = $(this).find(".box").val();
+            const box = boxVal !== "" ? boxVal : "-";
+            const comboVal = $(this).find(".combo").val();
+            const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
+            const total = parseFloat($(this).find(".total").text()) || 0;
             const fila = ` 
                 <tr>
-                    <td>${index + 1}</td>
-                    <td>${jugada.numero}</td>
-                    <td>${jugada.modalidad}</td>
-                    <td>${jugada.straight.toFixed(2)}</td>
-                    <td>${jugada.box !== "-" ? jugada.box : "-"}</td>
-                    <td>${jugada.combo !== "-" ? jugada.combo.toFixed(2) : "-"}</td>
-                    <td>${jugada.total.toFixed(2)}</td>
+                    <td>${$(this).find("td").first().text()}</td>
+                    <td>${num}</td>
+                    <td>${modalidad}</td>
+                    <td>${straight.toFixed(2)}</td>
+                    <td>${box !== "-" ? box : "-"}</td>
+                    <td>${combo !== "-" ? combo.toFixed(2) : "-"}</td>
+                    <td>${total.toFixed(2)}</td>
                 </tr>
             `;
             $("#ticketJugadas").append(fila);
@@ -687,283 +635,84 @@ $(document).ready(function() {
         $("#ticketFecha").text(fecha);
         console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());
 
-        // Preparar datos para enviar a SheetDB
-        const timestamp = new Date().toISOString();
-        const jugadasData = jugadasArray.map(jugada => ({
-            "numeroTicket": numeroTicket,
-            "fechaTransaccion": fechaTransaccion,
-            "fechasApuesta": fecha,
-            "tracks": tracksTexto,
-            "totalTicket": $("#totalJugadas").text(),
-            "numeroJugada": generarNumeroUnico(),
-            "numeroApostado": jugada.numero,
-            "modalidad": jugada.modalidad,
-            "straight": jugada.straight.toFixed(2),
-            "box": jugada.box !== "-" ? jugada.box : "",
-            "combo": jugada.combo !== "-" ? jugada.combo.toFixed(2) : "",
-            "total": jugada.total.toFixed(2),
-            "paymentMethod": "-", // Se actualizará al confirmar el pago
-            "timestamp": timestamp
-        }));
-
-        // Enviar los datos a SheetDB
-        guardarJugadas(jugadasData);
+        // Mostrar el modal usando Bootstrap 5
+        ticketModal.show();
     });
 
     /**
-     * Guarda las jugadas en SheetDB.
-     * @param {Array} jugadasData - Array de objetos con los datos de las jugadas.
-     */
-    function guardarJugadas(jugadasData) {
-        $.ajax({
-            url: SHEETDB_API_URL, // Usar la URL base sin añadir /tickets o /jugadas
-            method: 'POST',
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify(jugadasData), // SheetDB espera un array de objetos
-            success: function(response) {
-                console.log('Jugadas almacenadas en SheetDB:', response);
-                // Mostrar el modal después de almacenar las jugadas
-                ticketModal.show();
-                // Mostrar u ocultar secciones según el rol del usuario
-                const userRole = localStorage.getItem('userRole') || 'user';
-                if (userRole === 'admin') {
-                    $('#confirmarPagoFormContainer').hide();
-                    $('#confirmarTicketContainer').show();
-                    $('#confirmarTicket').show();
-                } else {
-                    $('#confirmarPagoFormContainer').show();
-                    $('#confirmarTicketContainer').hide();
-                }
-            },
-            error: function(error) {
-                console.error('Error al almacenar las jugadas en SheetDB:', error);
-                showAlert('Error al almacenar las jugadas. Por favor, inténtalo de nuevo.', 'danger');
-            }
-        });
-    }
-
-    /**
-     * Evento para confirmar el pago manual.
-     * Ahora, en lugar de enviar al backend, simplemente actualizamos las jugadas en SheetDB con el método de pago.
-     */
-    $("#confirmarPagoForm").submit(function(event) {
-        event.preventDefault();
-        $("#ticketAlerts").empty();
-
-        const codigoTransaccion = $("#codigoTransaccion").val().trim();
-        const archivoComprobante = $("#comprobantePago")[0].files[0];
-        const numeroTicket = $("#numeroTicket").text();
-
-        if (!codigoTransaccion) {
-            showAlert("Por favor, ingresa el código de transacción.", "warning");
-            return;
-        }
-
-        // Opcional: Puedes subir el comprobante a un servicio de almacenamiento y guardar la URL en SheetDB
-        // Aquí, simplemente registramos la confirmación sin el comprobante
-
-        // Obtener todas las jugadas correspondientes al numeroTicket
-        $.ajax({
-            url: `${SHEETDB_API_URL}?numeroTicket=${numeroTicket}`,
-            method: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.length === 0) {
-                    showAlert("No se encontraron jugadas para este ticket.", "danger");
-                    return;
-                }
-
-                // Actualizar cada jugada con el método de pago
-                const actualizarJugadas = response.map(jugada => {
-                    return {
-                        "id": jugada.id, // Necesario para actualizar
-                        "paymentMethod": "Pago Manual"
-                    };
-                });
-
-                // Enviar actualizaciones a SheetDB
-                const updateRequests = actualizarJugadas.map(jugada => {
-                    return $.ajax({
-                        url: `${SHEETDB_API_URL}/${jugada.id}`,
-                        method: 'PATCH',
-                        dataType: 'json',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ "paymentMethod": jugada.paymentMethod })
-                    });
-                });
-
-                $.when.apply($, updateRequests).done(function() {
-                    showAlert("Pago confirmado exitosamente.", "success");
-                    // Opcional: Puedes cerrar el modal o actualizar la interfaz según necesites
-                }).fail(function(error) {
-                    console.error('Error al confirmar el pago en SheetDB:', error);
-                    showAlert('Error al confirmar el pago. Por favor, inténtalo de nuevo.', "danger");
-                });
-            },
-            error: function(error) {
-                console.error('Error al obtener las jugadas de SheetDB:', error);
-                showAlert('Error al confirmar el pago. Por favor, inténtalo de nuevo.', "danger");
-            }
-        });
-    });
-
-    /**
-     * Previsualiza el comprobante de pago al seleccionarlo.
-     */
-    $("#comprobantePago").change(function(event) {
-        const archivo = event.target.files[0];
-        if (archivo) {
-            const lector = new FileReader();
-            lector.onload = function(e) {
-                $("#previsualizacionComprobante").html(`<img src="${e.target.result}" alt="Comprobante de Pago" class="img-fluid">`);
-            }
-            lector.readAsDataURL(archivo);
-        } else {
-            $("#previsualizacionComprobante").empty();
-        }
-    });
-
-    /**
-     * Evento para confirmar y generar el ticket final.
-     * En esta versión, simplemente mostramos una alerta y procedemos a imprimir.
+     * Evento para confirmar e imprimir el ticket.
+     * Envía los datos a SheetDB y maneja la impresión y descarga del ticket.
      */
     $("#confirmarTicket").click(function() {
-        $("#ticketAlerts").empty();
+        // Datos comunes a todas las jugadas
+        const ticketNumber = $("#numeroTicket").text();
+        const transactionDateTime = fechaTransaccion;
+        const betDates = $("#ticketFecha").text();
+        const tracks = $("#ticketTracks").text();
+        const totalTicket = $("#ticketTotal").text();
+        const timestamp = new Date().toISOString();
 
-        // Puedes agregar lógica adicional aquí si es necesario
-        showAlert("Ticket generado exitosamente.", "success");
+        // Array para almacenar las jugadas
+        const jugadasData = [];
 
-        // Imprimir el ticket
-        window.print();
+        $("#ticketJugadas tr").each(function() {
+            const jugadaNumber = generarNumeroUnico();
 
-        // Capturar el ticket como imagen y descargarlo
-        html2canvas(document.querySelector("#preTicket")).then(canvas => {
-            const imgData = canvas.toDataURL("image/png");
-            const link = document.createElement('a');
-            link.href = imgData;
-            link.download = 'ticket.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const jugadaData = {
+                "Ticket Number": ticketNumber,
+                "Transaction DateTime": transactionDateTime,
+                "Bet Dates": betDates,
+                "Tracks": tracks,
+                "Bet Number": $(this).find("td").eq(1).text(),
+                "Game Mode": $(this).find("td").eq(2).text(),
+                "Straight ($)": $(this).find("td").eq(3).text(),
+                "Box ($)": $(this).find("td").eq(4).text() !== "-" ? $(this).find("td").eq(4).text() : "",
+                "Combo ($)": $(this).find("td").eq(5).text() !== "-" ? $(this).find("td").eq(5).text() : "",
+                "Total ($)": $(this).find("td").eq(6).text(),
+                "Jugada Number": jugadaNumber,
+                "Timestamp": timestamp
+            };
+
+            jugadasData.push(jugadaData);
         });
 
-        // Cerrar el modal y reiniciar el formulario
-        ticketModal.hide();
-        resetForm();
-    });
+        // Enviar datos a SheetDB
+        $.ajax({
+            url: SHEETDB_API_URL, // Usar la variable de SheetDB
+            method: "POST",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(jugadasData),
+            success: function(response) {
+                window.print();
 
-    /**
-     * Evento para reiniciar el formulario.
-     */
-    $("#resetForm").click(function() { resetForm(); });
+                html2canvas(document.querySelector("#preTicket")).then(canvas => {
+                    const imgData = canvas.toDataURL("image/png");
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = 'ticket.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
 
-    /**
-     * Muestra las horas límite para cada track en la interfaz.
-     */
-    function mostrarHorasLimite() {
-        $(".cutoff-time").each(function() {
-            const track = $(this).data("track");
+                ticketModal.hide();
 
-            if (track === 'Venezuela') {
-               $(this).text(`Disponible siempre`);
-               return;
-            }
-            let cierreStr = "";
-            if (horariosCierre.USA[track]) {
-                cierreStr = horariosCierre.USA[track];
-            }
-            else if (horariosCierre["Santo Domingo"][track]) {
-                cierreStr = horariosCierre["Santo Domingo"][track];
-            }
+                resetForm();
 
-            if (cierreStr) {
-                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos
-                const horas = cierre.getHours().toString().padStart(2, '0');
-                const minutos = cierre.getMinutes().toString().padStart(2, '0');
-                const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Hora límite: ${horaLimite}`);
+                alert("Ticket guardado y enviado exitosamente.");
+            },
+            error: function(err) {
+                console.error("Error al enviar datos a SheetDB:", err);
+                alert("Hubo un problema al enviar los datos. Por favor, inténtalo de nuevo.\nDetalles del error: " + JSON.stringify(err));
             }
         });
-    }
-
-    /**
-     * Actualiza el estado de los tracks, deshabilitándolos 10 minutos antes de la hora de cierre.
-     */
-    function actualizarEstadoTracks() {
-        const fechaVal = $("#fecha").val();
-        if (!fechaVal) return;
-        const fechaSeleccionadaStr = fechaVal.split(", ")[0];
-        if (!fechaSeleccionadaStr) return;
-
-        const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
-        const fechaSeleccionada = new Date(yearSel, monthSel - 1, daySel);
-
-        const fechaActual = new Date();
-        const esMismoDia = fechaSeleccionada.toDateString() === fechaActual.toDateString();
-
-        // Si no es el mismo día, habilitar todos los tracks
-        if (!esMismoDia) {
-            $(".track-checkbox").prop('disabled', false).closest('label').removeClass('closed-track');
-            return;
-        }
-
-        const ahora = new Date();
-        const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
-
-        for (let region in horariosCierre) {
-            for (let track in horariosCierre[region]) {
-                // "Venezuela" nunca se deshabilita
-                if (track === 'Venezuela') {
-                    $(`.track-checkbox[value="${track}"]`).prop('disabled', false).closest('label').removeClass('closed-track');
-                    continue;
-                }
-
-                const horaCierreStr = horariosCierre[region][track];
-                const [horaCierre, minutoCierre] = horaCierreStr.split(":").map(Number);
-                const horaCierreMinutos = horaCierre * 60 + minutoCierre;
-
-                // 10 minutos antes del cierre
-                const horaLimite = horaCierreMinutos - 10;
-
-                if (ahoraMinutos >= horaLimite) {
-                    $(`.track-checkbox[value="${track}"]`)
-                        .prop('disabled', true)
-                        .prop('checked', false)
-                        .closest('label').addClass('closed-track');
-                } else {
-                    $(`.track-checkbox[value="${track}"]`)
-                        .prop('disabled', false)
-                        .closest('label').removeClass('closed-track');
-                }
-            }
-        }
-    }
-
-    // Llamar a actualizarEstadoTracks al cargar la página y luego cada minuto
-    actualizarEstadoTracks();
-    setInterval(function() {
-        actualizarEstadoTracks();
-    }, 60000); // 60000 ms = 1 minuto
-
-    /**
-     * Evento delegado para detectar cambios en los checkboxes de tracks
-     */
-    $(".track-checkbox").change(function() {
-        const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        // Excluir "Venezuela" del conteo de tracks para el cálculo del total
-        selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
-
-        calcularTotal();
     });
 
     // Inicializar las horas límite al cargar la página
     mostrarHorasLimite();
 
-    /**
-     * Evento delegado para detectar cambios en los campos de número apostado y resaltar duplicados
-     */
+    // Evento para detectar cambios en los campos de número apostado y resaltar duplicados
     $("#tablaJugadas").on("input", ".numeroApostado", function() {
         resaltarDuplicados();
     });
