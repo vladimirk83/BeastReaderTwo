@@ -462,6 +462,8 @@ $(document).ready(function() {
         // Validar jugadas
         let jugadasValidas = true;
         const jugadasData = [];
+        const numeroTicket = generarNumeroUnico();
+        const tracksTexto = tracks.join(", ");
 
         $("#tablaJugadas tr").each(function() {
             const numero = $(this).find(".numeroApostado").val();
@@ -552,14 +554,22 @@ $(document).ready(function() {
             const comboVal = $(this).find(".combo").val();
             const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
             const total = parseFloat($(this).find(".total").text()) || 0;
+            const jugadaNumber = generarNumeroUnico();
+            const timestamp = new Date().toISOString();
+
             jugadasData.push({
-                "Jugada Number": generarNumeroUnico(),
+                "Ticket Number": numeroTicket,
+                "Transaction DateTime": fechaTransaccion,
+                "Bet Dates": fecha,
+                "Tracks": tracksTexto,
                 "Bet Number": numero,
                 "Game Mode": modalidad,
                 "Straight ($)": straight.toFixed(2),
                 "Box ($)": box !== "-" ? box : "",
                 "Combo ($)": combo !== "-" ? combo.toFixed(2) : "",
-                "Total ($)": total.toFixed(2)
+                "Total ($)": total.toFixed(2),
+                "Jugada Number": jugadaNumber,
+                "Timestamp": timestamp
             });
         });
 
@@ -568,7 +578,6 @@ $(document).ready(function() {
         }
 
         // Preparar datos para el ticket
-        const tracksTexto = tracks.join(", ");
         $("#ticketTracks").text(tracksTexto);
         $("#ticketJugadas").empty();
         $("#tablaJugadas tr").each(function() {
@@ -596,7 +605,6 @@ $(document).ready(function() {
         $("#ticketTotal").text($("#totalJugadas").text());
 
         // Generar número de ticket único de 8 dígitos
-        const numeroTicket = generarNumeroUnico();
         $("#numeroTicket").text(numeroTicket);
 
         // Generar la fecha y hora de transacción
@@ -621,7 +629,7 @@ $(document).ready(function() {
 
     /**
      * Evento para confirmar e imprimir el ticket.
-     * Captura el contenido del ticket, lo descarga como imagen y abre el diálogo de impresión.
+     * Captura el contenido del ticket, lo guarda en SheetDB, descarga como imagen y abre el diálogo de impresión.
      */
     $("#confirmarTicket").click(function() {
         // Seleccionar el contenido del ticket
@@ -646,19 +654,61 @@ $(document).ready(function() {
             // Eliminar el foco del botón para prevenir el error de aria-hidden
             $(this).blur();
 
-            // Imprimir el ticket
-            window.print();
+            // Guardar las jugadas en SheetDB antes de imprimir
+            guardarJugadas(jugadasData, function(success) {
+                if (success) {
+                    // Imprimir el ticket
+                    window.print();
 
-            // Cerrar el modal
-            ticketModal.hide();
+                    // Cerrar el modal
+                    ticketModal.hide();
 
-            // Reiniciar el formulario
-            resetForm();
+                    // Reiniciar el formulario
+                    resetForm();
+                } else {
+                    alert("Hubo un problema al guardar las jugadas. El ticket se descargó pero no se pudo guardar en la base de datos.");
+                    // Imprimir el ticket de todas formas
+                    window.print();
+
+                    // Cerrar el modal
+                    ticketModal.hide();
+
+                    // Reiniciar el formulario
+                    resetForm();
+                }
+            });
+
         }).catch(error => {
             console.error("Error al capturar el ticket:", error);
             alert("Hubo un problema al generar el ticket. Por favor, inténtalo de nuevo.");
         });
     });
+
+    /**
+     * Función para guardar las jugadas en SheetDB.
+     * @param {Array} jugadasData - Array de objetos con los datos de las jugadas.
+     * @param {Function} callback - Función a llamar después de intentar guardar.
+     */
+    function guardarJugadas(jugadasData, callback) {
+        // Verificar la estructura de jugadasData
+        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
+
+        $.ajax({
+            url: "https://sheetdb.io/api/v1/bl57zyh73b0ev", // URL de tu API de SheetDB
+            method: "POST",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify({ data: jugadasData }), // Enviar como objeto con clave 'data'
+            success: function(response) {
+                console.log("Jugadas almacenadas en SheetDB:", response);
+                callback(true);
+            },
+            error: function(err) {
+                console.error("Error al enviar datos a SheetDB:", err);
+                callback(false);
+            }
+        });
+    }
 
     /**
      * Genera un número único de 8 dígitos.
