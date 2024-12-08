@@ -405,6 +405,17 @@ $(document).ready(function() {
                 $(this).text(`Cutoff Time: ${horaLimite}`);
             }
         });
+
+        // Increase font size after setting text
+        aumentarTamanoFuente();
+    }
+
+    /**
+     * Increases the font size of track labels and cutoff times for better visibility.
+     */
+    function aumentarTamanoFuente() {
+        $(".form-check-label").css("font-size", "1.125rem"); // 18px assuming default 16px font
+        $(".cutoff-time").css("font-size", "1.125rem"); // 18px
     }
 
     /**
@@ -424,6 +435,8 @@ $(document).ready(function() {
                     // Compare if the closing time is after 9:30 PM
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', true);
+                        // Apply visual indication
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5').css('cursor', 'not-allowed');
                     }
                 }
             });
@@ -436,6 +449,8 @@ $(document).ready(function() {
                     const cierre = dayjs(cierreStr, "HH:mm");
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', false);
+                        // Reset visual indication
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1').css('cursor', 'pointer');
                     }
                 }
             });
@@ -476,18 +491,14 @@ $(document).ready(function() {
 
         // Get selected dates as an array
         const fechasArray = fecha.split(", ");
-        const fechaActual = new Date();
-        const yearActual = fechaActual.getFullYear();
-        const monthActual = fechaActual.getMonth();
-        const dayActual = fechaActual.getDate();
-        const fechaActualSinHora = dayjs().startOf('day');
+        const fechaActual = dayjs().startOf('day');
 
         // Validate each selected date
         for (let fechaSeleccionadaStr of fechasArray) {
             const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
             const fechaSeleccionada = dayjs(new Date(yearSel, monthSel - 1, daySel));
 
-            if (fechaSeleccionada.isSame(fechaActualSinHora, 'day')) {
+            if (fechaSeleccionada.isSame(fechaActual, 'day')) {
                 // The selected date is today, apply time validation
                 const horaActual = dayjs();
                 for (let track of tracks) {
@@ -607,7 +618,7 @@ $(document).ready(function() {
             jugadasData.push({
                 "Ticket Number": numeroTicket,
                 "Transaction DateTime": fechaTransaccion,
-                "Bet Dates": fecha,
+                "Bet Dates": fecha, // Ensure this is a string, not a date object or serial number
                 "Tracks": tracksTexto,
                 "Bet Number": numero,
                 "Game Mode": modalidad,
@@ -761,14 +772,6 @@ $(document).ready(function() {
     }
 
     /**
-     * Increases the font size of track labels and cutoff times for better visibility.
-     */
-    function aumentarTamanoFuente() {
-        $(".form-check-label").css("font-size", "1.25rem"); // Adjust as needed
-        $(".cutoff-time").css("font-size", "1.25rem"); // Adjust as needed
-    }
-
-    /**
      * Displays the closing times for each track in the interface.
      */
     function mostrarHorasLimite() {
@@ -803,8 +806,13 @@ $(document).ready(function() {
         aumentarTamanoFuente();
     }
 
-    // Display closing times upon page load
-    mostrarHorasLimite();
+    /**
+     * Increases the font size of track labels and cutoff times for better visibility.
+     */
+    function aumentarTamanoFuente() {
+        $(".form-check-label").css("font-size", "1.125rem"); // 18px assuming default 16px font
+        $(".cutoff-time").css("font-size", "1.125rem"); // 18px
+    }
 
     /**
      * Disables tracks with closing times after 9:30 PM at that time.
@@ -823,8 +831,8 @@ $(document).ready(function() {
                     // Compare if the closing time is after 9:30 PM
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', true);
-                        // Optionally, you can also visually indicate that the track is disabled
-                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5');
+                        // Apply visual indication
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5').css('cursor', 'not-allowed');
                     }
                 }
             });
@@ -838,12 +846,15 @@ $(document).ready(function() {
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', false);
                         // Reset visual indication
-                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1');
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1').css('cursor', 'pointer');
                     }
                 }
             });
         }
     }
+
+    // Display closing times upon page load
+    mostrarHorasLimite();
 
     // Check and disable tracks upon page load
     deshabilitarTracksPorHora();
