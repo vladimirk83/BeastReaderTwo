@@ -7,7 +7,7 @@ $(document).ready(function() {
     // Define la URL de tu API de SheetDB  
     const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
 
-    // Inicializar Flatpickr con selección de rango de fechas
+    // Inicializar Flatpickr con selección de múltiples fechas
     flatpickr("#fecha", {
         mode: "multiple",
         dateFormat: "m-d-Y", // Formato MM-DD-YYYY
@@ -79,9 +79,10 @@ $(document).ready(function() {
      * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
      * @param {Array} tracks - Array de tracks seleccionados.
      * @param {String} numero - Número apostado.
+     * @param {jQuery} fila - Fila de la jugada.
      * @returns {String} - Modalidad de juego.
      */
-    function determinarModalidad(tracks, numero) {
+    function determinarModalidad(tracks, numero, fila) {
         let modalidad = "-";
 
         const esUSA = tracks.some(track => Object.keys(horariosCierre.USA).includes(track));
@@ -226,43 +227,6 @@ $(document).ready(function() {
     }
 
     /**
-     * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
-     * @param {Array} tracks - Array de tracks seleccionados.
-     * @param {String} numero - Número apostado.
-     * @returns {String} - Modalidad de juego.
-     */
-    function determinarModalidad(tracks, numero) {
-        let modalidad = "-";
-
-        const esUSA = tracks.some(track => Object.keys(horariosCierre.USA).includes(track));
-        const esSD = tracks.some(track => Object.keys(horariosCierre["Santo Domingo"]).includes(track));
-        const incluyeVenezuela = tracks.includes("Venezuela");
-
-        const longitud = numero.length;
-        const boxValue = parseInt($(".box").val()) || 0; // Asegurarse de obtener el valor correcto
-
-        if (incluyeVenezuela && esUSA && longitud === 2) {
-            modalidad = "Venezuela";
-        } else if (esUSA && !esSD) {
-            if (longitud === 4) {
-                modalidad = "Win 4";
-            } else if (longitud === 3) {
-                modalidad = "Peak 3";
-            } else if (longitud === 2 && [1, 2, 3].includes(boxValue)) {
-                modalidad = "Pulito";
-            }
-        } else if (esSD && !esUSA) {
-            if (longitud === 2) {
-                modalidad = "RD-Quiniela";
-            } else if (longitud === 4) {
-                modalidad = "RD-Pale";
-            }
-        }
-
-        return modalidad;
-    }
-
-    /**
      * Actualiza los placeholders y el estado de los campos según la modalidad de juego.
      * @param {String} modalidad - Modalidad de juego.
      * @param {jQuery} fila - Fila de la jugada.
@@ -292,46 +256,6 @@ $(document).ready(function() {
             fila.find(".box").attr("placeholder", "Ej: 2.50").prop('disabled', false);
             fila.find(".combo").attr("placeholder", "Ej: 3.00").prop('disabled', false);
         }
-    }
-
-    /**
-     * Genera un número único de 8 dígitos.
-     * @returns {String} - Número único.
-     */
-    function generarNumeroUnico() {
-        return Math.floor(10000000 + Math.random() * 90000000).toString();
-    }
-
-    /**
-     * Muestra las horas límite para cada track en la interfaz.
-     */
-    function mostrarHorasLimite() {
-        $(".cutoff-time").each(function() {
-            const track = $(this).data("track");
-
-            if (track === 'Venezuela') {
-               $(this).hide(); // Oculta el elemento del DOM
-               return;
-            }             
-            let cierreStr = "";
-            if (horariosCierre.USA[track]) {
-                cierreStr = horariosCierre.USA[track];
-            }
-            else if (horariosCierre["Santo Domingo"][track]) {
-                cierreStr = horariosCierre["Santo Domingo"][track];
-            } 
-            else if (horariosCierre.Venezuela[track]) {
-                cierreStr = horariosCierre.Venezuela[track];
-            }
-            if (cierreStr) {
-                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos en lugar de 5
-                const horas = cierre.getHours().toString().padStart(2, '0');
-                const minutos = cierre.getMinutes().toString().padStart(2, '0');
-                const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Hora límite: ${horaLimite}`);
-            }
-        });
     }
 
     /**
@@ -417,7 +341,7 @@ $(document).ready(function() {
         const fila = $(this).closest("tr");
         const num = fila.find(".numeroApostado").val();
         const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        const modalidad = determinarModalidad(tracks, num);
+        const modalidad = determinarModalidad(tracks, num, fila);
         fila.find(".tipoJuego").text(modalidad);
         actualizarPlaceholders(modalidad, fila);
         calcularTotalJugadaAndUpdate(fila);
@@ -448,6 +372,38 @@ $(document).ready(function() {
             }
         }
         return null;
+    }
+
+    /**
+     * Muestra las horas límite para cada track en la interfaz.
+     */
+    function mostrarHorasLimite() {
+        $(".cutoff-time").each(function() {
+            const track = $(this).data("track");
+
+            if (track === 'Venezuela') {
+               $(this).hide(); // Oculta el elemento del DOM
+               return;
+            }             
+            let cierreStr = "";
+            if (horariosCierre.USA[track]) {
+                cierreStr = horariosCierre.USA[track];
+            }
+            else if (horariosCierre["Santo Domingo"][track]) {
+                cierreStr = horariosCierre["Santo Domingo"][track];
+            } 
+            else if (horariosCierre.Venezuela[track]) {
+                cierreStr = horariosCierre.Venezuela[track];
+            }
+            if (cierreStr) {
+                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
+                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos en lugar de 5
+                const horas = cierre.getHours().toString().padStart(2, '0');
+                const minutos = cierre.getMinutes().toString().padStart(2, '0');
+                const horaLimite = `${horas}:${minutos}`;
+                $(this).text(`Hora límite: ${horaLimite}`);
+            }
+        });
     }
 
     /**
@@ -508,6 +464,8 @@ $(document).ready(function() {
 
         // Validar jugadas
         let jugadasValidas = true;
+        const jugadasData = [];
+
         $("#tablaJugadas tr").each(function() {
             const numero = $(this).find(".numeroApostado").val();
             const modalidad = $(this).find(".tipoJuego").text();
@@ -523,14 +481,19 @@ $(document).ready(function() {
             }
 
             let tracksRequeridos = [];
+
             if (["Win 4", "Peak 3", "Pulito", "Venezuela"].includes(modalidad)) {
+                // Modalidades que requieren tracks de USA
                 tracksRequeridos = Object.keys(horariosCierre.USA);
             } else if (["RD-Quiniela", "RD-Pale"].includes(modalidad)) {
+                // Modalidades que requieren tracks de Santo Domingo
                 tracksRequeridos = Object.keys(horariosCierre["Santo Domingo"]);
             } else {
+                // Modalidad no reconocida o no requiere validación específica
                 tracksRequeridos = [];
             }
 
+            // Verificar si al menos uno de los tracks requeridos está seleccionado
             const tracksSeleccionadosParaModalidad = tracks.filter(track => tracksRequeridos.includes(track));
 
             if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
@@ -539,6 +502,7 @@ $(document).ready(function() {
                 return false; // Salir del each
             }
 
+            // Validaciones específicas por modalidad
             if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
                 if (straight <= 0) {
@@ -565,6 +529,7 @@ $(document).ready(function() {
                 }
             }
 
+            // Validar límites
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
@@ -582,6 +547,28 @@ $(document).ready(function() {
                     return false;
                 }
             }
+
+            // Agregar jugada al array
+            const straight = parseFloat($(this).find(".straight").val()) || 0;
+            const boxVal = $(this).find(".box").val();
+            const box = boxVal !== "" ? boxVal : "-";
+            const comboVal = $(this).find(".combo").val();
+            const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
+            const total = parseFloat($(this).find(".total").text()) || 0;
+            jugadasData.push({
+                "Ticket Number": numeroTicket,
+                "Transaction DateTime": fechaTransaccion,
+                "Bet Dates": fecha,
+                "Tracks": tracksTexto,
+                "Bet Number": numero,
+                "Game Mode": modalidad,
+                "Straight ($)": straight.toFixed(2),
+                "Box ($)": box !== "-" ? box : "",
+                "Combo ($)": combo !== "-" ? combo.toFixed(2) : "",
+                "Total ($)": total.toFixed(2),
+                "Jugada Number": generarNumeroUnico(),
+                "Timestamp": new Date().toISOString()
+            });
         });
 
         if (!jugadasValidas) {
@@ -635,57 +622,30 @@ $(document).ready(function() {
         $("#ticketFecha").text(fecha);
         console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());
 
-        // Mostrar el modal usando Bootstrap 5
-        ticketModal.show();
+        // Enviar datos a SheetDB
+        guardarJugadas(jugadasData);
     });
 
     /**
-     * Evento para confirmar e imprimir el ticket.
-     * Envía los datos a SheetDB y maneja la impresión y descarga del ticket.
+     * Guarda las jugadas en SheetDB.
+     * @param {Array} jugadasData - Array de objetos con los datos de las jugadas.
      */
-    $("#confirmarTicket").click(function() {
-        // Datos comunes a todas las jugadas
-        const ticketNumber = $("#numeroTicket").text();
-        const transactionDateTime = fechaTransaccion;
-        const betDates = $("#ticketFecha").text();
-        const tracks = $("#ticketTracks").text();
-        const totalTicket = $("#ticketTotal").text();
-        const timestamp = new Date().toISOString();
+    function guardarJugadas(jugadasData) {
+        // Verificar la estructura de jugadasData
+        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
-        // Array para almacenar las jugadas
-        const jugadasData = [];
-
-        $("#ticketJugadas tr").each(function() {
-            const jugadaNumber = generarNumeroUnico();
-
-            const jugadaData = {
-                "Ticket Number": ticketNumber,
-                "Transaction DateTime": transactionDateTime,
-                "Bet Dates": betDates,
-                "Tracks": tracks,
-                "Bet Number": $(this).find("td").eq(1).text(),
-                "Game Mode": $(this).find("td").eq(2).text(),
-                "Straight ($)": $(this).find("td").eq(3).text(),
-                "Box ($)": $(this).find("td").eq(4).text() !== "-" ? $(this).find("td").eq(4).text() : "",
-                "Combo ($)": $(this).find("td").eq(5).text() !== "-" ? $(this).find("td").eq(5).text() : "",
-                "Total ($)": $(this).find("td").eq(6).text(),
-                "Jugada Number": jugadaNumber,
-                "Timestamp": timestamp
-            };
-
-            jugadasData.push(jugadaData);
-        });
-
-        // Enviar datos a SheetDB
         $.ajax({
-            url: SHEETDB_API_URL, // Usar la variable de SheetDB
+            url: SHEETDB_API_URL, // Usar la URL base
             method: "POST",
             dataType: "json",
             contentType: "application/json",
-            data: JSON.stringify(jugadasData),
+            data: JSON.stringify({ data: jugadasData }), // Enviar como objeto con clave 'data'
             success: function(response) {
+                console.log("Jugadas almacenadas en SheetDB:", response);
+                // Imprimir el ticket
                 window.print();
 
+                // Opcional: Usar html2canvas para capturar solo el ticket
                 html2canvas(document.querySelector("#preTicket")).then(canvas => {
                     const imgData = canvas.toDataURL("image/png");
                     const link = document.createElement('a');
@@ -696,8 +656,10 @@ $(document).ready(function() {
                     document.body.removeChild(link);
                 });
 
+                // Cerrar el modal
                 ticketModal.hide();
 
+                // Reiniciar el formulario
                 resetForm();
 
                 alert("Ticket guardado y enviado exitosamente.");
@@ -707,7 +669,7 @@ $(document).ready(function() {
                 alert("Hubo un problema al enviar los datos. Por favor, inténtalo de nuevo.\nDetalles del error: " + JSON.stringify(err));
             }
         });
-    });
+    }
 
     // Inicializar las horas límite al cargar la página
     mostrarHorasLimite();
