@@ -207,7 +207,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Calculates the number of possible combinations for a given number.
+     * Calculates the number of combinations possible for a given number.
      * @param {String} numero - Bet number.
      * @returns {Number} - Number of combinations.
      */
@@ -267,7 +267,6 @@ $(document).ready(function() {
         const valores = {};
         const duplicados = new Set();
 
-        // Collect values and detect duplicates
         camposNumeros.each(function() {
             const valor = $(this).val().trim();
             if (valor) {
@@ -279,7 +278,6 @@ $(document).ready(function() {
             }
         });
 
-        // Apply or remove the .duplicado class
         camposNumeros.each(function() {
             if (duplicados.has($(this).val().trim())) {
                 $(this).addClass('duplicado');
@@ -302,6 +300,7 @@ $(document).ready(function() {
         $("#totalJugadas").text("0.00");
         mostrarHorasLimite();
         resaltarDuplicados();
+        deshabilitarTracksPorHora(); // Ensure tracks are re-checked/disabled after reset
     }
 
     /**
@@ -324,20 +323,14 @@ $(document).ready(function() {
             alert("There are no bets to remove.");
             return;
         }
-        // Remove the last row
         $("#tablaJugadas tr:last").remove();
         jugadaCount--;
-        // Update the bet numbers
         $("#tablaJugadas tr").each(function(index) {
             $(this).find("td:first").text(index + 1);
         });
         calcularTotal();
     });
 
-    /**
-     * Event delegation to detect changes in bet input fields.
-     * Uses event delegation to handle dynamically added rows.
-     */
     $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
         const fila = $(this).closest("tr");
         const num = fila.find(".numeroApostado").val();
@@ -349,23 +342,14 @@ $(document).ready(function() {
         resaltarDuplicados();
     });
 
-    // Event delegation to detect changes in track checkboxes
     $(".track-checkbox").change(function() {
         const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        // Exclude "Venezuela" from the count of tracks for total calculation
         selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
-
         calcularTotal();
     });
 
-    // Initialize Bootstrap Modal
     var ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
 
-    /**
-     * Gets the closing time for a specific track.
-     * @param {String} track - Name of the track.
-     * @returns {String|null} - Closing time in "HH:MM" format or null if not found.
-     */
     function obtenerHoraLimite(track) {
         for (let region in horariosCierre) {
             if (horariosCierre[region][track]) {
@@ -375,73 +359,57 @@ $(document).ready(function() {
         return null;
     }
 
-    /**
-     * Displays the closing times for each track in the interface.
-     */
+    function aumentarTamanoFuente() {
+        // Increase font size to 18px (~1.125rem) to match the app title size
+        $(".form-check-label").css("font-size", "1.125rem"); 
+        $(".cutoff-time").css("font-size", "1.125rem");
+    }
+
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
             const track = $(this).data("track");
 
             if (track === 'Venezuela') {
-               $(this).hide(); // Hide the DOM element
+               $(this).hide();
                return;
             }             
             let cierreStr = "";
             if (horariosCierre.USA[track]) {
                 cierreStr = horariosCierre.USA[track];
-            }
-            else if (horariosCierre["Santo Domingo"][track]) {
+            } else if (horariosCierre["Santo Domingo"][track]) {
                 cierreStr = horariosCierre["Santo Domingo"][track];
-            } 
-            else if (horariosCierre.Venezuela[track]) {
+            } else if (horariosCierre.Venezuela[track]) {
                 cierreStr = horariosCierre.Venezuela[track];
             }
             if (cierreStr) {
                 const cierre = dayjs(cierreStr, "HH:mm");
-                cierre.subtract(10, 'minute'); // Subtract 10 minutes
+                cierre.subtract(10, 'minute');
                 const horas = cierre.format("HH");
                 const minutos = cierre.format("mm");
                 const horaLimite = `${horas}:${minutos}`;
                 $(this).text(`Cutoff Time: ${horaLimite}`);
             }
         });
-
-        // Increase font size after setting text
         aumentarTamanoFuente();
     }
 
-    /**
-     * Increases the font size of track labels and cutoff times for better visibility.
-     */
-    function aumentarTamanoFuente() {
-        $(".form-check-label").css("font-size", "1.125rem"); // 18px assuming default 16px font
-        $(".cutoff-time").css("font-size", "1.125rem"); // 18px
-    }
-
-    /**
-     * Disables tracks with closing times after 9:30 PM at that time.
-     */
     function deshabilitarTracksPorHora() {
         const ahora = dayjs();
         const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
 
         if (ahora.isAfter(limite) || ahora.isSame(limite)) {
-            // Iterate over all tracks
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
                 if (cierreStr) {
                     const cierre = dayjs(cierreStr, "HH:mm");
-                    // Compare if the closing time is after 9:30 PM
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
-                        $(this).prop('disabled', true);
-                        // Apply visual indication
+                        $(this).prop('disabled', true).prop('checked', false); // Uncheck and disable expired
                         $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5').css('cursor', 'not-allowed');
                     }
                 }
             });
         } else {
-            // If it's not yet 9:30 PM, ensure tracks are enabled if applicable
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
@@ -449,7 +417,6 @@ $(document).ready(function() {
                     const cierre = dayjs(cierreStr, "HH:mm");
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', false);
-                        // Reset visual indication
                         $(this).closest('.form-check').find('.form-check-label').css('opacity', '1').css('cursor', 'pointer');
                     }
                 }
@@ -466,11 +433,7 @@ $(document).ready(function() {
     // Set an interval to check every minute if any tracks need to be disabled
     setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minute
 
-    /**
-     * Event to generate the ticket after validating the form.
-     */
     $("#generarTicket").click(function() {
-        // Validate form
         const fecha = $("#fecha").val();
         if (!fecha) {
             alert("Please select a date.");
@@ -482,32 +445,28 @@ $(document).ready(function() {
             return;
         }
 
-        // Validate that if "Venezuela" track is selected, at least one USA track is also selected
         const tracksUSASeleccionados = tracks.filter(track => Object.keys(horariosCierre.USA).includes(track));
         if (tracks.includes("Venezuela") && tracksUSASeleccionados.length === 0) {
             alert("To play in the 'Venezuela' mode, you must select at least one USA track in addition to 'Venezuela'.");
             return;
         }
 
-        // Get selected dates as an array
         const fechasArray = fecha.split(", ");
         const fechaActual = dayjs().startOf('day');
 
-        // Validate each selected date
         for (let fechaSeleccionadaStr of fechasArray) {
             const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
             const fechaSeleccionada = dayjs(new Date(yearSel, monthSel - 1, daySel));
 
             if (fechaSeleccionada.isSame(fechaActual, 'day')) {
-                // The selected date is today, apply time validation
                 const horaActual = dayjs();
                 for (let track of tracks) {
-                    if (track === 'Venezuela') continue; // Exclude "Venezuela" from time validation
+                    if (track === 'Venezuela') continue;
 
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":").map(Number);
-                        const cierre = dayjs().hour(horas).minute(minutos).second(0).subtract(10, 'minute'); // Subtract 10 minutes
+                        const cierre = dayjs().hour(horas).minute(minutos).second(0).subtract(10, 'minute');
                         if (horaActual.isAfter(cierre)) {
                             alert(`The track "${track}" has already closed for today. Please select another track or a future date.`);
                             return;
@@ -517,10 +476,13 @@ $(document).ready(function() {
             }
         }
 
-        // Validate bets
         let jugadasValidas = true;
         jugadasData = []; // Reset jugadasData before adding new ones
         const numeroTicket = generarNumeroUnico();
+
+        // Set fechaTransaccion BEFORE building jugadasData to ensure it saves correctly
+        fechaTransaccion = dayjs().format('MM/DD/YYYY hh:mm A');
+
         const tracksTexto = tracks.join(", ");
 
         $("#tablaJugadas tr").each(function() {
@@ -529,7 +491,7 @@ $(document).ready(function() {
             if (!numero || (numero.length < 2 || numero.length > 4)) {
                 jugadasValidas = false;
                 alert("Please enter valid bet numbers (2, 3, or 4 digits).");
-                return false; // Exit the each loop
+                return false;
             }
             if (modalidad === "-") {
                 jugadasValidas = false;
@@ -545,21 +507,16 @@ $(document).ready(function() {
             } else if (["RD-Quiniela", "RD-Pale"].includes(modalidad)) {
                 // Game modes that require Santo Domingo tracks
                 tracksRequeridos = Object.keys(horariosCierre["Santo Domingo"]);
-            } else {
-                // Unrecognized game mode or no specific validation required
-                tracksRequeridos = [];
             }
 
-            // Check if at least one required track is selected
             const tracksSeleccionadosParaModalidad = tracks.filter(track => tracksRequeridos.includes(track));
 
             if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
                 jugadasValidas = false;
                 alert(`The bet with game mode "${modalidad}" requires at least one corresponding selected track.`);
-                return false; // Exit the each loop
+                return false;
             }
 
-            // Specific validations per game mode
             if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
                 if (straight <= 0) {
@@ -586,7 +543,6 @@ $(document).ready(function() {
                 }
             }
 
-            // Validate limits
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
@@ -605,7 +561,6 @@ $(document).ready(function() {
                 }
             }
 
-            // Add bet to the array
             const straight = parseFloat($(this).find(".straight").val()) || 0;
             const boxVal = $(this).find(".box").val();
             const box = boxVal !== "" ? boxVal : "-";
@@ -618,7 +573,7 @@ $(document).ready(function() {
             jugadasData.push({
                 "Ticket Number": numeroTicket,
                 "Transaction DateTime": fechaTransaccion,
-                "Bet Dates": fecha, // Ensure this is a string, not a date object or serial number
+                "Bet Dates": fecha,
                 "Tracks": tracksTexto,
                 "Bet Number": numero,
                 "Game Mode": modalidad,
@@ -635,7 +590,6 @@ $(document).ready(function() {
             return;
         }
 
-        // Prepare data for the ticket
         $("#ticketTracks").text(tracksTexto);
         $("#ticketJugadas").empty();
         $("#tablaJugadas tr").each(function() {
@@ -662,69 +616,46 @@ $(document).ready(function() {
         });
         $("#ticketTotal").text($("#totalJugadas").text());
 
-        // Generate a unique 8-digit ticket number
-        $("#numeroTicket").text(numeroTicket);
-
-        // Generate the transaction date and time
-        fechaTransaccion = dayjs().format('MM-DD-YYYY hh:mm A');
+        // fechaTransaccion already set above
         $("#ticketTransaccion").text(fechaTransaccion);
 
-        // Generate QR code
-        $("#qrcode").empty(); // Clear the previous container
+        $("#numeroTicket").text(numeroTicket);
+
+        $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"), {
             text: numeroTicket,
             width: 128,
             height: 128,
         });
 
-        // Display the selected bet dates on the ticket
         $("#ticketFecha").text(fecha);
         console.log("Bet dates assigned to #ticketFecha:", $("#ticketFecha").text());
 
-        // Show the modal using Bootstrap 5
         ticketModal.show();
     });
 
-    /**
-     * Event to confirm and print the ticket.
-     * Captures the ticket content, saves it to SheetDB, downloads it as an image, and opens the print dialog.
-     */
     $("#confirmarTicket").click(function() {
-        // Select the ticket content
         const ticketElement = document.getElementById("preTicket");
 
-        // Use html2canvas to capture the ticket as an image
         html2canvas(ticketElement).then(canvas => {
-            // Convert the canvas to an image URL
             const imgData = canvas.toDataURL("image/png");
-
-            // Create a link to download the image
             const link = document.createElement('a');
             link.href = imgData;
             link.download = `ticket_${$("#numeroTicket").text()}.png`;
 
-            // Add the link to the DOM, click it, and then remove it
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // **Remove focus from the button to prevent aria-hidden error**
             $(this).blur();
 
-            // Save the bets to SheetDB before printing
             guardarJugadas(jugadasData, function(success) {
                 if (success) {
-                    // Print the ticket
                     window.print();
-
-                    // Close the modal
                     ticketModal.hide();
-
-                    // Reset the form
                     resetForm();
                 } else {
-                    // Do not alert the user about the failure
-                    // Instead, proceed to print and reset the form
+                    // No user alert if saving fails
                     window.print();
                     ticketModal.hide();
                     resetForm();
@@ -737,21 +668,15 @@ $(document).ready(function() {
         });
     });
 
-    /**
-     * Function to save the bets to SheetDB.
-     * @param {Array} jugadasData - Array of objects with bet data.
-     * @param {Function} callback - Function to call after attempting to save.
-     */
     function guardarJugadas(jugadasData, callback) {
-        // Verify the structure of jugadasData
         console.log("Sending jugadasData to SheetDB:", JSON.stringify(jugadasData));
 
         $.ajax({
-            url: SHEETDB_API_URL, // Your SheetDB API URL defined at the beginning
+            url: SHEETDB_API_URL,
             method: "POST",
             dataType: "json",
             contentType: "application/json",
-            data: JSON.stringify({ data: jugadasData }), // Send as an object with key 'data'
+            data: JSON.stringify({ data: jugadasData }),
             success: function(response) {
                 console.log("Bets stored in SheetDB:", response);
                 callback(true);
@@ -763,103 +688,12 @@ $(document).ready(function() {
         });
     }
 
-    /**
-     * Generates a unique 8-digit number.
-     * @returns {String} - Unique number.
-     */
     function generarNumeroUnico() {
         return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
-    /**
-     * Displays the closing times for each track in the interface.
-     */
-    function mostrarHorasLimite() {
-        $(".cutoff-time").each(function() {
-            const track = $(this).data("track");
-
-            if (track === 'Venezuela') {
-               $(this).hide(); // Hide the DOM element
-               return;
-            }             
-            let cierreStr = "";
-            if (horariosCierre.USA[track]) {
-                cierreStr = horariosCierre.USA[track];
-            }
-            else if (horariosCierre["Santo Domingo"][track]) {
-                cierreStr = horariosCierre["Santo Domingo"][track];
-            } 
-            else if (horariosCierre.Venezuela[track]) {
-                cierreStr = horariosCierre.Venezuela[track];
-            }
-            if (cierreStr) {
-                const cierre = dayjs(cierreStr, "HH:mm");
-                cierre.subtract(10, 'minute'); // Subtract 10 minutes
-                const horas = cierre.format("HH");
-                const minutos = cierre.format("mm");
-                const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Cutoff Time: ${horaLimite}`);
-            }
-        });
-
-        // Increase font size after setting text
-        aumentarTamanoFuente();
-    }
-
-    /**
-     * Increases the font size of track labels and cutoff times for better visibility.
-     */
-    function aumentarTamanoFuente() {
-        $(".form-check-label").css("font-size", "1.125rem"); // 18px assuming default 16px font
-        $(".cutoff-time").css("font-size", "1.125rem"); // 18px
-    }
-
-    /**
-     * Disables tracks with closing times after 9:30 PM at that time.
-     */
-    function deshabilitarTracksPorHora() {
-        const ahora = dayjs();
-        const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
-
-        if (ahora.isAfter(limite) || ahora.isSame(limite)) {
-            // Iterate over all tracks
-            $(".track-checkbox").each(function() {
-                const track = $(this).val();
-                const cierreStr = obtenerHoraLimite(track);
-                if (cierreStr) {
-                    const cierre = dayjs(cierreStr, "HH:mm");
-                    // Compare if the closing time is after 9:30 PM
-                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
-                        $(this).prop('disabled', true);
-                        // Apply visual indication
-                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5').css('cursor', 'not-allowed');
-                    }
-                }
-            });
-        } else {
-            // If it's not yet 9:30 PM, ensure tracks are enabled if applicable
-            $(".track-checkbox").each(function() {
-                const track = $(this).val();
-                const cierreStr = obtenerHoraLimite(track);
-                if (cierreStr) {
-                    const cierre = dayjs(cierreStr, "HH:mm");
-                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
-                        $(this).prop('disabled', false);
-                        // Reset visual indication
-                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1').css('cursor', 'pointer');
-                    }
-                }
-            });
-        }
-    }
-
-    // Display closing times upon page load
     mostrarHorasLimite();
-
-    // Check and disable tracks upon page load
     deshabilitarTracksPorHora();
-
-    // Set an interval to check every minute if any tracks need to be disabled
-    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minute
+    setInterval(deshabilitarTracksPorHora, 60000); // Check every minute
 
 });
