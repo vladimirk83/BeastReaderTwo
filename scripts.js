@@ -642,6 +642,10 @@ $(document).ready(function() {
             link.click();
             document.body.removeChild(link);
 
+            // **Nueva Línea Añadida:**
+            // Eliminar el foco del botón para prevenir el error de aria-hidden
+            $(this).blur();
+
             // Imprimir el ticket
             window.print();
 
