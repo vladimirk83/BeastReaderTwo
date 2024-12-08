@@ -1,17 +1,17 @@
  // scripts.js
 
-// Definir la URL de tu API de SheetDB como una constante
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev'; // Reemplaza con tu URL real
+// Define the URL of your SheetDB API as a constant
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Replace with your actual URL
 
 let fechaTransaccion = '';
-let jugadasData = []; // Definida en un alcance global
+let jugadasData = []; // Defined in the global scope
 
 $(document).ready(function() {
 
-    // Inicializar Flatpickr con selección de múltiples fechas
+    // Initialize Flatpickr with multiple date selection
     flatpickr("#fecha", {
         mode: "multiple",
-        dateFormat: "m-d-Y", // Formato MM-DD-YYYY
+        dateFormat: "m-d-Y", // Format MM-DD-YYYY
         minDate: "today",
         allowInput: true,
         onChange: function(selectedDates, dateStr, instance) {
@@ -24,7 +24,7 @@ $(document).ready(function() {
     let selectedTracks = 0;
     let selectedDays = 0;
 
-    // Horarios de cierre por track
+    // Closing times per track
     const horariosCierre = {
         "USA": {
             "New York Mid Day": "14:25",
@@ -40,14 +40,14 @@ $(document).ready(function() {
             "Georgia Night": "23:20",
             "Pensilvania AM": "12:55",
             "Pensilvania PM": "18:20"
-            // Nota: "Venezuela" se excluye aquí
+            // Note: "Venezuela" is excluded here
         },
         "Santo Domingo": {
             "Real": "12:45",
             "Gana mas": "14:25",
             "Loteka": "19:30",
-            "Nacional": "20:30", // Domingos a las 17:50
-            "Quiniela Pale": "20:30", // Domingos a las 15:30
+            "Nacional": "20:30", // Sundays at 17:50
+            "Quiniela Pale": "20:30", // Sundays at 15:30
             "Primera Día": "11:50",
             "Suerte Día": "12:20",
             "Lotería Real": "12:50",
@@ -55,33 +55,33 @@ $(document).ready(function() {
             "Lotedom": "17:50",
             "Primera Noche": "19:50",
             "Panama": "16:00",
-            // Horarios especiales para domingos
+            // Special closing times for Sundays
             "Quiniela Pale Domingo": "15:30",
             "Nacional Domingo": "17:50"
         },
         "Venezuela": {
-            "Venezuela": "19:00" // Asumiendo un horario de cierre para Venezuela
+            "Venezuela": "19:00" // Assuming a closing time for Venezuela
         }
     };
 
-    // Límites de apuestas por modalidad
+    // Betting limits per game mode
     const limitesApuesta = {
         "Win 4": { "straight": 6, "box": 30, "combo": 50 },
         "Peak 3": { "straight": 35, "box": 50, "combo": 70 },
         "Venezuela": { "straight": 100 },
         "Venezuela-Pale": { "straight": 100 },
         "Pulito": { "straight": 100 },
-        "RD-Quiniela": { "straight": 100 }, // Actualizado a $100
-        "RD-Pale": { "straight": 20 }, // Se mantiene en $20
-        "Combo": { "combo": 50 } // Añadido
+        "RD-Quiniela": { "straight": 100 }, // Updated to $100
+        "RD-Pale": { "straight": 20 }, // Remains at $20
+        "Combo": { "combo": 50 } // Added
     };
 
     /**
-     * Determina la modalidad de juego basada en los tracks seleccionados y el número apostado.
-     * @param {Array} tracks - Array de tracks seleccionados.
-     * @param {String} numero - Número apostado.
-     * @param {jQuery} fila - Fila de la jugada.
-     * @returns {String} - Modalidad de juego.
+     * Determines the game mode based on selected tracks and the bet number.
+     * @param {Array} tracks - Array of selected tracks.
+     * @param {String} numero - Bet number.
+     * @param {jQuery} fila - Row of the bet.
+     * @returns {String} - Game mode.
      */
     function determinarModalidad(tracks, numero, fila) {
         let modalidad = "-";
@@ -115,11 +115,11 @@ $(document).ready(function() {
     }
 
     /**
-     * Agrega una nueva jugada a la tabla.
+     * Adds a new bet to the table.
      */
     function agregarJugada() {
         if (jugadaCount >= 100) {
-            alert("Has alcanzado el máximo de 100 jugadas.");
+            alert("You have reached the maximum of 100 bets.");
             return;
         }
         jugadaCount++;
@@ -128,20 +128,20 @@ $(document).ready(function() {
                 <td>${jugadaCount}</td>
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
                 <td class="tipoJuego">-</td>
-                <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="Ej: 5"></td>
-                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3"></td>
-                <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="Ej: 3.00"></td>
+                <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5"></td>
+                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 or 3"></td>
+                <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
         `;
         $("#tablaJugadas").append(fila);
     }
 
-    // Agregar una jugada inicial
+    // Add an initial bet
     agregarJugada();
 
     /**
-     * Calcula el total de todas las jugadas considerando los tracks y días seleccionados.
+     * Calculates the total of all bets considering selected tracks and days.
      */
     function calcularTotal() {
         let total = 0;
@@ -149,11 +149,11 @@ $(document).ready(function() {
             total += parseFloat($(this).text()) || 0;
         });
 
-        // Si no hay días seleccionados, el total es 0
+        // If no days are selected, the total is 0
         if (selectedDays === 0) {
             total = 0;
         } else {
-            // Multiplicar por el número de tracks seleccionados y días
+            // Multiply by the number of selected tracks and days
             total = (total * selectedTracks * selectedDays).toFixed(2);
         }
 
@@ -161,8 +161,8 @@ $(document).ready(function() {
     }
 
     /**
-     * Calcula el total de una jugada específica.
-     * @param {jQuery} fila - Fila de la jugada.
+     * Calculates the total for a specific bet.
+     * @param {jQuery} fila - Row of the bet.
      */
     function calcularTotalJugada(fila) {
         const modalidad = fila.find(".tipoJuego").text();
@@ -177,7 +177,7 @@ $(document).ready(function() {
         let box = parseFloat(fila.find(".box").val()) || 0;
         let combo = parseFloat(fila.find(".combo").val()) || 0;
 
-        // Aplicar límites según modalidad
+        // Apply limits based on the game mode
         if (limitesApuesta[modalidad]) {
             straight = Math.min(straight, limitesApuesta[modalidad].straight || straight);
             if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito") {
@@ -188,18 +188,18 @@ $(document).ready(function() {
             }
         }
 
-        // Calcular total según modalidad
+        // Calculate total based on the game mode
         let total = 0;
         if (modalidad === "Pulito") {
-            total = straight; // No sumar box
+            total = straight; // Do not add box
         } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
             total = straight;
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
             total = straight + box + (combo * combinaciones);
-        } else if (modalidad === "Combo") { // Añadido
-            total = combo; // Solo sumar combo
+        } else if (modalidad === "Combo") { // Added
+            total = combo; // Only add combo
         } else {
-            // Modalidad no reconocida
+            // Unrecognized game mode
             total = straight + box + combo;
         }
 
@@ -207,9 +207,9 @@ $(document).ready(function() {
     }
 
     /**
-     * Calcula el número de combinaciones posibles para un número dado.
-     * @param {String} numero - Número apostado.
-     * @returns {Number} - Número de combinaciones.
+     * Calculates the number of possible combinations for a given number.
+     * @param {String} numero - Bet number.
+     * @returns {Number} - Number of combinations.
      */
     function calcularCombinaciones(numero) {
         const counts = {};
@@ -228,46 +228,46 @@ $(document).ready(function() {
     }
 
     /**
-     * Actualiza los placeholders y el estado de los campos según la modalidad de juego.
-     * @param {String} modalidad - Modalidad de juego.
-     * @param {jQuery} fila - Fila de la jugada.
+     * Updates placeholders and field states based on the game mode.
+     * @param {String} modalidad - Game mode.
+     * @param {jQuery} fila - Row of the bet.
      */
     function actualizarPlaceholders(modalidad, fila) {
         if (limitesApuesta[modalidad]) {
-            fila.find(".straight").attr("placeholder", `Máximo $${limitesApuesta[modalidad].straight}`).prop('disabled', false);
+            fila.find(".straight").attr("placeholder", `Max $${limitesApuesta[modalidad].straight}`).prop('disabled', false);
         } else {
-            fila.find(".straight").attr("placeholder", "Ej: 5.00").prop('disabled', false);
+            fila.find(".straight").attr("placeholder", "E.g., 5.00").prop('disabled', false);
         }
 
         if (modalidad === "Pulito") {
-            fila.find(".box").attr("placeholder", "1, 2 o 3").prop('disabled', false);
-            fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "1, 2 or 3").prop('disabled', false);
+            fila.find(".combo").attr("placeholder", "Not applicable").prop('disabled', true).val('');
         } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
-            fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
-            fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".combo").attr("placeholder", "Not applicable").prop('disabled', true).val('');
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
-            fila.find(".box").attr("placeholder", `Máximo $${limitesApuesta[modalidad].box}`).prop('disabled', false);
-            fila.find(".combo").attr("placeholder", `Máximo $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
-        } else if (modalidad === "Combo") { // Añadido
-            fila.find(".straight").attr("placeholder", "No aplica").prop('disabled', true).val('');
-            fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
-            fila.find(".combo").attr("placeholder", `Máximo $${limitesApuesta.Combo.combo}`).prop('disabled', false);
+            fila.find(".box").attr("placeholder", `Max $${limitesApuesta[modalidad].box}`).prop('disabled', false);
+            fila.find(".combo").attr("placeholder", `Max $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
+        } else if (modalidad === "Combo") { // Added
+            fila.find(".straight").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".combo").attr("placeholder", `Max $${limitesApuesta.Combo.combo}`).prop('disabled', false);
         } else {
-            // Modalidad no reconocida
-            fila.find(".box").attr("placeholder", "Ej: 2.50").prop('disabled', false);
-            fila.find(".combo").attr("placeholder", "Ej: 3.00").prop('disabled', false);
+            // Unrecognized game mode
+            fila.find(".box").attr("placeholder", "E.g., 2.50").prop('disabled', false);
+            fila.find(".combo").attr("placeholder", "E.g., 3.00").prop('disabled', false);
         }
     }
 
     /**
-     * Resalta los números apostados duplicados.
+     * Highlights duplicate bet numbers.
      */
     function resaltarDuplicados() {
         const camposNumeros = $('.numeroApostado');
         const valores = {};
         const duplicados = new Set();
 
-        // Recopilar valores y detectar duplicados
+        // Collect values and detect duplicates
         camposNumeros.each(function() {
             const valor = $(this).val().trim();
             if (valor) {
@@ -279,7 +279,7 @@ $(document).ready(function() {
             }
         });
 
-        // Aplicar o remover la clase .duplicado
+        // Apply or remove the .duplicado class
         camposNumeros.each(function() {
             if (duplicados.has($(this).val().trim())) {
                 $(this).addClass('duplicado');
@@ -290,7 +290,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Reinicia el formulario a su estado inicial.
+     * Resets the form to its initial state.
      */
     function resetForm() {
         $("#lotteryForm")[0].reset();
@@ -305,29 +305,29 @@ $(document).ready(function() {
     }
 
     /**
-     * Calcula el total de apuestas por jugada y actualiza el total general.
-     * @param {jQuery} fila - Fila de la jugada.
+     * Calculates the total for a specific bet and updates the overall total.
+     * @param {jQuery} fila - Row of the bet.
      */
     function calcularTotalJugadaAndUpdate(fila) {
         calcularTotalJugada(fila);
         calcularTotal();
     }
 
-    // Evento para agregar más jugadas
+    // Event to add more bets
     $("#agregarJugada").click(function() {
         agregarJugada();
     });
 
-    // Evento para eliminar la última jugada
+    // Event to remove the last bet
     $("#eliminarJugada").click(function() {
         if (jugadaCount === 0) {
-            alert("No hay jugadas para eliminar.");
+            alert("There are no bets to remove.");
             return;
         }
-        // Remover la última fila
+        // Remove the last row
         $("#tablaJugadas tr:last").remove();
         jugadaCount--;
-        // Actualizar el número de jugadas
+        // Update the bet numbers
         $("#tablaJugadas tr").each(function(index) {
             $(this).find("td:first").text(index + 1);
         });
@@ -335,8 +335,8 @@ $(document).ready(function() {
     });
 
     /**
-     * Evento delegado para detectar cambios en los campos de entrada de jugadas.
-     * Utiliza event delegation para manejar dinámicamente las filas agregadas.
+     * Event delegation to detect changes in bet input fields.
+     * Uses event delegation to handle dynamically added rows.
      */
     $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
         const fila = $(this).closest("tr");
@@ -349,22 +349,22 @@ $(document).ready(function() {
         resaltarDuplicados();
     });
 
-    // Evento delegado para detectar cambios en los checkboxes de tracks
+    // Event delegation to detect changes in track checkboxes
     $(".track-checkbox").change(function() {
         const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        // Excluir "Venezuela" del conteo de tracks para el cálculo del total
+        // Exclude "Venezuela" from the count of tracks for total calculation
         selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
 
         calcularTotal();
     });
 
-    // Inicializar Bootstrap Modal
+    // Initialize Bootstrap Modal
     var ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
 
     /**
-     * Obtiene la hora límite de cierre para un track específico.
-     * @param {String} track - Nombre del track.
-     * @returns {String|null} - Hora límite en formato "HH:MM" o null si no se encuentra.
+     * Gets the closing time for a specific track.
+     * @param {String} track - Name of the track.
+     * @returns {String|null} - Closing time in "HH:MM" format or null if not found.
      */
     function obtenerHoraLimite(track) {
         for (let region in horariosCierre) {
@@ -376,14 +376,14 @@ $(document).ready(function() {
     }
 
     /**
-     * Muestra las horas límite para cada track en la interfaz.
+     * Displays the closing times for each track in the interface.
      */
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
             const track = $(this).data("track");
 
             if (track === 'Venezuela') {
-               $(this).hide(); // Oculta el elemento del DOM
+               $(this).hide(); // Hide the DOM element
                return;
             }             
             let cierreStr = "";
@@ -397,38 +397,38 @@ $(document).ready(function() {
                 cierreStr = horariosCierre.Venezuela[track];
             }
             if (cierreStr) {
-                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos en lugar de 5
-                const horas = cierre.getHours().toString().padStart(2, '0');
-                const minutos = cierre.getMinutes().toString().padStart(2, '0');
+                const cierre = dayjs(cierreStr, "HH:mm");
+                cierre.subtract(10, 'minute'); // Subtract 10 minutes
+                const horas = cierre.format("HH");
+                const minutos = cierre.format("mm");
                 const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Hora límite: ${horaLimite}`);
+                $(this).text(`Cutoff Time: ${horaLimite}`);
             }
         });
     }
 
     /**
-     * Deshabilita tracks con hora de cierre posterior a las 9:30 PM a esa hora.
+     * Disables tracks with closing times after 9:30 PM at that time.
      */
     function deshabilitarTracksPorHora() {
         const ahora = dayjs();
         const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
 
         if (ahora.isAfter(limite) || ahora.isSame(limite)) {
-            // Iterar sobre todos los tracks
+            // Iterate over all tracks
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
                 if (cierreStr) {
                     const cierre = dayjs(cierreStr, "HH:mm");
-                    // Comparar si la hora de cierre es después de las 9:30 PM
+                    // Compare if the closing time is after 9:30 PM
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', true);
                     }
                 }
             });
         } else {
-            // Si aún no es 9:30 PM, asegurar que los tracks estén habilitados si aplicable
+            // If it's not yet 9:30 PM, ensure tracks are enabled if applicable
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
@@ -442,63 +442,63 @@ $(document).ready(function() {
         }
     }
 
-    // Mostrar las horas límite al cargar la página
+    // Display closing times upon page load
     mostrarHorasLimite();
 
-    // Verificar y deshabilitar tracks al cargar la página
+    // Check and disable tracks upon page load
     deshabilitarTracksPorHora();
 
-    // Configurar un intervalo para verificar cada minuto si se debe deshabilitar algún track
-    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minuto
+    // Set an interval to check every minute if any tracks need to be disabled
+    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minute
 
     /**
-     * Evento para generar el ticket después de validar el formulario.
+     * Event to generate the ticket after validating the form.
      */
     $("#generarTicket").click(function() {
-        // Validar formulario
+        // Validate form
         const fecha = $("#fecha").val();
         if (!fecha) {
-            alert("Por favor, selecciona una fecha.");
+            alert("Please select a date.");
             return;
         }
         const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
         if (!tracks || tracks.length === 0) {
-            alert("Por favor, selecciona al menos un track.");
+            alert("Please select at least one track.");
             return;
         }
 
-        // Validar que si se seleccionó el track "Venezuela", se haya seleccionado al menos un track de USA
+        // Validate that if "Venezuela" track is selected, at least one USA track is also selected
         const tracksUSASeleccionados = tracks.filter(track => Object.keys(horariosCierre.USA).includes(track));
         if (tracks.includes("Venezuela") && tracksUSASeleccionados.length === 0) {
-            alert("Para jugar en la modalidad 'Venezuela', debes seleccionar al menos un track de USA además de 'Venezuela'.");
+            alert("To play in the 'Venezuela' mode, you must select at least one USA track in addition to 'Venezuela'.");
             return;
         }
 
-        // Obtener las fechas seleccionadas como array
+        // Get selected dates as an array
         const fechasArray = fecha.split(", ");
         const fechaActual = new Date();
         const yearActual = fechaActual.getFullYear();
         const monthActual = fechaActual.getMonth();
         const dayActual = fechaActual.getDate();
-        const fechaActualSinHora = new Date(yearActual, monthActual, dayActual);
+        const fechaActualSinHora = dayjs().startOf('day');
 
-        // Validar cada fecha seleccionada
+        // Validate each selected date
         for (let fechaSeleccionadaStr of fechasArray) {
             const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
-            const fechaSeleccionada = new Date(yearSel, monthSel - 1, daySel);
+            const fechaSeleccionada = dayjs(new Date(yearSel, monthSel - 1, daySel));
 
-            if (fechaSeleccionada.getTime() === fechaActualSinHora.getTime()) {
-                // La fecha seleccionada es hoy, aplicar validación de hora
+            if (fechaSeleccionada.isSame(fechaActualSinHora, 'day')) {
+                // The selected date is today, apply time validation
                 const horaActual = dayjs();
                 for (let track of tracks) {
-                    if (track === 'Venezuela') continue; // Excluir "Venezuela" de la validación de hora
+                    if (track === 'Venezuela') continue; // Exclude "Venezuela" from time validation
 
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":").map(Number);
-                        const cierre = dayjs().hour(horas).minute(minutos - 10).second(0); // Restamos 10 minutos
+                        const cierre = dayjs().hour(horas).minute(minutos).second(0).subtract(10, 'minute'); // Subtract 10 minutes
                         if (horaActual.isAfter(cierre)) {
-                            alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`);
+                            alert(`The track "${track}" has already closed for today. Please select another track or a future date.`);
                             return;
                         }
                     }
@@ -506,9 +506,9 @@ $(document).ready(function() {
             }
         }
 
-        // Validar jugadas
+        // Validate bets
         let jugadasValidas = true;
-        jugadasData = []; // Resetear jugadasData antes de agregar nuevas
+        jugadasData = []; // Reset jugadasData before adding new ones
         const numeroTicket = generarNumeroUnico();
         const tracksTexto = tracks.join(", ");
 
@@ -517,50 +517,50 @@ $(document).ready(function() {
             const modalidad = $(this).find(".tipoJuego").text();
             if (!numero || (numero.length < 2 || numero.length > 4)) {
                 jugadasValidas = false;
-                alert("Por favor, ingresa números apostados válidos (2, 3 o 4 dígitos).");
-                return false; // Salir del each
+                alert("Please enter valid bet numbers (2, 3, or 4 digits).");
+                return false; // Exit the each loop
             }
             if (modalidad === "-") {
                 jugadasValidas = false;
-                alert("Por favor, selecciona una modalidad de juego válida.");
+                alert("Please select a valid game mode.");
                 return false;
             }
 
             let tracksRequeridos = [];
 
             if (["Win 4", "Peak 3", "Pulito", "Venezuela"].includes(modalidad)) {
-                // Modalidades que requieren tracks de USA
+                // Game modes that require USA tracks
                 tracksRequeridos = Object.keys(horariosCierre.USA);
             } else if (["RD-Quiniela", "RD-Pale"].includes(modalidad)) {
-                // Modalidades que requieren tracks de Santo Domingo
+                // Game modes that require Santo Domingo tracks
                 tracksRequeridos = Object.keys(horariosCierre["Santo Domingo"]);
             } else {
-                // Modalidad no reconocida o no requiere validación específica
+                // Unrecognized game mode or no specific validation required
                 tracksRequeridos = [];
             }
 
-            // Verificar si al menos uno de los tracks requeridos está seleccionado
+            // Check if at least one required track is selected
             const tracksSeleccionadosParaModalidad = tracks.filter(track => tracksRequeridos.includes(track));
 
             if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
                 jugadasValidas = false;
-                alert(`La jugada con modalidad "${modalidad}" requiere al menos un track seleccionado correspondiente.`);
-                return false; // Salir del each
+                alert(`The bet with game mode "${modalidad}" requires at least one corresponding selected track.`);
+                return false; // Exit the each loop
             }
 
-            // Validaciones específicas por modalidad
+            // Specific validations per game mode
             if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
                 if (straight <= 0) {
                     jugadasValidas = false;
-                    alert("Por favor, ingresa al menos una apuesta en Straight.");
+                    alert("Please enter at least a bet in Straight.");
                     return false;
                 }
                 if (modalidad === "Pulito") {
                     const box = parseInt($(this).find(".box").val());
                     if (![1, 2, 3].includes(box)) {
                         jugadasValidas = false;
-                        alert("En la modalidad Pulito, el campo 'Box' debe ser 1, 2 o 3.");
+                        alert("In the Pulito mode, the 'Box' field must be 1, 2, or 3.");
                         return false;
                     }
                 }
@@ -570,31 +570,31 @@ $(document).ready(function() {
                 const combo = parseFloat($(this).find(".combo").val()) || 0;
                 if (straight <= 0 && box <= 0 && combo <= 0) {
                     jugadasValidas = false;
-                    alert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`);
+                    alert(`Please enter at least a bet in Straight, Box, or Combo for ${modalidad}.`);
                     return false;
                 }
             }
 
-            // Validar límites
+            // Validate limits
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
-                    alert(`El monto en Straight excede el límite para ${modalidad}.`);
+                    alert(`The amount in Straight exceeds the limit for ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
                     jugadasValidas = false;
-                    alert(`El monto en Box excede el límite para ${modalidad}.`);
+                    alert(`The amount in Box exceeds the limit for ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].combo !== undefined && parseFloat($(this).find(".combo").val()) > (limitesApuesta[modalidad].combo || Infinity)) {
                     jugadasValidas = false;
-                    alert(`El monto en Combo excede el límite para ${modalidad}.`);
+                    alert(`The amount in Combo exceeds the limit for ${modalidad}.`);
                     return false;
                 }
             }
 
-            // Agregar jugada al array
+            // Add bet to the array
             const straight = parseFloat($(this).find(".straight").val()) || 0;
             const boxVal = $(this).find(".box").val();
             const box = boxVal !== "" ? boxVal : "-";
@@ -624,7 +624,7 @@ $(document).ready(function() {
             return;
         }
 
-        // Preparar datos para el ticket
+        // Prepare data for the ticket
         $("#ticketTracks").text(tracksTexto);
         $("#ticketJugadas").empty();
         $("#tablaJugadas tr").each(function() {
@@ -651,128 +651,132 @@ $(document).ready(function() {
         });
         $("#ticketTotal").text($("#totalJugadas").text());
 
-        // Generar número de ticket único de 8 dígitos
+        // Generate a unique 8-digit ticket number
         $("#numeroTicket").text(numeroTicket);
 
-        // Generar la fecha y hora de transacción
+        // Generate the transaction date and time
         fechaTransaccion = dayjs().format('MM-DD-YYYY hh:mm A');
         $("#ticketTransaccion").text(fechaTransaccion);
 
-        // Generar código QR
-        $("#qrcode").empty(); // Limpiar el contenedor anterior
+        // Generate QR code
+        $("#qrcode").empty(); // Clear the previous container
         new QRCode(document.getElementById("qrcode"), {
             text: numeroTicket,
             width: 128,
             height: 128,
         });
 
-        // Mostrar las fechas de apuesta en el ticket
+        // Display the selected bet dates on the ticket
         $("#ticketFecha").text(fecha);
-        console.log("Fechas asignadas a #ticketFecha:", $("#ticketFecha").text());
+        console.log("Bet dates assigned to #ticketFecha:", $("#ticketFecha").text());
 
-        // Mostrar el modal usando Bootstrap 5
+        // Show the modal using Bootstrap 5
         ticketModal.show();
     });
 
     /**
-     * Evento para confirmar e imprimir el ticket.
-     * Captura el contenido del ticket, lo guarda en SheetDB, descarga como imagen y abre el diálogo de impresión.
+     * Event to confirm and print the ticket.
+     * Captures the ticket content, saves it to SheetDB, downloads it as an image, and opens the print dialog.
      */
     $("#confirmarTicket").click(function() {
-        // Seleccionar el contenido del ticket
+        // Select the ticket content
         const ticketElement = document.getElementById("preTicket");
 
-        // Usar html2canvas para capturar el ticket como imagen
+        // Use html2canvas to capture the ticket as an image
         html2canvas(ticketElement).then(canvas => {
-            // Convertir el canvas a una URL de imagen
+            // Convert the canvas to an image URL
             const imgData = canvas.toDataURL("image/png");
 
-            // Crear un enlace para descargar la imagen
+            // Create a link to download the image
             const link = document.createElement('a');
             link.href = imgData;
             link.download = `ticket_${$("#numeroTicket").text()}.png`;
 
-            // Añadir el enlace al DOM, hacer clic y luego removerlo
+            // Add the link to the DOM, click it, and then remove it
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // **Eliminar el foco del botón para prevenir el error de aria-hidden**
+            // **Remove focus from the button to prevent aria-hidden error**
             $(this).blur();
 
-            // Guardar las jugadas en SheetDB antes de imprimir
+            // Save the bets to SheetDB before printing
             guardarJugadas(jugadasData, function(success) {
                 if (success) {
-                    // Imprimir el ticket
+                    // Print the ticket
                     window.print();
 
-                    // Cerrar el modal
+                    // Close the modal
                     ticketModal.hide();
 
-                    // Reiniciar el formulario
+                    // Reset the form
                     resetForm();
                 } else {
-                    alert("Hubo un problema al guardar las jugadas. El ticket se descargó pero no se pudo guardar en la base de datos.");
-                    // Imprimir el ticket de todas formas
+                    // Do not alert the user about the failure
+                    // Instead, proceed to print and reset the form
                     window.print();
-
-                    // Cerrar el modal
                     ticketModal.hide();
-
-                    // Reiniciar el formulario
                     resetForm();
                 }
             });
 
         }).catch(error => {
-            console.error("Error al capturar el ticket:", error);
-            alert("Hubo un problema al generar el ticket. Por favor, inténtalo de nuevo.");
+            console.error("Error capturing the ticket:", error);
+            alert("There was a problem generating the ticket. Please try again.");
         });
     });
 
     /**
-     * Función para guardar las jugadas en SheetDB.
-     * @param {Array} jugadasData - Array de objetos con los datos de las jugadas.
-     * @param {Function} callback - Función a llamar después de intentar guardar.
+     * Function to save the bets to SheetDB.
+     * @param {Array} jugadasData - Array of objects with bet data.
+     * @param {Function} callback - Function to call after attempting to save.
      */
     function guardarJugadas(jugadasData, callback) {
-        // Verificar la estructura de jugadasData
-        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
+        // Verify the structure of jugadasData
+        console.log("Sending jugadasData to SheetDB:", JSON.stringify(jugadasData));
 
         $.ajax({
-            url: SHEETDB_API_URL, // URL de tu API de SheetDB definida al inicio
+            url: SHEETDB_API_URL, // Your SheetDB API URL defined at the beginning
             method: "POST",
             dataType: "json",
             contentType: "application/json",
-            data: JSON.stringify({ data: jugadasData }), // Enviar como objeto con clave 'data'
+            data: JSON.stringify({ data: jugadasData }), // Send as an object with key 'data'
             success: function(response) {
-                console.log("Jugadas almacenadas en SheetDB:", response);
+                console.log("Bets stored in SheetDB:", response);
                 callback(true);
             },
             error: function(err) {
-                console.error("Error al enviar datos a SheetDB:", err);
+                console.error("Error sending data to SheetDB:", err);
                 callback(false);
             }
         });
     }
 
     /**
-     * Genera un número único de 8 dígitos.
-     * @returns {String} - Número único.
+     * Generates a unique 8-digit number.
+     * @returns {String} - Unique number.
      */
     function generarNumeroUnico() {
         return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
     /**
-     * Muestra las horas límite para cada track en la interfaz.
+     * Increases the font size of track labels and cutoff times for better visibility.
+     */
+    function aumentarTamanoFuente() {
+        $(".form-check-label").css("font-size", "1.25rem"); // Adjust as needed
+        $(".cutoff-time").css("font-size", "1.25rem"); // Adjust as needed
+    }
+
+    /**
+     * Displays the closing times for each track in the interface.
      */
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
             const track = $(this).data("track");
 
             if (track === 'Venezuela') {
-               $(this).hide(); // Oculta el elemento del DOM
+               $(this).hide(); // Hide the DOM element
                return;
             }             
             let cierreStr = "";
@@ -786,38 +790,46 @@ $(document).ready(function() {
                 cierreStr = horariosCierre.Venezuela[track];
             }
             if (cierreStr) {
-                const cierre = new Date(`1970-01-01T${cierreStr}:00`);
-                cierre.setMinutes(cierre.getMinutes() - 10); // Restar 10 minutos en lugar de 5
-                const horas = cierre.getHours().toString().padStart(2, '0');
-                const minutos = cierre.getMinutes().toString().padStart(2, '0');
+                const cierre = dayjs(cierreStr, "HH:mm");
+                cierre.subtract(10, 'minute'); // Subtract 10 minutes
+                const horas = cierre.format("HH");
+                const minutos = cierre.format("mm");
                 const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Hora límite: ${horaLimite}`);
+                $(this).text(`Cutoff Time: ${horaLimite}`);
             }
         });
+
+        // Increase font size after setting text
+        aumentarTamanoFuente();
     }
 
+    // Display closing times upon page load
+    mostrarHorasLimite();
+
     /**
-     * Deshabilita tracks con hora de cierre posterior a las 9:30 PM a esa hora.
+     * Disables tracks with closing times after 9:30 PM at that time.
      */
     function deshabilitarTracksPorHora() {
         const ahora = dayjs();
         const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
 
         if (ahora.isAfter(limite) || ahora.isSame(limite)) {
-            // Iterar sobre todos los tracks
+            // Iterate over all tracks
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
                 if (cierreStr) {
                     const cierre = dayjs(cierreStr, "HH:mm");
-                    // Comparar si la hora de cierre es después de las 9:30 PM
+                    // Compare if the closing time is after 9:30 PM
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', true);
+                        // Optionally, you can also visually indicate that the track is disabled
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5');
                     }
                 }
             });
         } else {
-            // Si aún no es 9:30 PM, asegurar que los tracks estén habilitados si aplicable
+            // If it's not yet 9:30 PM, ensure tracks are enabled if applicable
             $(".track-checkbox").each(function() {
                 const track = $(this).val();
                 const cierreStr = obtenerHoraLimite(track);
@@ -825,19 +837,18 @@ $(document).ready(function() {
                     const cierre = dayjs(cierreStr, "HH:mm");
                     if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).prop('disabled', false);
+                        // Reset visual indication
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1');
                     }
                 }
             });
         }
     }
 
-    // Mostrar las horas límite al cargar la página
-    mostrarHorasLimite();
-
-    // Verificar y deshabilitar tracks al cargar la página
+    // Check and disable tracks upon page load
     deshabilitarTracksPorHora();
 
-    // Configurar un intervalo para verificar cada minuto si se debe deshabilitar algún track
-    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minuto
+    // Set an interval to check every minute if any tracks need to be disabled
+    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minute
 
 });
