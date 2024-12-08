@@ -1,5 +1,8 @@
  // scripts.js
 
+// Definir la URL de tu API de SheetDB como una constante
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
+
 let fechaTransaccion = '';
 
 $(document).ready(function() {
@@ -404,6 +407,50 @@ $(document).ready(function() {
     }
 
     /**
+     * Deshabilita tracks con hora de cierre posterior a las 9:30 PM a esa hora.
+     */
+    function deshabilitarTracksPorHora() {
+        const ahora = dayjs();
+        const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
+
+        if (ahora.isAfter(limite) || ahora.isSame(limite)) {
+            // Iterar sobre todos los tracks
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    // Comparar si la hora de cierre es después de las 9:30 PM
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', true);
+                    }
+                }
+            });
+        } else {
+            // Si aún no es 9:30 PM, asegurar que los tracks estén habilitados si aplicable
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', false);
+                    }
+                }
+            });
+        }
+    }
+
+    // Mostrar las horas límite al cargar la página
+    mostrarHorasLimite();
+
+    // Verificar y deshabilitar tracks al cargar la página
+    deshabilitarTracksPorHora();
+
+    // Configurar un intervalo para verificar cada minuto si se debe deshabilitar algún track
+    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minuto
+
+    /**
      * Evento para generar el ticket después de validar el formulario.
      */
     $("#generarTicket").click(function() {
@@ -441,16 +488,15 @@ $(document).ready(function() {
 
             if (fechaSeleccionada.getTime() === fechaActualSinHora.getTime()) {
                 // La fecha seleccionada es hoy, aplicar validación de hora
-                const horaActual = new Date();
+                const horaActual = dayjs();
                 for (let track of tracks) {
                     if (track === 'Venezuela') continue; // Excluir "Venezuela" de la validación de hora
 
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":").map(Number);
-                        const cierre = new Date();
-                        cierre.setHours(horas, minutos - 10, 0, 0); // Restamos 10 minutos en lugar de 5
-                        if (horaActual > cierre) {
+                        const cierre = dayjs().hour(horas).minute(minutos - 10).second(0); // Restamos 10 minutos
+                        if (horaActual.isAfter(cierre)) {
                             alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o fecha.`);
                             return;
                         }
@@ -650,8 +696,7 @@ $(document).ready(function() {
             link.click();
             document.body.removeChild(link);
 
-            // **Nueva Línea Añadida:**
-            // Eliminar el foco del botón para prevenir el error de aria-hidden
+            // **Eliminar el foco del botón para prevenir el error de aria-hidden**
             $(this).blur();
 
             // Guardar las jugadas en SheetDB antes de imprimir
@@ -694,7 +739,7 @@ $(document).ready(function() {
         console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
         $.ajax({
-            url: "https://sheetdb.io/api/v1/bl57zyh73b0ev", // URL de tu API de SheetDB
+            url: SHEETDB_API_URL, // URL de tu API de SheetDB definida al inicio
             method: "POST",
             dataType: "json",
             contentType: "application/json",
@@ -749,5 +794,49 @@ $(document).ready(function() {
             }
         });
     }
+
+    /**
+     * Deshabilita tracks con hora de cierre posterior a las 9:30 PM a esa hora.
+     */
+    function deshabilitarTracksPorHora() {
+        const ahora = dayjs();
+        const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
+
+        if (ahora.isAfter(limite) || ahora.isSame(limite)) {
+            // Iterar sobre todos los tracks
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    // Comparar si la hora de cierre es después de las 9:30 PM
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', true);
+                    }
+                }
+            });
+        } else {
+            // Si aún no es 9:30 PM, asegurar que los tracks estén habilitados si aplicable
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', false);
+                    }
+                }
+            });
+        }
+    }
+
+    // Mostrar las horas límite al cargar la página
+    mostrarHorasLimite();
+
+    // Verificar y deshabilitar tracks al cargar la página
+    deshabilitarTracksPorHora();
+
+    // Configurar un intervalo para verificar cada minuto si se debe deshabilitar algún track
+    setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minuto
 
 });
