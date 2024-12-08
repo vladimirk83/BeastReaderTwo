@@ -1,9 +1,10 @@
  // scripts.js
 
 // Definir la URL de tu API de SheetDB como una constante
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Reemplaza con tu URL real
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev'; // Reemplaza con tu URL real
 
 let fechaTransaccion = '';
+let jugadasData = []; // Definida en un alcance global
 
 $(document).ready(function() {
 
@@ -507,7 +508,7 @@ $(document).ready(function() {
 
         // Validar jugadas
         let jugadasValidas = true;
-        const jugadasData = [];
+        jugadasData = []; // Resetear jugadasData antes de agregar nuevas
         const numeroTicket = generarNumeroUnico();
         const tracksTexto = tracks.join(", ");
 
