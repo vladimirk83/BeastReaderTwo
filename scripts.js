@@ -1,7 +1,7 @@
  // scripts.js
 
 // Define the URL of your SheetDB API as a constant
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/gect4lbs5bwvr'; // Replace with your actual URL
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev'; // Replace with your actual URL
 
 let fechaTransaccion = '';
 let jugadasData = []; // Defined in the global scope
