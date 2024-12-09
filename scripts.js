@@ -474,6 +474,39 @@ $(document).ready(function() {
     }
 
     /**
+     * Function to save the bets to SheetDB.
+     * @param {Array} jugadasData - Array of objects with bet data.
+     * @param {Function} callback - Function to call after attempting to save.
+     */
+    function guardarJugadas(jugadasData, callback) {
+        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
+
+        $.ajax({
+            url: SHEETDB_API_URL,
+            method: "POST",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify({ data: jugadasData }),
+            success: function(response) {
+                console.log("Jugadas almacenadas en SheetDB:", response);
+                callback(true);
+            },
+            error: function(err) {
+                console.error("Error al enviar datos a SheetDB:", err);
+                callback(false);
+            }
+        });
+    }
+
+    /**
+     * Generates a unique 8-digit number.
+     * @returns {String} - Unique number.
+     */
+    function generarNumeroUnico() {
+        return Math.floor(10000000 + Math.random() * 90000000).toString();
+    }
+
+    /**
      * Function to save the form state to localStorage
      */
     function guardarEstadoFormulario() {
@@ -749,19 +782,18 @@ $(document).ready(function() {
 
         $("#numeroTicket").text(numeroTicket);
 
-        // Adjust modal styles for better responsiveness before capturing
-        const $preTicket = $("#preTicket");
-        const originalWidth = $preTicket.css("width");
-        const originalHeight = $preTicket.css("height");
-        const originalFontSize = $preTicket.css("font-size");
+        // Ajustar el modal-dialog a extra grande antes de mostrarlo
+        $(".modal-dialog").removeClass("modal-lg").addClass("modal-xl");
 
-        // Apply temporary styles for horizontal layout and larger modal
+        // Ajustar estilos del contenido del modal para mejor visibilidad
+        const $preTicket = $("#preTicket");
         $preTicket.css({
+            "max-height": "80vh", // Limitar la altura máxima y permitir scroll
+            "overflow-y": "auto",
             "width": "100%",
             "height": "auto",
             "font-size": "14px",
-            "display": "block",
-            "white-space": "nowrap"
+            "white-space": "normal" // Permitir el ajuste de líneas
         });
 
         // Generate QR code
@@ -775,20 +807,10 @@ $(document).ready(function() {
         $("#ticketFecha").text(fecha);
         console.log("Bet dates assigned to #ticketFecha:", $("#ticketFecha").text());
 
-        // Adjust the modal-dialog to extra large
-        $(".modal-dialog").removeClass("modal-lg").addClass("modal-xl");
         ticketModal.show();
 
         // Save the current state after generating the ticket
         guardarEstadoFormulario();
-
-        // After showing the modal, reset styles if necessary
-        $preTicket.css({
-            "width": originalWidth,
-            "height": originalHeight,
-            "font-size": originalFontSize,
-            "white-space": "normal"
-        });
     });
 
     /**
@@ -852,105 +874,6 @@ $(document).ready(function() {
             confirmarBtn.prop('disabled', false); // Re-enable the button
         });
     });
-
-    /**
-     * Function to save the bets to SheetDB.
-     * @param {Array} jugadasData - Array of objects with bet data.
-     * @param {Function} callback - Function to call after attempting to save.
-     */
-    function guardarJugadas(jugadasData, callback) {
-        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
-
-        $.ajax({
-            url: SHEETDB_API_URL,
-            method: "POST",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify({ data: jugadasData }),
-            success: function(response) {
-                console.log("Jugadas almacenadas en SheetDB:", response);
-                callback(true);
-            },
-            error: function(err) {
-                console.error("Error al enviar datos a SheetDB:", err);
-                callback(false);
-            }
-        });
-    }
-
-    /**
-     * Generates a unique 8-digit number.
-     * @returns {String} - Unique number.
-     */
-    function generarNumeroUnico() {
-        return Math.floor(10000000 + Math.random() * 90000000).toString();
-    }
-
-    /**
-     * Function to save the form state to localStorage
-     */
-    function guardarEstadoFormulario() {
-        const estado = {
-            jugadaCount: jugadaCount,
-            selectedTracks: selectedTracks,
-            selectedDays: selectedDays,
-            fecha: $("#fecha").val(),
-            jugadas: []
-        };
-
-        $("#tablaJugadas tr").each(function() {
-            const numero = $(this).find(".numeroApostado").val();
-            const modalidad = $(this).find(".tipoJuego").text();
-            const straight = $(this).find(".straight").val();
-            const box = $(this).find(".box").val();
-            const combo = $(this).find(".combo").val();
-            const total = $(this).find(".total").text();
-            estado.jugadas.push({
-                numeroApostado: numero,
-                tipoJuego: modalidad,
-                straight: straight,
-                box: box,
-                combo: combo,
-                total: total
-            });
-        });
-
-        localStorage.setItem('estadoFormulario', JSON.stringify(estado));
-    }
-
-    /**
-     * Function to load the form state from localStorage
-     */
-    function cargarEstadoFormulario() {
-        const estado = JSON.parse(localStorage.getItem('estadoFormulario'));
-        if (estado) {
-            $("#fecha").val(estado.fecha);
-            selectedDays = estado.selectedDays;
-            selectedTracks = estado.selectedTracks;
-            jugadaCount = estado.jugadaCount;
-            $("#tablaJugadas").empty();
-            estado.jugadas.forEach((jugada, index) => {
-                if (index >= 100) return; // Prevent adding more than 100 jugadas
-                const fila = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
-                        <td class="tipoJuego">${jugada.tipoJuego}</td>
-                        <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5" value="${jugada.straight}"></td>
-                        <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3" value="${jugada.box}"></td>
-                        <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00" value="${jugada.combo}"></td>
-                        <td class="total">${jugada.total}</td>
-                    </tr>
-                `;
-                $("#tablaJugadas").append(fila);
-            });
-            jugadaCount = estado.jugadaCount;
-            calcularTotal();
-        }
-    }
-
-    // Load form state on page load
-    cargarEstadoFormulario();
 
     /**
      * Display closing times upon page load
