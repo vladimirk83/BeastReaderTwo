@@ -1,3 +1,5 @@
+ /* styles.css */
+
 /* Estilos Básicos */
 :root {
     --color-fondo: #0a0a0a; /* Fondo oscuro */
@@ -17,6 +19,7 @@ body {
     font-family: 'Montserrat', 'Poppins', sans-serif;
     margin: 0;
     padding: 20px;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Contenedor Principal */
@@ -279,6 +282,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     padding: 20px;
     border-radius: 10px;
     /* Otros estilos necesarios */
+    overflow-x: auto; /* Add horizontal scroll if necessary */
 }
 
 #preTicket h4 {
@@ -288,20 +292,47 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
 #preTicket table {
     background-color: #1e1e1e;
+    width: 100%; /* Ensure table takes full width */
+    table-layout: fixed; /* Fix table layout to prevent overflow */
 }
 
 #preTicket th, #preTicket td {
     border: 1px solid #00ffff;
     color: #ffffff;
+    padding: 8px; /* Add padding for better readability */
+    word-wrap: break-word; /* Prevent long words from overflowing */
 }
 
 /* Clase para resaltar campos duplicados */
 .duplicado {
     background-color: #ffff99; /* Fondo amarillo claro */
     border: 2px solid #ffeb3b; /* Borde amarillo más oscuro */
-
 }
+
 /* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
 .cutoff-time[data-track='Venezuela'] {
     color: var(--color-fondo);
+}
+
+/* Responsividad Mejorada para el Ticket */
+@media (max-width: 600px) {
+    #preTicket table, #preTicket th, #preTicket td {
+        font-size: 12px;
+    }
+
+    #preTicket {
+        padding: 10px;
+    }
+
+    /* Ajustar tamaño del QR code */
+    #qrcode {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+/* Estilo para asegurar que la tabla no se corte en la imagen capturada */
+#preTicket {
+    max-width: 100%;
+    overflow-x: auto;
 }
