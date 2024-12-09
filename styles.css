@@ -38,6 +38,7 @@ h2 {
     margin-bottom: 20px;
     color: var(--color-neon-cian);
     text-shadow: 0 0 10px var(--color-neon-cian);
+    font-size: 1.125rem; /* Ajustar tamaño de fuente a 18px (1.125rem aprox.) */
 }
 
 /* Selección de Fecha */
@@ -55,6 +56,7 @@ h2 {
 /* Selección de Tracks */
 .form-check-label {
     color: var(--color-texto);
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 /* Estilos del Accordion */
@@ -63,6 +65,7 @@ h2 {
     color: var(--color-texto-acordeon);
     border: 2px solid var(--color-neon-cian);
     transition: background-color 0.3s, color 0.3s;
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 .accordion-button:not(.collapsed) {
@@ -77,7 +80,7 @@ h2 {
 
 .accordion-body {
     background-color: #1e1e1e;
-    color: var(--color-texto);
+    color: #ffffff;
     border: 1px solid var(--color-neon-cian);
 }
 
@@ -96,7 +99,7 @@ h2 {
 
 /* Indicador de Hora Límite */
 .cutoff-time {
-    font-size: 0.9em;
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
     color: #aaaaaa; /* Color tenue */
 }
 
@@ -113,6 +116,11 @@ h2 {
     background-color: #1e1e1e;
     color: var(--color-neon-cian);
     text-shadow: 0 0 5px var(--color-neon-cian);
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+}
+
+.table-dark td {
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 /* Botones */
@@ -122,6 +130,7 @@ h2 {
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 .btn-primary {
@@ -205,6 +214,8 @@ h2 {
 /* QR Code */
 #qrcode {
     margin: 0 auto;
+    width: 128px;
+    height: 128px;
 }
 
 /* Placeholder con límite de apuesta */
@@ -233,7 +244,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
     .btn {
         padding: 8px 16px;
-        font-size: 16px;
+        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
     }
 
     .table-responsive {
@@ -241,7 +252,15 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     }
 
     .accordion-button {
-        font-size: 1em;
+        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    }
+
+    .cutoff-time {
+        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    }
+
+    .form-check-label {
+        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
     }
 }
 
@@ -288,12 +307,14 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 #preTicket h4 {
     color: #00ffff; /* Color de título */
     text-shadow: 0 0 5px #00ffff;
+    font-size: 1.5rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 #preTicket table {
     background-color: #1e1e1e;
     width: 100%; /* Ensure table takes full width */
     table-layout: fixed; /* Fix table layout to prevent overflow */
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 #preTicket th, #preTicket td {
@@ -301,6 +322,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     color: #ffffff;
     padding: 8px; /* Add padding for better readability */
     word-wrap: break-word; /* Prevent long words from overflowing */
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
 }
 
 /* Clase para resaltar campos duplicados */
@@ -317,7 +339,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 /* Responsividad Mejorada para el Ticket */
 @media (max-width: 600px) {
     #preTicket table, #preTicket th, #preTicket td {
-        font-size: 12px;
+        font-size: 1rem; /* Ajustar a 16px para pantallas más pequeñas */
     }
 
     #preTicket {
