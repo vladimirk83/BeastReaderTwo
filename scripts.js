@@ -17,6 +17,7 @@ $(document).ready(function() {
         onChange: function(selectedDates, dateStr, instance) {
             selectedDays = selectedDates.length;
             calcularTotal();
+            guardarEstadoFormulario();
         },
     });
 
@@ -119,7 +120,7 @@ $(document).ready(function() {
      */
     function agregarJugada() {
         if (jugadaCount >= 100) {
-            alert("You have reached the maximum of 100 bets.");
+            alert("Has alcanzado el máximo de 100 jugadas.");
             return;
         }
         jugadaCount++;
@@ -129,12 +130,13 @@ $(document).ready(function() {
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
                 <td class="tipoJuego">-</td>
                 <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5"></td>
-                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 or 3"></td>
+                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3"></td>
                 <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
         `;
         $("#tablaJugadas").append(fila);
+        guardarEstadoFormulario();
     }
 
     // Add an initial bet
@@ -158,6 +160,7 @@ $(document).ready(function() {
         }
 
         $("#totalJugadas").text(total);
+        guardarEstadoFormulario();
     }
 
     /**
@@ -204,6 +207,7 @@ $(document).ready(function() {
         }
 
         fila.find(".total").text(total.toFixed(2));
+        calcularTotal();
     }
 
     /**
@@ -240,23 +244,25 @@ $(document).ready(function() {
         }
 
         if (modalidad === "Pulito") {
-            fila.find(".box").attr("placeholder", "1, 2 or 3").prop('disabled', false);
-            fila.find(".combo").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "1, 2 o 3").prop('disabled', false);
+            fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
-            fila.find(".box").attr("placeholder", "Not applicable").prop('disabled', true).val('');
-            fila.find(".combo").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
+            fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
             fila.find(".box").attr("placeholder", `Max $${limitesApuesta[modalidad].box}`).prop('disabled', false);
             fila.find(".combo").attr("placeholder", `Max $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
         } else if (modalidad === "Combo") { // Added
-            fila.find(".straight").attr("placeholder", "Not applicable").prop('disabled', true).val('');
-            fila.find(".box").attr("placeholder", "Not applicable").prop('disabled', true).val('');
+            fila.find(".straight").attr("placeholder", "No aplica").prop('disabled', true).val('');
+            fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".combo").attr("placeholder", `Max $${limitesApuesta.Combo.combo}`).prop('disabled', false);
         } else {
             // Unrecognized game mode
             fila.find(".box").attr("placeholder", "E.g., 2.50").prop('disabled', false);
             fila.find(".combo").attr("placeholder", "E.g., 3.00").prop('disabled', false);
         }
+
+        guardarEstadoFormulario();
     }
 
     /**
@@ -285,6 +291,8 @@ $(document).ready(function() {
                 $(this).removeClass('duplicado');
             }
         });
+
+        guardarEstadoFormulario();
     }
 
     /**
@@ -301,6 +309,7 @@ $(document).ready(function() {
         mostrarHorasLimite();
         resaltarDuplicados();
         deshabilitarTracksPorHora(); // Ensure tracks are re-checked/disabled after reset
+        localStorage.removeItem('estadoFormulario'); // Clear saved state
     }
 
     /**
@@ -320,7 +329,7 @@ $(document).ready(function() {
     // Event to remove the last bet
     $("#eliminarJugada").click(function() {
         if (jugadaCount === 0) {
-            alert("There are no bets to remove.");
+            alert("No hay jugadas para eliminar.");
             return;
         }
         $("#tablaJugadas tr:last").remove();
@@ -422,6 +431,173 @@ $(document).ready(function() {
                 }
             });
         }
+        guardarEstadoFormulario();
+    }
+
+    // Function to save the form state to localStorage
+    function guardarEstadoFormulario() {
+        const estado = {
+            jugadaCount: jugadaCount,
+            selectedTracks: selectedTracks,
+            selectedDays: selectedDays,
+            fecha: $("#fecha").val(),
+            jugadas: []
+        };
+
+        $("#tablaJugadas tr").each(function() {
+            const numero = $(this).find(".numeroApostado").val();
+            const modalidad = $(this).find(".tipoJuego").text();
+            const straight = $(this).find(".straight").val();
+            const box = $(this).find(".box").val();
+            const combo = $(this).find(".combo").val();
+            const total = $(this).find(".total").text();
+            estado.jugadas.push({
+                numeroApostado: numero,
+                tipoJuego: modalidad,
+                straight: straight,
+                box: box,
+                combo: combo,
+                total: total
+            });
+        });
+
+        localStorage.setItem('estadoFormulario', JSON.stringify(estado));
+    }
+
+    // Function to load the form state from localStorage
+    function cargarEstadoFormulario() {
+        const estado = JSON.parse(localStorage.getItem('estadoFormulario'));
+        if (estado) {
+            $("#fecha").val(estado.fecha);
+            selectedDays = estado.selectedDays;
+            selectedTracks = estado.selectedTracks;
+            jugadaCount = estado.jugadaCount;
+            $("#tablaJugadas").empty();
+            estado.jugadas.forEach((jugada, index) => {
+                if (index >= 100) return; // Prevent adding more than 100 jugadas
+                const fila = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
+                        <td class="tipoJuego">${jugada.tipoJuego}</td>
+                        <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5" value="${jugada.straight}"></td>
+                        <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3" value="${jugada.box}"></td>
+                        <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00" value="${jugada.combo}"></td>
+                        <td class="total">${jugada.total}</td>
+                    </tr>
+                `;
+                $("#tablaJugadas").append(fila);
+            });
+            jugadaCount = estado.jugadaCount;
+            calcularTotal();
+        }
+    }
+
+    // Load form state on page load
+    cargarEstadoFormulario();
+
+    /**
+     * Event delegation to detect changes in bet input fields.
+     * Uses event delegation to handle dynamically added rows.
+     */
+    $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
+        const fila = $(this).closest("tr");
+        const num = fila.find(".numeroApostado").val();
+        const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
+        const modalidad = determinarModalidad(tracks, num, fila);
+        fila.find(".tipoJuego").text(modalidad);
+        actualizarPlaceholders(modalidad, fila);
+        calcularTotalJugadaAndUpdate(fila);
+        resaltarDuplicados();
+    });
+
+    // Event delegation to detect changes in track checkboxes
+    $(".track-checkbox").change(function() {
+        const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
+        selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
+        calcularTotal();
+    });
+
+    var ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
+
+    /**
+     * Gets the closing time for a specific track.
+     * @param {String} track - Name of the track.
+     * @returns {String|null} - Closing time in "HH:MM" format or null if not found.
+     */
+    function obtenerHoraLimite(track) {
+        for (let region in horariosCierre) {
+            if (horariosCierre[region][track]) {
+                return horariosCierre[region][track];
+            }
+        }
+        return null;
+    }
+
+    function aumentarTamanoFuente() {
+        // Increase font size to 18px (~1.125rem) to match the app title size
+        $(".form-check-label").css("font-size", "1.125rem"); 
+        $(".cutoff-time").css("font-size", "1.125rem");
+    }
+
+    function mostrarHorasLimite() {
+        $(".cutoff-time").each(function() {
+            const track = $(this).data("track");
+
+            if (track === 'Venezuela') {
+               $(this).hide();
+               return;
+            }             
+            let cierreStr = "";
+            if (horariosCierre.USA[track]) {
+                cierreStr = horariosCierre.USA[track];
+            } else if (horariosCierre["Santo Domingo"][track]) {
+                cierreStr = horariosCierre["Santo Domingo"][track];
+            } else if (horariosCierre.Venezuela[track]) {
+                cierreStr = horariosCierre.Venezuela[track];
+            }
+            if (cierreStr) {
+                const cierre = dayjs(cierreStr, "HH:mm");
+                cierre.subtract(10, 'minute');
+                const horas = cierre.format("HH");
+                const minutos = cierre.format("mm");
+                const horaLimite = `${horas}:${minutos}`;
+                $(this).text(`Cutoff Time: ${horaLimite}`);
+            }
+        });
+        aumentarTamanoFuente();
+    }
+
+    function deshabilitarTracksPorHora() {
+        const ahora = dayjs();
+        const limite = dayjs().hour(21).minute(30).second(0); // 9:30 PM
+
+        if (ahora.isAfter(limite) || ahora.isSame(limite)) {
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', true).prop('checked', false); // Uncheck and disable expired
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '0.5').css('cursor', 'not-allowed');
+                    }
+                }
+            });
+        } else {
+            $(".track-checkbox").each(function() {
+                const track = $(this).val();
+                const cierreStr = obtenerHoraLimite(track);
+                if (cierreStr) {
+                    const cierre = dayjs(cierreStr, "HH:mm");
+                    if (cierre.isAfter(dayjs("21:30", "HH:mm"))) {
+                        $(this).prop('disabled', false);
+                        $(this).closest('.form-check').find('.form-check-label').css('opacity', '1').css('cursor', 'pointer');
+                    }
+                }
+            });
+        }
+        guardarEstadoFormulario();
     }
 
     // Display closing times upon page load
@@ -433,21 +609,24 @@ $(document).ready(function() {
     // Set an interval to check every minute if any tracks need to be disabled
     setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minute
 
+    /**
+     * Event to generate the ticket after validating the form.
+     */
     $("#generarTicket").click(function() {
         const fecha = $("#fecha").val();
         if (!fecha) {
-            alert("Please select a date.");
+            alert("Por favor, selecciona una fecha.");
             return;
         }
         const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
         if (!tracks || tracks.length === 0) {
-            alert("Please select at least one track.");
+            alert("Por favor, selecciona al menos un track.");
             return;
         }
 
         const tracksUSASeleccionados = tracks.filter(track => Object.keys(horariosCierre.USA).includes(track));
         if (tracks.includes("Venezuela") && tracksUSASeleccionados.length === 0) {
-            alert("To play in the 'Venezuela' mode, you must select at least one USA track in addition to 'Venezuela'.");
+            alert("Para jugar en el modo 'Venezuela', debes seleccionar al menos un track de USA además de 'Venezuela'.");
             return;
         }
 
@@ -466,9 +645,9 @@ $(document).ready(function() {
                     const horaLimiteStr = obtenerHoraLimite(track);
                     if (horaLimiteStr) {
                         const [horas, minutos] = horaLimiteStr.split(":").map(Number);
-                        const cierre = dayjs().hour(horas).minute(minutos).second(0).subtract(10, 'minute');
+                        const cierre = dayjs().hour(horas).minute(minutos).second(0).subtract(10, 'minute'); // Subtract 10 minutes
                         if (horaActual.isAfter(cierre)) {
-                            alert(`The track "${track}" has already closed for today. Please select another track or a future date.`);
+                            alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o una fecha futura.`);
                             return;
                         }
                     }
@@ -490,12 +669,12 @@ $(document).ready(function() {
             const modalidad = $(this).find(".tipoJuego").text();
             if (!numero || (numero.length < 2 || numero.length > 4)) {
                 jugadasValidas = false;
-                alert("Please enter valid bet numbers (2, 3, or 4 digits).");
+                alert("Por favor, ingresa números de jugada válidos (2, 3 o 4 dígitos).");
                 return false;
             }
             if (modalidad === "-") {
                 jugadasValidas = false;
-                alert("Please select a valid game mode.");
+                alert("Por favor, selecciona un modo de juego válido.");
                 return false;
             }
 
@@ -513,7 +692,7 @@ $(document).ready(function() {
 
             if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
                 jugadasValidas = false;
-                alert(`The bet with game mode "${modalidad}" requires at least one corresponding selected track.`);
+                alert(`La jugada con el modo de juego "${modalidad}" requiere al menos un track seleccionado correspondiente.`);
                 return false;
             }
 
@@ -521,14 +700,14 @@ $(document).ready(function() {
                 const straight = parseFloat($(this).find(".straight").val()) || 0;
                 if (straight <= 0) {
                     jugadasValidas = false;
-                    alert("Please enter at least a bet in Straight.");
+                    alert("Por favor, ingresa al menos una apuesta en Straight.");
                     return false;
                 }
                 if (modalidad === "Pulito") {
                     const box = parseInt($(this).find(".box").val());
                     if (![1, 2, 3].includes(box)) {
                         jugadasValidas = false;
-                        alert("In the Pulito mode, the 'Box' field must be 1, 2, or 3.");
+                        alert("En el modo Pulito, el campo 'Box' debe ser 1, 2 o 3.");
                         return false;
                     }
                 }
@@ -538,7 +717,7 @@ $(document).ready(function() {
                 const combo = parseFloat($(this).find(".combo").val()) || 0;
                 if (straight <= 0 && box <= 0 && combo <= 0) {
                     jugadasValidas = false;
-                    alert(`Please enter at least a bet in Straight, Box, or Combo for ${modalidad}.`);
+                    alert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`);
                     return false;
                 }
             }
@@ -546,17 +725,17 @@ $(document).ready(function() {
             if (limitesApuesta[modalidad]) {
                 if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
                     jugadasValidas = false;
-                    alert(`The amount in Straight exceeds the limit for ${modalidad}.`);
+                    alert(`La cantidad en Straight excede el límite para ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
                     jugadasValidas = false;
-                    alert(`The amount in Box exceeds the limit for ${modalidad}.`);
+                    alert(`La cantidad en Box excede el límite para ${modalidad}.`);
                     return false;
                 }
                 if (limitesApuesta[modalidad].combo !== undefined && parseFloat($(this).find(".combo").val()) > (limitesApuesta[modalidad].combo || Infinity)) {
                     jugadasValidas = false;
-                    alert(`The amount in Combo exceeds the limit for ${modalidad}.`);
+                    alert(`La cantidad en Combo excede el límite para ${modalidad}.`);
                     return false;
                 }
             }
@@ -568,12 +747,12 @@ $(document).ready(function() {
             const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
             const total = parseFloat($(this).find(".total").text()) || 0;
             const jugadaNumber = generarNumeroUnico();
-            const timestamp = new Date().toISOString();
+            const timestamp = dayjs().toISOString();
 
             jugadasData.push({
                 "Ticket Number": numeroTicket,
                 "Transaction DateTime": fechaTransaccion,
-                "Bet Dates": fecha,
+                "Bet Dates": fecha, // Ensure this is a string, not a date object or serial number
                 "Tracks": tracksTexto,
                 "Bet Number": numero,
                 "Game Mode": modalidad,
@@ -590,6 +769,7 @@ $(document).ready(function() {
             return;
         }
 
+        // Prepare data for the ticket
         $("#ticketTracks").text(tracksTexto);
         $("#ticketJugadas").empty();
         $("#tablaJugadas tr").each(function() {
@@ -621,6 +801,22 @@ $(document).ready(function() {
 
         $("#numeroTicket").text(numeroTicket);
 
+        // Adjust modal styles for better responsiveness before capturing
+        const $preTicket = $("#preTicket");
+        const originalWidth = $preTicket.css("width");
+        const originalHeight = $preTicket.css("height");
+        const originalFontSize = $preTicket.css("font-size");
+
+        // Apply temporary styles for horizontal layout
+        $preTicket.css({
+            "width": "100%",
+            "height": "auto",
+            "font-size": "14px",
+            "display": "block",
+            "white-space": "nowrap"
+        });
+
+        // Generate QR code
         $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"), {
             text: numeroTicket,
@@ -632,12 +828,35 @@ $(document).ready(function() {
         console.log("Bet dates assigned to #ticketFecha:", $("#ticketFecha").text());
 
         ticketModal.show();
+
+        // Save the current state after generating the ticket
+        guardarEstadoFormulario();
+
+        // After showing the modal, reset styles if necessary
+        $preTicket.css({
+            "width": originalWidth,
+            "height": originalHeight,
+            "font-size": originalFontSize,
+            "white-space": "normal"
+        });
     });
 
+    /**
+     * Event to confirm and print the ticket.
+     * Captures the ticket content, saves it to SheetDB, downloads it as an image, and opens the print dialog.
+     */
     $("#confirmarTicket").click(function() {
         const ticketElement = document.getElementById("preTicket");
 
-        html2canvas(ticketElement).then(canvas => {
+        // Adjust the modal size before capturing to ensure full visibility
+        $(ticketElement).css({
+            "width": "800px", // Adjust as necessary
+            "height": "auto",
+            "font-size": "14px",
+            "white-space": "nowrap"
+        });
+
+        html2canvas(ticketElement, { scale: 2 }).then(canvas => {
             const imgData = canvas.toDataURL("image/png");
             const link = document.createElement('a');
             link.href = imgData;
@@ -664,12 +883,25 @@ $(document).ready(function() {
 
         }).catch(error => {
             console.error("Error capturing the ticket:", error);
-            alert("There was a problem generating the ticket. Please try again.");
+            alert("Hubo un problema al generar el ticket. Por favor, intenta de nuevo.");
+        }).finally(() => {
+            // Restore original styles after capturing
+            $(ticketElement).css({
+                "width": "",
+                "height": "",
+                "font-size": "",
+                "white-space": ""
+            });
         });
     });
 
+    /**
+     * Function to save the bets to SheetDB.
+     * @param {Array} jugadasData - Array of objects with bet data.
+     * @param {Function} callback - Function to call after attempting to save.
+     */
     function guardarJugadas(jugadasData, callback) {
-        console.log("Sending jugadasData to SheetDB:", JSON.stringify(jugadasData));
+        console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
         $.ajax({
             url: SHEETDB_API_URL,
@@ -678,22 +910,99 @@ $(document).ready(function() {
             contentType: "application/json",
             data: JSON.stringify({ data: jugadasData }),
             success: function(response) {
-                console.log("Bets stored in SheetDB:", response);
+                console.log("Jugadas almacenadas en SheetDB:", response);
                 callback(true);
             },
             error: function(err) {
-                console.error("Error sending data to SheetDB:", err);
+                console.error("Error al enviar datos a SheetDB:", err);
                 callback(false);
             }
         });
     }
 
+    /**
+     * Generates a unique 8-digit number.
+     * @returns {String} - Unique number.
+     */
     function generarNumeroUnico() {
         return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
-    mostrarHorasLimite();
-    deshabilitarTracksPorHora();
-    setInterval(deshabilitarTracksPorHora, 60000); // Check every minute
+    /**
+     * Function to save the form state to localStorage
+     */
+    function guardarEstadoFormulario() {
+        const estado = {
+            jugadaCount: jugadaCount,
+            selectedTracks: selectedTracks,
+            selectedDays: selectedDays,
+            fecha: $("#fecha").val(),
+            jugadas: []
+        };
+
+        $("#tablaJugadas tr").each(function() {
+            const numero = $(this).find(".numeroApostado").val();
+            const modalidad = $(this).find(".tipoJuego").text();
+            const straight = $(this).find(".straight").val();
+            const box = $(this).find(".box").val();
+            const combo = $(this).find(".combo").val();
+            const total = $(this).find(".total").text();
+            estado.jugadas.push({
+                numeroApostado: numero,
+                tipoJuego: modalidad,
+                straight: straight,
+                box: box,
+                combo: combo,
+                total: total
+            });
+        });
+
+        localStorage.setItem('estadoFormulario', JSON.stringify(estado));
+    }
+
+    /**
+     * Function to load the form state from localStorage
+     */
+    function cargarEstadoFormulario() {
+        const estado = JSON.parse(localStorage.getItem('estadoFormulario'));
+        if (estado) {
+            $("#fecha").val(estado.fecha);
+            selectedDays = estado.selectedDays;
+            selectedTracks = estado.selectedTracks;
+            jugadaCount = estado.jugadaCount;
+            $("#tablaJugadas").empty();
+            estado.jugadas.forEach((jugada, index) => {
+                if (index >= 100) return; // Prevent adding more than 100 jugadas
+                const fila = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
+                        <td class="tipoJuego">${jugada.tipoJuego}</td>
+                        <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5" value="${jugada.straight}"></td>
+                        <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3" value="${jugada.box}"></td>
+                        <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00" value="${jugada.combo}"></td>
+                        <td class="total">${jugada.total}</td>
+                    </tr>
+                `;
+                $("#tablaJugadas").append(fila);
+            });
+            jugadaCount = estado.jugadaCount;
+            calcularTotal();
+        }
+    }
+
+    // Load form state on page load
+    cargarEstadoFormulario();
+
+    /**
+     * Prevent form reset unless triggered explicitly by a reset button.
+     */
+    $("#lotteryForm").on("reset", function(e) {
+        // Check if the reset was triggered by a button with a specific class
+        if (!e.originalEvent || !$(e.originalEvent.submitter).hasClass("btn-reset")) {
+            e.preventDefault();
+            alert("Por favor, utiliza el botón de resetear para reiniciar el formulario.");
+        }
+    });
 
 });
