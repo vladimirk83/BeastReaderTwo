@@ -339,7 +339,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
 /* Ajustar Anchos de las Columnas en el Ticket */
 #preTicket th:nth-child(1) { /* Número de Jugada */
-    width: 5%; /* Suficiente para 3 caracteres */
+    width: 8%; /* Suficiente para 3 caracteres */
 }
 
 #preTicket th:nth-child(2), /* Bet Number */
