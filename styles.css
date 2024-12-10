@@ -196,6 +196,10 @@ h2 {
     background-color: #0a0a0a; /* Fondo oscuro */
     color: #ffffff; /* Texto blanco */
     box-shadow: 0 0 20px var(--color-neon-cian);
+    max-height: 90vh;
+    overflow: auto;
+    resize: both; /* Permite redimensionar el modal manualmente */
+    border: 2px solid #00ffff; /* Opcional: para visualizar los bordes */
 }
 
 .modal-header, .modal-footer {
@@ -295,6 +299,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     }
 }
 
+/* Estilos para el Contenedor del Ticket */
 #preTicket {
     background-color: #0a0a0a; /* Fondo oscuro */
     color: #ffffff; /* Texto blanco */
@@ -302,14 +307,18 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     border-radius: 10px;
     /* Otros estilos necesarios */
     overflow-x: auto; /* Add horizontal scroll if necessary */
+    max-width: 100%;
+    overflow-y: visible; /* Asegurar que no haya scroll vertical */
 }
 
+/* Título del Ticket */
 #preTicket h4 {
     color: #00ffff; /* Color de título */
     text-shadow: 0 0 5px #00ffff;
-    font-size: 1.5rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.5rem; /* Aumentar tamaño de fuente a 24px */
 }
 
+/* Tabla del Ticket */
 #preTicket table {
     background-color: #1e1e1e;
     width: 100%; /* Ensure table takes full width */
@@ -320,9 +329,32 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 #preTicket th, #preTicket td {
     border: 1px solid #00ffff;
     color: #ffffff;
-    padding: 8px; /* Add padding for better readability */
+    padding: 6px; /* Reducir el padding para ahorrar espacio */
     word-wrap: break-word; /* Prevent long words from overflowing */
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 0.9rem; /* Reducir tamaño de fuente a 14px */
+    white-space: nowrap; /* Evitar que el texto se apile */
+    overflow: hidden; /* Ocultar el texto que se desborda */
+    text-overflow: ellipsis; /* Mostrar puntos suspensivos si el texto es demasiado largo */
+}
+
+/* Ajustar Anchos de las Columnas en el Ticket */
+#preTicket th:nth-child(2), /* Número Apostado */
+#preTicket th:nth-child(4), /* Straight ($) */
+#preTicket th:nth-child(5), /* Box ($) */
+#preTicket th:nth-child(6), /* Combo ($) */
+#preTicket th:nth-child(7)  /* Total ($) */
+{
+    width: 10%; /* Ajustar según sea necesario */
+}
+
+#preTicket th:nth-child(3) { /* Modalidad */
+    width: 20%;
+}
+
+/* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
+#preTicket td {
+    font-size: 0.9rem; /* Reducir a 14px */
+    padding: 6px; /* Reducir el padding */
 }
 
 /* Clase para resaltar campos duplicados */
@@ -339,7 +371,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 /* Responsividad Mejorada para el Ticket */
 @media (max-width: 600px) {
     #preTicket table, #preTicket th, #preTicket td {
-        font-size: 1rem; /* Ajustar a 16px para pantallas más pequeñas */
+        font-size: 0.9rem; /* Ajustar a 14px para pantallas más pequeñas */
     }
 
     #preTicket {
@@ -351,10 +383,9 @@ input::-ms-input-placeholder { /* Microsoft Edge */
         width: 100px;
         height: 100px;
     }
-}
 
-/* Estilo para asegurar que la tabla no se corte en la imagen capturada */
-#preTicket {
-    max-width: 100%;
-    overflow-x: auto;
+    /* Ajustar tamaño de la fuente en encabezados y celdas */
+    #preTicket th, #preTicket td {
+        font-size: 0.8rem; /* Reducir a 12.8px */
+    }
 }
