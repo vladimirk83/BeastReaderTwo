@@ -799,56 +799,62 @@ $(document).ready(function() {
 
         const ticketElement = document.getElementById("preTicket");
 
-        // Ajustar el tamaño del modal antes de capturar para asegurar visibilidad completa
+        // Guardar los estilos originales
+        const originalStyles = {
+            width: $(ticketElement).css("width"),
+            height: $(ticketElement).css("height"),
+            maxHeight: $(ticketElement).css("max-height"),
+            overflowY: $(ticketElement).css("overflow-y")
+        };
+
+        // Ajustar el contenedor para que muestre todo el contenido
         $(ticketElement).css({
-            "width": "800px", // Ajusta según sea necesario
+            "width": "auto",
             "height": "auto",
-            "font-size": "14px",
-            "white-space": "nowrap"
+            "max-height": "none",
+            "overflow-y": "visible"
         });
 
-        html2canvas(ticketElement, { scale: 2 }).then(canvas => {
-            const imgData = canvas.toDataURL("image/png");
-            const link = document.createElement('a');
-            link.href = imgData;
-            link.download = `ticket_${$("#numeroTicket").text()}.png`;
+        // Capturar la imagen después de un breve retraso para asegurar que los estilos se apliquen
+        setTimeout(() => {
+            html2canvas(ticketElement, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.href = imgData;
+                link.download = `ticket_${$("#numeroTicket").text()}.png`;
 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-            // Actualización del mensaje de confirmación
-            alert("El ticket se está descargando, por favor ábrelo y compártelo.");
+                // Actualización del mensaje de confirmación
+                alert("El ticket se está descargando, por favor ábrelo y compártelo.");
 
-            $(this).blur();
+                $(this).blur();
 
-            guardarJugadas(jugadasData, function(success) {
-                if (success) {
-                    window.print();
-                    ticketModal.hide();
-                    resetForm();
-                } else {
-                    // No mostrar alerta si falla el guardado
-                    window.print();
-                    ticketModal.hide();
-                    resetForm();
-                }
+                guardarJugadas(jugadasData, function(success) {
+                    if (success) {
+                        window.print();
+                        ticketModal.hide();
+                        resetForm();
+                    } else {
+                        // No mostrar alerta si falla el guardado
+                        window.print();
+                        ticketModal.hide();
+                        resetForm();
+                    }
+                });
+
+            }).catch(error => {
+                console.error("Error al capturar el ticket:", error);
+                alert("Hubo un problema al generar el ticket. Por favor, intenta de nuevo.");
+            }).finally(() => {
+                // Restaurar los estilos originales
+                $(ticketElement).css(originalStyles);
+
+                confirmarBtn.prop('disabled', false); // Rehabilitar el botón
             });
-
-        }).catch(error => {
-            console.error("Error al capturar el ticket:", error);
-            alert("Hubo un problema al generar el ticket. Por favor, intenta de nuevo.");
-        }).finally(() => {
-            // Restaurar estilos originales después de capturar
-            $(ticketElement).css({
-                "width": "",
-                "height": "",
-                "font-size": "",
-                "white-space": ""
-            });
-
-            confirmarBtn.prop('disabled', false); // Rehabilitar el botón
-        });
+        }, 500); // Retraso de 500ms
     });
 
     /**
