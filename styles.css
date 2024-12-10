@@ -11,6 +11,7 @@
     --color-fondo-acordeon: #1e1e1e; /* Fondo para acordeón */
     --color-fondo-acordeon-activo: #00ffff; /* Fondo activo para acordeón */
     --color-texto-acordeon: #ffffff; /* Color de texto para acordeón */
+    --color-error: #ff00ff; /* Color para resaltar errores */
 }
 
 body {
@@ -311,7 +312,6 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     overflow-y: visible; /* Asegurar que no haya scroll vertical */
 }
 
-/* Título del Ticket */
 #preTicket h4 {
     color: #00ffff; /* Color de título */
     text-shadow: 0 0 5px #00ffff;
@@ -338,13 +338,17 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 }
 
 /* Ajustar Anchos de las Columnas en el Ticket */
-#preTicket th:nth-child(2), /* Número Apostado */
+#preTicket th:nth-child(1) { /* Número de Jugada */
+    width: 5%; /* Suficiente para 3 caracteres */
+}
+
+#preTicket th:nth-child(2), /* Bet Number */
 #preTicket th:nth-child(4), /* Straight ($) */
 #preTicket th:nth-child(5), /* Box ($) */
 #preTicket th:nth-child(6), /* Combo ($) */
 #preTicket th:nth-child(7)  /* Total ($) */
 {
-    width: 10%; /* Ajustar según sea necesario */
+    width: 12%; /* Ajustar según sea necesario */
 }
 
 #preTicket th:nth-child(3) { /* Modalidad */
@@ -361,6 +365,12 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 .duplicado {
     background-color: #ffff99; /* Fondo amarillo claro */
     border: 2px solid #ffeb3b; /* Borde amarillo más oscuro */
+}
+
+/* Clase para resaltar campos con errores */
+.error-field {
+    background-color: var(--color-neon-morado) !important; /* Fondo morado brillante */
+    border: 2px solid var(--color-neon-cian) !important; /* Borde cian para destacar */
 }
 
 /* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
@@ -388,4 +398,10 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     #preTicket th, #preTicket td {
         font-size: 0.8rem; /* Reducir a 12.8px */
     }
+}
+
+/* Estilo para asegurar que la tabla no se corte en la imagen capturada */
+#preTicket {
+    max-width: 100%;
+    overflow-x: auto;
 }
