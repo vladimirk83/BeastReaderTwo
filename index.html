@@ -20,6 +20,7 @@
             .modal-dialog {
                 max-width: 100%;
                 margin: 0;
+                height: 100%;
             }
             #preTicket {
                 padding: 0.5rem;
@@ -48,7 +49,9 @@
         /* Estilos adicionales para mejorar la visualización en móviles y escritorio */
         .modal-content {
             max-height: 90vh;
-            overflow-y: auto;
+            overflow: auto;
+            resize: both; /* Permite redimensionar el modal manualmente */
+            border: 2px solid #00ffff; /* Opcional: para visualizar los bordes */
         }
         /* Asegurar que el QR code no sea demasiado grande en móviles */
         #qrcode {
@@ -61,7 +64,11 @@
             font-size: 1rem;
         }
         #preTicket th, #preTicket td {
-            padding: 0.5rem;
+            border: 1px solid #00ffff;
+            color: #ffffff;
+            padding: 8px; /* Añadir padding para mejor legibilidad */
+            word-wrap: break-word; /* Prevenir que palabras largas se desborden */
+            font-size: 1rem;
         }
         /* Ajustar el tamaño de la fuente en la tabla del ticket final */
         @media print {
@@ -76,6 +83,29 @@
         .duplicado {
             border: 2px solid red;
             background-color: #ffcccc;
+        }
+        /* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
+        .cutoff-time[data-track='Venezuela'] {
+            color: var(--color-fondo);
+        }
+        /* Responsividad Mejorada para el Ticket */
+        @media (max-width: 600px) {
+            #preTicket table, #preTicket th, #preTicket td {
+                font-size: 1rem; /* Ajustar a 16px para pantallas más pequeñas */
+            }
+            #preTicket {
+                padding: 10px;
+            }
+            /* Ajustar tamaño del QR code */
+            #qrcode {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        /* Estilo para asegurar que la tabla no se corte en la imagen capturada */
+        #preTicket {
+            max-width: 100%;
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -299,7 +329,6 @@
                                     </div>
                                     <span class="cutoff-time" data-track="Panama"></span>
                                 </div>
-                                <!-- Agrega otros tracks si es necesario -->
                             </div>
                         </div>
                     </div>
@@ -348,8 +377,8 @@
     </div>
     <!-- Modal para Previsualizar Ticket -->
     <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-fullscreen-sm-down modal-dialog-scrollable">
-            <div class="modal-content bg-dark text-white">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="ticketModalLabel">Previsualización del Ticket</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
