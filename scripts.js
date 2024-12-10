@@ -603,7 +603,7 @@ $(document).ready(function() {
                             cierreFinal = cierreOriginal.subtract(10, 'minute');
                         }
 
-                        if (horaActual.isAfter(cierreFinal)) {
+                        if (horaActual.isAfter(cierreFinal) || horaActual.isSame(cierreFinal)) {
                             alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o una fecha futura.`);
                             return;
                         }
@@ -620,109 +620,128 @@ $(document).ready(function() {
         fechaTransaccion = dayjs().format('MM/DD/YYYY hh:mm A');
 
         const tracksTexto = tracks.join(", ");
+        const jugadasConErrores = [];
 
         $("#tablaJugadas tr").each(function() {
             const numero = $(this).find(".numeroApostado").val();
             const modalidad = $(this).find(".tipoJuego").text();
-            if (!numero || (numero.length < 2 || numero.length > 4)) {
-                jugadasValidas = false;
-                alert("Por favor, ingresa números de jugada válidos (2, 3 o 4 dígitos).");
-                return false;
+            const straight = $(this).find(".straight").val();
+            const box = $(this).find(".box").val();
+            const combo = $(this).find(".combo").val();
+            const total = $(this).find(".total").text();
+            const jugadaNumero = parseInt($(this).find("td:first").text());
+
+            // Validaciones
+            let error = false;
+
+            // Validar número de jugada
+            if (!numero || numero.length < 2 || numero.length > 4) {
+                error = true;
+                jugadasConErrores.push(jugadaNumero);
+                $(this).find(".numeroApostado").addClass('error-field');
+            } else {
+                $(this).find(".numeroApostado").removeClass('error-field');
             }
+
+            // Validar modalidad
             if (modalidad === "-") {
-                jugadasValidas = false;
-                alert("Por favor, selecciona un modo de juego válido.");
-                return false;
+                error = true;
+                jugadasConErrores.push(jugadaNumero);
             }
 
-            let tracksRequeridos = [];
-
-            if (["Win 4", "Peak 3", "Pulito", "Venezuela-Pale"].includes(modalidad)) { // Incluye "Venezuela-Pale"
-                // Modos de juego que requieren pistas de USA
-                tracksRequeridos = Object.keys(horariosCierre.USA);
-            } else if (["RD-Quiniela", "RD-Pale"].includes(modalidad)) {
-                // Modos de juego que requieren pistas de Santo Domingo
-                tracksRequeridos = Object.keys(horariosCierre["Santo Domingo"]);
-            }
-
-            const tracksSeleccionadosParaModalidad = tracks.filter(track => tracksRequeridos.includes(track));
-
-            if (tracksRequeridos.length > 0 && tracksSeleccionadosParaModalidad.length === 0) {
-                jugadasValidas = false;
-                alert(`La jugada con el modo de juego "${modalidad}" requiere al menos un track seleccionado correspondiente.`);
-                return false;
-            }
-
+            // Validar montos según modalidad
             if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(modalidad)) {
-                const straight = parseFloat($(this).find(".straight").val()) || 0;
-                if (straight <= 0) {
-                    jugadasValidas = false;
-                    alert("Por favor, ingresa al menos una apuesta en Straight.");
-                    return false;
+                if (!straight || parseFloat(straight) <= 0) {
+                    error = true;
+                    jugadasConErrores.push(jugadaNumero);
+                    $(this).find(".straight").addClass('error-field');
+                } else {
+                    $(this).find(".straight").removeClass('error-field');
                 }
+
                 if (modalidad === "Pulito") {
-                    const box = parseInt($(this).find(".box").val());
-                    if (![1, 2, 3].includes(box)) {
-                        jugadasValidas = false;
-                        alert("En el modo Pulito, el campo 'Box' debe ser 1, 2 o 3.");
-                        return false;
+                    const boxVal = parseInt(box);
+                    if (![1, 2, 3].includes(boxVal)) {
+                        error = true;
+                        jugadasConErrores.push(jugadaNumero);
+                        $(this).find(".box").addClass('error-field');
+                    } else {
+                        $(this).find(".box").removeClass('error-field');
                     }
                 }
             } else if (["Win 4", "Peak 3"].includes(modalidad)) {
-                const straight = parseFloat($(this).find(".straight").val()) || 0;
-                const box = parseFloat($(this).find(".box").val()) || 0;
-                const combo = parseFloat($(this).find(".combo").val()) || 0;
-                if (straight <= 0 && box <= 0 && combo <= 0) {
-                    jugadasValidas = false;
-                    alert(`Por favor, ingresa al menos una apuesta en Straight, Box o Combo para ${modalidad}.`);
-                    return false;
+                if ((!straight || parseFloat(straight) <= 0) && 
+                    (!box || parseFloat(box) <= 0) && 
+                    (!combo || parseFloat(combo) <= 0)) {
+                    error = true;
+                    jugadasConErrores.push(jugadaNumero);
+                    $(this).find(".straight").addClass('error-field');
+                    $(this).find(".box").addClass('error-field');
+                    $(this).find(".combo").addClass('error-field');
+                } else {
+                    if (straight && parseFloat(straight) > 0) {
+                        $(this).find(".straight").removeClass('error-field');
+                    }
+                    if (box && parseFloat(box) > 0) {
+                        $(this).find(".box").removeClass('error-field');
+                    }
+                    if (combo && parseFloat(combo) > 0) {
+                        $(this).find(".combo").removeClass('error-field');
+                    }
                 }
             }
 
+            // Aplicar límites de apuesta
             if (limitesApuesta[modalidad]) {
-                if (parseFloat($(this).find(".straight").val()) > (limitesApuesta[modalidad].straight || Infinity)) {
-                    jugadasValidas = false;
-                    alert(`La cantidad en Straight excede el límite para ${modalidad}.`);
-                    return false;
+                if (straight && parseFloat(straight) > (limitesApuesta[modalidad].straight || Infinity)) {
+                    error = true;
+                    jugadasConErrores.push(jugadaNumero);
+                    $(this).find(".straight").addClass('error-field');
                 }
-                if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito" && parseFloat($(this).find(".box").val()) > (limitesApuesta[modalidad].box || Infinity)) {
-                    jugadasValidas = false;
-                    alert(`La cantidad en Box excede el límite para ${modalidad}.`);
-                    return false;
+
+                if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito") {
+                    if (box && parseFloat(box) > (limitesApuesta[modalidad].box || Infinity)) {
+                        error = true;
+                        jugadasConErrores.push(jugadaNumero);
+                        $(this).find(".box").addClass('error-field');
+                    }
                 }
-                if (limitesApuesta[modalidad].combo !== undefined && parseFloat($(this).find(".combo").val()) > (limitesApuesta[modalidad].combo || Infinity)) {
-                    jugadasValidas = false;
-                    alert(`La cantidad en Combo excede el límite para ${modalidad}.`);
-                    return false;
+
+                if (limitesApuesta[modalidad].combo !== undefined) {
+                    if (combo && parseFloat(combo) > (limitesApuesta[modalidad].combo || Infinity)) {
+                        error = true;
+                        jugadasConErrores.push(jugadaNumero);
+                        $(this).find(".combo").addClass('error-field');
+                    }
                 }
             }
 
-            const straight = parseFloat($(this).find(".straight").val()) || 0;
-            const boxVal = $(this).find(".box").val();
-            const box = boxVal !== "" ? boxVal : "-";
-            const comboVal = $(this).find(".combo").val();
-            const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
-            const total = parseFloat($(this).find(".total").text()) || 0;
-            const jugadaNumber = generarNumeroUnico();
-            const timestamp = dayjs().toISOString();
+            if (error) {
+                jugadasValidas = false;
+            }
 
-            jugadasData.push({
-                "Ticket Number": numeroTicket,
-                "Transaction DateTime": fechaTransaccion,
-                "Bet Dates": fecha, // Asegúrate de que sea una cadena, no un objeto de fecha o número serial
-                "Tracks": tracksTexto,
-                "Bet Number": numero,
-                "Game Mode": modalidad,
-                "Straight ($)": straight.toFixed(2),
-                "Box ($)": box !== "-" ? box : "",
-                "Combo ($)": combo !== "-" ? combo.toFixed(2) : "",
-                "Total ($)": total.toFixed(2),
-                "Jugada Number": jugadaNumber,
-                "Timestamp": timestamp
-            });
+            if (!error) {
+                jugadasData.push({
+                    "Ticket Number": numeroTicket,
+                    "Transaction DateTime": fechaTransaccion,
+                    "Bet Dates": fecha, // Asegúrate de que sea una cadena, no un objeto de fecha o número serial
+                    "Tracks": tracksTexto,
+                    "Bet Number": numero,
+                    "Game Mode": modalidad,
+                    "Straight ($)": straight ? parseFloat(straight).toFixed(2) : "",
+                    "Box ($)": box && box !== "-" ? box : "",
+                    "Combo ($)": combo && combo !== "-" ? parseFloat(combo).toFixed(2) : "",
+                    "Total ($)": parseFloat(total).toFixed(2),
+                    "Jugada Number": generarNumeroUnico(),
+                    "Timestamp": dayjs().toISOString()
+                });
+            }
         });
 
         if (!jugadasValidas) {
+            const jugadasUnicas = [...new Set(jugadasConErrores)];
+            const jugadasTexto = jugadasUnicas.join(", ");
+            alert(`Hay errores en las siguientes jugadas: ${jugadasTexto}. Por favor, corrígelas antes de generar el ticket.`);
             return;
         }
 
@@ -817,7 +836,7 @@ $(document).ready(function() {
 
         // Capturar la imagen después de un breve retraso para asegurar que los estilos se apliquen
         setTimeout(() => {
-            html2canvas(ticketElement, { scale: 2 }).then(canvas => {
+            html2canvas(ticketElement, { scale: 3 }).then(canvas => { // Aumentar scale a 3 para mayor resolución
                 const imgData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
                 link.href = imgData;
