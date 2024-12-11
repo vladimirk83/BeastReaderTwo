@@ -647,6 +647,7 @@ $(document).ready(function() {
             if (modalidad === "-") {
                 error = true;
                 jugadasConErrores.push(jugadaNumero);
+                // Opcional: Resaltar la modalidad si es necesario
             }
 
             // Validar montos según modalidad
@@ -877,27 +878,34 @@ $(document).ready(function() {
     });
 
     /**
-     * Guarda las jugadas en SheetDB.
+     * Guarda las jugadas en SheetDB usando Fetch API.
      * @param {Array} jugadasData - Array de objetos con datos de jugadas.
      * @param {Function} callback - Función a llamar después de intentar guardar.
      */
     function guardarJugadas(jugadasData, callback) {
         console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
-        $.ajax({
-            url: SHEETDB_API_URL,
-            method: "POST",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify({ data: jugadasData }),
-            success: function(response) {
-                console.log("Jugadas almacenadas en SheetDB:", response);
-                callback(true);
+        fetch(SHEETDB_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            error: function(err) {
-                console.error("Error al enviar datos a SheetDB:", err);
-                callback(false);
+            body: JSON.stringify({ data: jugadasData })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Jugadas almacenadas en SheetDB:", data);
+            callback(true);
+        })
+        .catch(error => {
+            console.error("Error al enviar datos a SheetDB:", error);
+            alert("Hubo un error al guardar las jugadas en Google Sheets. Por favor, verifica tu conexión o inténtalo de nuevo más tarde.");
+            callback(false);
         });
     }
 
