@@ -350,6 +350,13 @@ $(document).ready(function() {
         calcularTotal();
     });
 
+    // Evento para resetear el formulario
+    $("#resetForm").click(function() {
+        if (confirm("¿Estás seguro de que deseas resetear el formulario? Esto eliminará todas las jugadas actuales.")) {
+            resetForm();
+        }
+    });
+
     /**
      * Delegación de eventos para detectar cambios en los campos de entrada de las jugadas.
      * Utiliza delegación de eventos para manejar filas agregadas dinámicamente.
@@ -854,15 +861,13 @@ $(document).ready(function() {
 
                 guardarJugadas(jugadasData, function(success) {
                     if (success) {
-                        window.print();
-                        ticketModal.hide();
-                        resetForm();
+                        console.log("Jugadas guardadas exitosamente en SheetDB.");
                     } else {
-                        // No mostrar alerta si falla el guardado
-                        window.print();
-                        ticketModal.hide();
-                        resetForm();
+                        console.error("Error al guardar las jugadas en SheetDB.");
                     }
+                    window.print();
+                    ticketModal.hide();
+                    resetForm();
                 });
 
             }).catch(error => {
@@ -904,7 +909,7 @@ $(document).ready(function() {
         })
         .catch(error => {
             console.error("Error al enviar datos a SheetDB:", error);
-            alert("Hubo un error al guardar las jugadas en Google Sheets. Por favor, verifica tu conexión o inténtalo de nuevo más tarde.");
+            // Eliminado el alert para que el usuario no lo vea
             callback(false);
         });
     }
