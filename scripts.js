@@ -1,26 +1,29 @@
  // scripts.js
 
-// Define the URL of your SheetDB API as a constant
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev'; // Reemplaza con tu URL real
+// URL de tu API de SheetDB (Reemplaza con la tuya real)
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
+// Variables globales
 let fechaTransaccion = '';
-let jugadasData = []; // Definido en el ámbito global
-let isProgrammaticReset = false; // Bandera para manejar reseteos programáticos
+let jugadasData = [];
+let isProgrammaticReset = false;
+
+// Inicializar Day.js con plugins
+dayjs.extend(dayjs_plugin_customParseFormat);
+dayjs.extend(dayjs_plugin_arraySupport);
 
 $(document).ready(function() {
 
     // Inicializar Flatpickr con selección múltiple de fechas
     flatpickr("#fecha", {
         mode: "multiple",
-        dateFormat: "m-d-Y", // Formato MM-DD-YYYY
+        dateFormat: "m-d-Y",
         minDate: "today",
         allowInput: true,
         onChange: function(selectedDates, dateStr, instance) {
             selectedDays = selectedDates.length;
             calcularTotal();
             guardarEstadoFormulario();
-
-            // Llamamos a la función para habilitar/deshabilitar cada vez que cambia la fecha
             deshabilitarTracksPorHora();
         },
     });
@@ -76,9 +79,9 @@ $(document).ready(function() {
         "Venezuela": { "straight": 100 },
         "Venezuela-Pale": { "straight": 100 },
         "Pulito": { "straight": 100 },
-        "RD-Quiniela": { "straight": 100 }, // Actualizado a $100
-        "RD-Pale": { "straight": 20 }, // Permanece en $20
-        "Combo": { "combo": 50 } // Añadido
+        "RD-Quiniela": { "straight": 100 },
+        "RD-Pale": { "straight": 20 },
+        "Combo": { "combo": 50 }
     };
 
     /**
@@ -102,7 +105,7 @@ $(document).ready(function() {
             if (longitud === 2) {
                 modalidad = "Venezuela";
             } else if (longitud === 4) {
-                modalidad = "Venezuela-Pale"; // Asigna "Pale" para 4 dígitos
+                modalidad = "Venezuela-Pale";
             }
         } else if (esUSA && !esSD) {
             if (longitud === 4) {
@@ -146,11 +149,11 @@ $(document).ready(function() {
         $("#tablaJugadas").append(fila);
         guardarEstadoFormulario();
 
-        // Foco automático en el campo "Bet Number" de la nueva jugada
+        // Foco automático en el campo "Número Apostado" de la nueva jugada
         $("#tablaJugadas tr:last .numeroApostado").focus();
     }
 
-    // Agregar una jugada inicial
+    // Agregar una jugada inicial al cargar la página
     agregarJugada();
 
     /**
@@ -320,7 +323,7 @@ $(document).ready(function() {
         $("#totalJugadas").text("0.00");
         mostrarHorasLimite();
         resaltarDuplicados();
-        deshabilitarTracksPorHora(); // Asegurar que las pistas se re-verifiquen/deshabiliten tras el reseteo
+        deshabilitarTracksPorHora(); // Re-verificar la habilitación de tracks tras el reseteo
         localStorage.removeItem('estadoFormulario'); // Limpiar estado guardado
         isProgrammaticReset = false; // Resetear bandera
     }
@@ -380,11 +383,10 @@ $(document).ready(function() {
         const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
         selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
         calcularTotal();
-
-        // Re-evaluar la habilitación de tracks al cambiar las selecciones de pistas
-        deshabilitarTracksPorHora();
+        deshabilitarTracksPorHora(); // Re-evaluar la habilitación de tracks al cambiar las selecciones de pistas
     });
 
+    // Inicializar el modal de Bootstrap
     var ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
 
     /**
@@ -418,7 +420,7 @@ $(document).ready(function() {
             const track = $(this).data("track");
 
             if (track === 'Venezuela') {
-               $(this).hide();
+               $(this).hide(); // Ocultar la hora de corte para Venezuela
                return;
             }             
             let cierreStr = "";
@@ -450,11 +452,12 @@ $(document).ready(function() {
     }
 
     // ============================================
-    //    PEQUEÑA ADICIÓN PARA FECHAS FUTURAS
+    //    ADICIÓN PARA MANEJO DE FECHAS FUTURAS
     // ============================================
 
     /**
      * Indica si el usuario ha incluido HOY en la selección de fechas.
+     * @returns {Boolean} - True si incluye hoy, false de lo contrario.
      */
     function usuarioIncluyeHoy() {
         const hoy = dayjs().startOf('day');
@@ -474,7 +477,7 @@ $(document).ready(function() {
 
     /**
      * Deshabilita (o habilita) pistas según la hora actual y sus horarios de cierre,
-     * **pero solamente** si incluye la fecha de hoy en la selección.
+     * pero solamente si incluye la fecha de hoy en la selección.
      * De lo contrario, habilita todo (fechas futuras no deben estar deshabilitadas).
      */
     function deshabilitarTracksPorHora() {
@@ -501,7 +504,7 @@ $(document).ready(function() {
                     cierreFinal = cierreOriginal.subtract(10, 'minute');
                 }
 
-                // Comparamos con la hora actual
+                // Comparar con la hora actual
                 if (ahora.isAfter(cierreFinal) || ahora.isSame(cierreFinal)) {
                     // Deshabilitar y desmarcar
                     $(this).prop('disabled', true).prop('checked', false);
@@ -544,8 +547,77 @@ $(document).ready(function() {
     }
 
     // ============================================
-    //        FIN PEQUEÑA ADICIÓN
+    //        FIN DE LA ADICIÓN
     // ============================================
+
+    /**
+     * Guarda el estado del formulario en localStorage.
+     */
+    function guardarEstadoFormulario() {
+        const estado = {
+            jugadaCount: jugadaCount,
+            selectedTracks: selectedTracks,
+            selectedDays: selectedDays,
+            fecha: $("#fecha").val(),
+            jugadas: []
+        };
+
+        $("#tablaJugadas tr").each(function() {
+            const numero = $(this).find(".numeroApostado").val();
+            const modalidad = $(this).find(".tipoJuego").text();
+            const straight = $(this).find(".straight").val();
+            const box = $(this).find(".box").val();
+            const combo = $(this).find(".combo").val();
+            const total = $(this).find(".total").text();
+            estado.jugadas.push({
+                numeroApostado: numero,
+                tipoJuego: modalidad,
+                straight: straight,
+                box: box,
+                combo: combo,
+                total: total
+            });
+        });
+
+        localStorage.setItem('estadoFormulario', JSON.stringify(estado));
+    }
+
+    /**
+     * Carga el estado del formulario desde localStorage.
+     */
+    function cargarEstadoFormulario() {
+        const estado = JSON.parse(localStorage.getItem('estadoFormulario'));
+        if (estado) {
+            $("#fecha").val(estado.fecha);
+            selectedDays = estado.selectedDays;
+            selectedTracks = estado.selectedTracks;
+            jugadaCount = estado.jugadaCount;
+            $("#tablaJugadas").empty();
+            estado.jugadas.forEach((jugada, index) => {
+                if (index >= 100) return; // Prevenir añadir más de 100 jugadas
+                const fila = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
+                        <td class="tipoJuego">${jugada.tipoJuego}</td>
+                        <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5" value="${jugada.straight}"></td>
+                        <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3" value="${jugada.box}"></td>
+                        <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00" value="${jugada.combo}"></td>
+                        <td class="total">${jugada.total}</td>
+                    </tr>
+                `;
+                $("#tablaJugadas").append(fila);
+            });
+            jugadaCount = estado.jugadaCount;
+            calcularTotal();
+            mostrarHorasLimite();
+            deshabilitarTracksPorHora(); // Re-evaluar la habilitación de tracks al cargar el estado
+            resaltarDuplicados();
+        }
+    }
+
+    // Cargar el estado del formulario al cargar la página
+    cargarEstadoFormulario();
 
     /**
      * Previene el reseteo del formulario a menos que se active explícitamente mediante un botón de reset.
@@ -974,7 +1046,9 @@ $(document).ready(function() {
             });
             jugadaCount = estado.jugadaCount;
             calcularTotal();
+            mostrarHorasLimite();
             deshabilitarTracksPorHora(); // Re-evaluar la habilitación de tracks al cargar el estado
+            resaltarDuplicados();
         }
     }
 
@@ -1349,15 +1423,22 @@ $(document).ready(function() {
     }
 
     /**
-     * Muestra los horarios de cierre al cargar la página.
+     * Guarda el estado del formulario en localStorage.
+     * (Esta función ya está definida arriba, puedes eliminar esta duplicación si aparece)
      */
-    mostrarHorasLimite();
 
     /**
-     * Deshabilita las pistas según la hora actual al cargar la página
-     * y luego cada minuto (por setInterval).
+     * Carga el estado del formulario desde localStorage.
+     * (Esta función ya está definida arriba, puedes eliminar esta duplicación si aparece)
      */
+
+    // Mostrar horas de cierre al cargar
+    mostrarHorasLimite();
+
+    // Deshabilitar/habilitar en base a si se incluyó hoy.
     deshabilitarTracksPorHora();
+
+    // Checar cada minuto si la hora cambió (solo aplica si se incluyó hoy).
     setInterval(deshabilitarTracksPorHora, 60000); // 60000 ms = 1 minuto
 
 });
