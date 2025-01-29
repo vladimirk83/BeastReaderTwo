@@ -29,18 +29,18 @@ $(document).ready(function() {
     // Horarios de cierre por pista
     const horariosCierre = {
         "USA": {
-            "New York AM": "14:15",
-            "Georgia AM": "12:20",
-            "New Jersey AM": "12:50",
-            "Florida AM": "13:25",
-            "Connecticut AM": "13:30",
-            "Georgia Eve": "18:40",
-            "New York PM": "22:00",
-            "New Jersey PM": "22:00",
-            "Florida PM": "21:30",
-            "Connecticut PM": "22:00",
-            "Georgia Night": "22:00",
-            "Pensilvania AM": "12:50",
+            "New York Mid Day": "14:25",
+            "New York Evening": "22:25",
+            "Georgia Mid Day": "12:20",
+            "Georgia Evening": "18:45",
+            "New Jersey Mid Day": "12:54",
+            "New Jersey Evening": "22:50",
+            "Florida Mid Day": "13:25",
+            "Florida Evening": "21:30",
+            "Connecticut Mid Day": "13:35",
+            "Connecticut Evening": "22:20",
+            "Georgia Night": "23:20",
+            "Pensilvania AM": "12:55",
             "Pensilvania PM": "18:20"
             // "Venezuela" está excluido aquí
         },
