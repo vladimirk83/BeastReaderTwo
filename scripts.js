@@ -1,4 +1,4 @@
-  // scripts.js
+ // scripts.js
 
 // Define the URL of your SheetDB API as a constant
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev'; // Reemplaza con tu URL real
@@ -350,6 +350,13 @@ $(document).ready(function() {
         calcularTotal();
     });
 
+    // Evento para resetear el formulario
+    $("#resetForm").click(function() {
+        if (confirm("¿Estás seguro de que deseas resetear el formulario? Esto eliminará todas las jugadas actuales.")) {
+            resetForm();
+        }
+    });
+
     /**
      * Delegación de eventos para detectar cambios en los campos de entrada de las jugadas.
      * Utiliza delegación de eventos para manejar filas agregadas dinámicamente.
@@ -647,6 +654,7 @@ $(document).ready(function() {
             if (modalidad === "-") {
                 error = true;
                 jugadasConErrores.push(jugadaNumero);
+                // Opcional: Resaltar la modalidad si es necesario
             }
 
             // Validar montos según modalidad
@@ -853,15 +861,13 @@ $(document).ready(function() {
 
                 guardarJugadas(jugadasData, function(success) {
                     if (success) {
-                        window.print();
-                        ticketModal.hide();
-                        resetForm();
+                        console.log("Jugadas guardadas exitosamente en SheetDB.");
                     } else {
-                        // No mostrar alerta si falla el guardado
-                        window.print();
-                        ticketModal.hide();
-                        resetForm();
+                        console.error("Error al guardar las jugadas en SheetDB.");
                     }
+                    window.print();
+                    ticketModal.hide();
+                    resetForm();
                 });
 
             }).catch(error => {
@@ -877,27 +883,34 @@ $(document).ready(function() {
     });
 
     /**
-     * Guarda las jugadas en SheetDB.
+     * Guarda las jugadas en SheetDB usando Fetch API.
      * @param {Array} jugadasData - Array de objetos con datos de jugadas.
      * @param {Function} callback - Función a llamar después de intentar guardar.
      */
     function guardarJugadas(jugadasData, callback) {
         console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
-        $.ajax({
-            url: SHEETDB_API_URL,
-            method: "POST",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify({ data: jugadasData }),
-            success: function(response) {
-                console.log("Jugadas almacenadas en SheetDB:", response);
-                callback(true);
+        fetch(SHEETDB_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            error: function(err) {
-                console.error("Error al enviar datos a SheetDB:", err);
-                callback(false);
+            body: JSON.stringify({ data: jugadasData })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Jugadas almacenadas en SheetDB:", data);
+            callback(true);
+        })
+        .catch(error => {
+            console.error("Error al enviar datos a SheetDB:", error);
+            // Eliminado el alert para que el usuario no lo vea
+            callback(false);
         });
     }
 
