@@ -35,37 +35,37 @@ $(document).ready(function() {
     // Horarios de cierre por pista
     const horariosCierre = {
         "USA": {
-            "New York Mid Day": "14:25",
-            "New York Evening": "22:25",
+            "New York Mid Day": "14:20",
+            "New York Evening": "22:00",
             "Georgia Mid Day": "12:20",
-            "Georgia Evening": "18:45",
-            "New Jersey Mid Day": "12:54",
-            "New Jersey Evening": "22:50",
-            "Florida Mid Day": "13:25",
+            "Georgia Evening": "18:40",
+            "New Jersey Mid Day": "12:50",
+            "New Jersey Evening": "22:00",
+            "Florida Mid Day": "13:20",
             "Florida Evening": "21:30",
-            "Connecticut Mid Day": "13:35",
-            "Connecticut Evening": "22:20",
-            "Georgia Night": "23:20",
-            "Pensilvania AM": "12:55",
-            "Pensilvania PM": "18:20"
+            "Connecticut Mid Day": "13:30",
+            "Connecticut Evening": "22:00",
+            "Georgia Night": "22:00",
+            "Pensilvania AM": "12:45",
+            "Pensilvania PM": "18:15"
             // "Venezuela" está excluido aquí
         },
         "Santo Domingo": {
-            "Real": "12:45",
-            "Gana mas": "14:25",
-            "Loteka": "19:30",
-            "Nacional": "20:30", // Domingos a las 17:50
-            "Quiniela Pale": "20:30", // Domingos a las 15:30
-            "Primera Día": "11:50",
-            "Suerte Día": "12:20",
-            "Lotería Real": "12:50",
-            "Suerte Tarde": "17:50",
-            "Lotedom": "17:50",
-            "Primera Noche": "19:50",
+            "Real": "11:45",
+            "Gana mas": "13:25",
+            "Loteka": "18:30",
+            "Nacional": "19:30", // Domingos a las 17:50
+            "Quiniela Pale": "19:30", // Domingos a las 15:30
+            "Primera Día": "10:50",
+            "Suerte Día": "11:20",
+            "Lotería Real": "11:50",
+            "Suerte Tarde": "16:50",
+            "Lotedom": "16:50",
+            "Primera Noche": "18:50",
             "Panama": "16:00",
             // Horarios de cierre especiales para Domingos
-            "Quiniela Pale Domingo": "15:30",
-            "Nacional Domingo": "17:50"
+            "Quiniela Pale Domingo": "14:30",
+            "Nacional Domingo": "16:50"
         },
         "Venezuela": {
             "Venezuela": "19:00" // Asumiendo un horario de cierre para Venezuela
@@ -74,14 +74,14 @@ $(document).ready(function() {
 
     // Límites de apuesta por modo de juego
     const limitesApuesta = {
-        "Win 4": { "straight": 6, "box": 30, "combo": 50 },
-        "Peak 3": { "straight": 35, "box": 50, "combo": 70 },
+        "Win 4": { "straight": 6, "box": 30, "combo": 6 },
+        "Peak 3": { "straight": 35, "box": 50, "combo": 35 },
         "Venezuela": { "straight": 100 },
         "Venezuela-Pale": { "straight": 100 },
         "Pulito": { "straight": 100 },
         "RD-Quiniela": { "straight": 100 },
-        "RD-Pale": { "straight": 20 },
-        "Combo": { "combo": 50 }
+        "RD-Pale": { "straight": 20 }
+        
     };
 
     /**
