@@ -29,18 +29,18 @@ $(document).ready(function() {
     // Horarios de cierre por pista
     const horariosCierre = {
         "USA": {
-            "New York AM": "14:15",
-            "Georgia AM": "12:20",
-            "New Jersey AM": "12:50",
-            "Florida AM": "13:25",
-            "Connecticut AM": "13:30",
-            "Georgia Eve": "18:40",
-            "New York PM": "22:00",
-            "New Jersey PM": "22:00",
-            "Florida PM": "21:30",
-            "Connecticut PM": "22:00",
-            "Georgia Night": "22:00",
-            "Pensilvania AM": "12:50",
+            "New York Mid Day": "14:25",
+            "New York Evening": "22:25",
+            "Georgia Mid Day": "12:20",
+            "Georgia Evening": "18:45",
+            "New Jersey Mid Day": "12:54",
+            "New Jersey Evening": "22:50",
+            "Florida Mid Day": "13:25",
+            "Florida Evening": "21:30",
+            "Connecticut Mid Day": "13:35",
+            "Connecticut Evening": "22:20",
+            "Georgia Night": "23:20",
+            "Pensilvania AM": "12:55",
             "Pensilvania PM": "18:20"
             // "Venezuela" está excluido aquí
         },
@@ -129,7 +129,7 @@ $(document).ready(function() {
             return;
         }
         jugadaCount++;
-        const fila = `
+        const fila = 
             <tr>
                 <td>${jugadaCount}</td>
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
@@ -139,7 +139,7 @@ $(document).ready(function() {
                 <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
-        `;
+        ;
         $("#tablaJugadas").append(fila);
         guardarEstadoFormulario();
 
@@ -246,7 +246,7 @@ $(document).ready(function() {
      */
     function actualizarPlaceholders(modalidad, fila) {
         if (limitesApuesta[modalidad]) {
-            fila.find(".straight").attr("placeholder", `Max $${limitesApuesta[modalidad].straight}`).prop('disabled', false);
+            fila.find(".straight").attr("placeholder", Max $${limitesApuesta[modalidad].straight}).prop('disabled', false);
         } else {
             fila.find(".straight").attr("placeholder", "E.g., 5.00").prop('disabled', false);
         }
@@ -258,12 +258,12 @@ $(document).ready(function() {
             fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         } else if (modalidad === "Win 4" || modalidad === "Peak 3") {
-            fila.find(".box").attr("placeholder", `Max $${limitesApuesta[modalidad].box}`).prop('disabled', false);
-            fila.find(".combo").attr("placeholder", `Max $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
+            fila.find(".box").attr("placeholder", Max $${limitesApuesta[modalidad].box}).prop('disabled', false);
+            fila.find(".combo").attr("placeholder", Max $${limitesApuesta[modalidad].combo}).prop('disabled', false);
         } else if (modalidad === "Combo") { // Añadido
             fila.find(".straight").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
-            fila.find(".combo").attr("placeholder", `Max $${limitesApuesta.Combo.combo}`).prop('disabled', false);
+            fila.find(".combo").attr("placeholder", Max $${limitesApuesta.Combo.combo}).prop('disabled', false);
         } else {
             // Modo de juego no reconocido
             fila.find(".box").attr("placeholder", "E.g., 2.50").prop('disabled', false);
@@ -436,8 +436,8 @@ $(document).ready(function() {
 
                 const horas = cierreFinal.format("HH");
                 const minutos = cierreFinal.format("mm");
-                const horaLimite = `${horas}:${minutos}`;
-                $(this).text(`Cutoff Time: ${horaLimite}`);
+                const horaLimite = ${horas}:${minutos};
+                $(this).text(Cutoff Time: ${horaLimite});
             }
         });
         aumentarTamanoFuente();
@@ -534,7 +534,7 @@ $(document).ready(function() {
             $("#tablaJugadas").empty();
             estado.jugadas.forEach((jugada, index) => {
                 if (index >= 100) return; // Prevenir añadir más de 100 jugadas
-                const fila = `
+                const fila = 
                     <tr>
                         <td>${index + 1}</td>
                         <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
@@ -544,7 +544,7 @@ $(document).ready(function() {
                         <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00" value="${jugada.combo}"></td>
                         <td class="total">${jugada.total}</td>
                     </tr>
-                `;
+                ;
                 $("#tablaJugadas").append(fila);
             });
             jugadaCount = estado.jugadaCount;
@@ -611,7 +611,7 @@ $(document).ready(function() {
                         }
 
                         if (horaActual.isAfter(cierreFinal) || horaActual.isSame(cierreFinal)) {
-                            alert(`El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o una fecha futura.`);
+                            alert(El track "${track}" ya ha cerrado para hoy. Por favor, selecciona otro track o una fecha futura.);
                             return;
                         }
                     }
@@ -749,7 +749,7 @@ $(document).ready(function() {
         if (!jugadasValidas) {
             const jugadasUnicas = [...new Set(jugadasConErrores)];
             const jugadasTexto = jugadasUnicas.join(", ");
-            alert(`Hay errores en las siguientes jugadas: ${jugadasTexto}. Por favor, corrígelas antes de generar el ticket.`);
+            alert(Hay errores en las siguientes jugadas: ${jugadasTexto}. Por favor, corrígelas antes de generar el ticket.);
             return;
         }
 
@@ -765,7 +765,7 @@ $(document).ready(function() {
             const comboVal = $(this).find(".combo").val();
             const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
             const total = parseFloat($(this).find(".total").text()) || 0;
-            const fila = ` 
+            const fila =  
                 <tr>
                     <td>${$(this).find("td").first().text()}</td>
                     <td>${num}</td>
@@ -775,7 +775,7 @@ $(document).ready(function() {
                     <td>${combo !== "-" ? combo.toFixed(2) : "-"}</td>
                     <td>${total.toFixed(2)}</td>
                 </tr>
-            `;
+            ;
             $("#ticketJugadas").append(fila);
         });
         $("#ticketTotal").text($("#totalJugadas").text());
@@ -848,7 +848,7 @@ $(document).ready(function() {
                 const imgData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
                 link.href = imgData;
-                link.download = `ticket_${$("#numeroTicket").text()}.png`;
+                link.download = ticket_${$("#numeroTicket").text()}.png;
 
                 document.body.appendChild(link);
                 link.click();
@@ -899,7 +899,7 @@ $(document).ready(function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(HTTP error! Status: ${response.status});
             }
             return response.json();
         })
