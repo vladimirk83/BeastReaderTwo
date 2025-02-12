@@ -306,7 +306,6 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     color: #ffffff; /* Texto blanco */
     padding: 20px;
     border-radius: 10px;
-    /* Otros estilos necesarios */
     overflow-x: auto; /* Add horizontal scroll if necessary */
     max-width: 100%;
     overflow-y: visible; /* Asegurar que no haya scroll vertical */
@@ -358,7 +357,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 /* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
 #preTicket td {
     font-size: 0.9rem; /* Reducir a 14px */
-    padding: 6px; /* Reducir el padding */
+    padding: 6px;
 }
 
 /* Clase para resaltar campos duplicados */
@@ -382,21 +381,18 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 @media (max-width: 600px) {
     #preTicket table, #preTicket th, #preTicket td {
         font-size: 0.9rem; /* Ajustar a 14px para pantallas más pequeñas */
+        white-space: nowrap; /* Evitar salto de línea */
     }
-
     #preTicket {
         padding: 10px;
+        overflow-x: auto; /* Permite scroll horizontal si es más ancho */
     }
-
-    /* Ajustar tamaño del QR code */
     #qrcode {
         width: 100px;
         height: 100px;
     }
-
-    /* Ajustar tamaño de la fuente en encabezados y celdas */
     #preTicket th, #preTicket td {
-        font-size: 0.8rem; /* Reducir a 12.8px */
+        font-size: 0.8rem; /* Reducir a ~12.8px si gustas */
     }
 }
 
@@ -404,4 +400,33 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 #preTicket {
     max-width: 100%;
     overflow-x: auto;
+}
+
+/* =========================================
+   Ajuste 1: Mismo ancho para Straight, Box y Combo
+   ========================================= */
+#tablaJugadas input.straight,
+#tablaJugadas input.box,
+#tablaJugadas input.combo {
+    width: 70px;
+    min-width: 70px; 
+    /* Mismo tamaño para que se vean uniformes */
+}
+
+/* =========================================
+   Ajuste 2: Forzar formato amplio en móviles
+   Sobrescribimos las reglas de @media 
+   para evitar que se encoja demasiado
+   ========================================= */
+@media (max-width: 576px) {
+    #preTicket table {
+        font-size: 1rem !important; /* Mantener fuente más grande */
+        white-space: nowrap !important; /* No romper texto en celdas */
+    }
+    #preTicket th, #preTicket td {
+        padding: 0.5rem !important; 
+    }
+    #preTicket {
+        overflow-x: auto !important;
+    }
 }
