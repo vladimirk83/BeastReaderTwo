@@ -1,13 +1,13 @@
- // scripts.js
+// scripts.js
 
-// URL de tu API de SheetDB (Reemplaza con la tuya real si usas SheetDB)
+// URL de tu API de SheetDB (Reemplázala con la tuya real si usas SheetDB)
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 // Variables globales
 let fechaTransaccion = '';
 let jugadasData = [];
 let isProgrammaticReset = false;
-window.ticketDataUrl = null;  // Para guardar la imagen generada del ticket
+window.ticketDataUrl = null;  // Guardaremos la imagen generada del ticket (base64)
 
 // Inicializar Day.js con plugins
 dayjs.extend(dayjs_plugin_customParseFormat);
@@ -25,13 +25,13 @@ $(document).ready(function() {
             selectedDays = selectedDates.length;
             calcularTotal();
             guardarEstadoFormulario();
-            deshabilitarTracksPorHora();
+            deshabilitarTracksPorHora(); // Revisar habilitación de tracks
         },
     });
 
     let jugadaCount = 0;      // Conteo de jugadas en la tabla
-    let selectedTracks = 0;   // Conteo de tracks seleccionados (excluyendo "Venezuela")
-    let selectedDays = 0;     // Conteo de días seleccionados en Flatpickr
+    let selectedTracks = 0;   // Conteo de tracks (distintos de "Venezuela") para multiplicar
+    let selectedDays = 0;     // Conteo de días seleccionados
 
     // Horarios de cierre por pista
     const horariosCierre = {
@@ -49,7 +49,7 @@ $(document).ready(function() {
             "Georgia Night": "22:00",
             "Pensilvania AM": "12:45",
             "Pensilvania PM": "18:15",
-            // Nuevos tracks con mismas horas que NY Midday o Evening
+            // Nuevos tracks (Brooklyn/Front) con horas equivalentes
             "Brooklyn Midday": "14:20",
             "Brooklyn Evening": "22:00",
             "Front Midday": "14:20",
@@ -68,31 +68,31 @@ $(document).ready(function() {
             "Lotedom": "16:50",
             "Primera Noche": "18:50",
             "Panama": "16:00",
-            // Ejemplo de horarios de cierre para domingos:
+            // Ej. cierres para domingos
             "Quiniela Pale Domingo": "14:30",
             "Nacional Domingo": "16:50"
         },
         "Venezuela": {
-            "Venezuela": "19:00" 
+            // Venezuela siempre abierto => ignoramos su horario
+            "Venezuela": "00:00" 
         }
     };
 
     // Límites de apuesta por modo de juego
     const limitesApuesta = {
-        "Win 4":      { "straight": 6,  "box": 30, "combo": 6 },
-        "Pick 3":     { "straight": 35, "box": 50, "combo": 35 },
-        "Venezuela":  { "straight": 100 },
-        "Venezuela-Pale": { "straight": 100 },
-        "Pulito":     { "straight": 100 },
-        "RD-Quiniela":{ "straight": 100 },
-        "RD-Pale":    { "straight": 20 }
+        "Win 4":           { "straight": 6,  "box": 30, "combo": 6 },
+        "Pick 3":          { "straight": 35, "box": 50, "combo": 35 },
+        "Venezuela":       { "straight": 100 },
+        "Venezuela-Pale":  { "straight": 100 },
+        "Pulito":          { "straight": 100 },
+        "RD-Quiniela":     { "straight": 100 },
+        "RD-Pale":         { "straight": 20 }
     };
 
+    // ------------------ Lógica de Modalidad ------------------
+
     /**
-     * Determina el modo de juego según pistas seleccionadas y número apostado.
-     * @param {Array} tracks - Array de pistas seleccionadas.
-     * @param {String} numero - Número de jugada.
-     * @param {jQuery} fila - Fila de la jugada.
+     * Determina el modo de juego según los tracks y el número.
      */
     function determinarModalidad(tracks, numero, fila) {
         let modalidad = "-";
@@ -102,7 +102,8 @@ $(document).ready(function() {
         const incluyeVenezuela = tracks.includes("Venezuela");
 
         const longitud = numero.length;
-        const boxValue = parseInt(fila.find(".box").val()) || 0;
+        // NOTA: En Pulito, el "box" ya no es un solo valor sino una lista de posiciones (1,2,3).
+        // Aun así, para otras modalidades seguimos la lógica anterior:
 
         // Venezuela + USA
         if (incluyeVenezuela && esUSA) {
@@ -117,8 +118,9 @@ $(document).ready(function() {
             if (longitud === 4) {
                 modalidad = "Win 4";
             } else if (longitud === 3) {
-                modalidad = "Pick 3"; // <--- Renombrado correcto
-            } else if (longitud === 2 && [1, 2, 3].includes(boxValue)) {
+                modalidad = "Pick 3"; 
+            } else if (longitud === 2) {
+                // Podría ser Pulito
                 modalidad = "Pulito";
             }
         }
@@ -134,11 +136,12 @@ $(document).ready(function() {
         return modalidad;
     }
 
+    // ------------------ Funciones para Manejo de Jugadas ------------------
+
     /**
-     * Agrega una nueva jugada, hasta un máximo de 25.
+     * Agrega una nueva jugada, máximo 25.
      */
     function agregarJugada() {
-        // Límite 25 jugadas
         if (jugadaCount >= 25) {
             alert("Has alcanzado el máximo de 25 jugadas.");
             return;
@@ -150,43 +153,43 @@ $(document).ready(function() {
                 <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required></td>
                 <td class="tipoJuego">-</td>
                 <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" placeholder="E.g., 5"></td>
-                <td><input type="number" class="form-control box" min="1" max="3" step="1" placeholder="1, 2 o 3"></td>
+                <!-- 
+                   Pulito: box no será un solo valor sino múltiples (1, 2, 3).
+                   Aun así, dejamos el input para que el usuario ponga, p.ej: "1,2" 
+                -->
+                <td><input type="text" class="form-control box" placeholder="1, 2, o 1,2,3..."></td>
                 <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" placeholder="E.g., 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
         `;
         $("#tablaJugadas").append(fila);
         guardarEstadoFormulario();
-
-        // Foco en el número apostado
+        // Foco en el número
         $("#tablaJugadas tr:last .numeroApostado").focus();
     }
 
-    // Agregar jugada inicial
+    // Agregamos una jugada inicial al cargar
     agregarJugada();
 
     /**
-     * Calcula el total de todas las jugadas (multiplicado por tracks y días).
+     * Calcula el total general de todas las jugadas (multiplicado por tracks y días).
      */
     function calcularTotal() {
         let total = 0;
         $(".total").each(function() {
             total += parseFloat($(this).text()) || 0;
         });
-
-        // Sin días seleccionados => total 0
         if (selectedDays === 0) {
             total = 0;
         } else {
             total = (total * selectedTracks * selectedDays).toFixed(2);
         }
-
         $("#totalJugadas").text(total);
         guardarEstadoFormulario();
     }
 
     /**
-     * Calcula el total de una jugada específica.
+     * Calcula el total para una jugada individual.
      */
     function calcularTotalJugada(fila) {
         const modalidad = fila.find(".tipoJuego").text();
@@ -198,14 +201,19 @@ $(document).ready(function() {
 
         const combinaciones = calcularCombinaciones(numero);
         let straight = parseFloat(fila.find(".straight").val()) || 0;
-        let box = parseFloat(fila.find(".box").val()) || 0;
+        // box es un input de texto (especial para Pulito)
+        let boxVal = fila.find(".box").val().trim();
         let combo = parseFloat(fila.find(".combo").val()) || 0;
 
         // Aplicar límites
         if (limitesApuesta[modalidad]) {
             straight = Math.min(straight, limitesApuesta[modalidad].straight || straight);
             if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito") {
-                box = Math.min(box, limitesApuesta[modalidad].box || box);
+                // Si no es Pulito, interpretamos box como num. (Pero ya no es typical)
+                // Aun así, dejamos la lógica original: 
+                let numericBox = parseFloat(boxVal) || 0;
+                numericBox = Math.min(numericBox, limitesApuesta[modalidad].box || numericBox);
+                boxVal = numericBox; 
             }
             if (limitesApuesta[modalidad].combo !== undefined) {
                 combo = Math.min(combo, limitesApuesta[modalidad].combo || combo);
@@ -214,14 +222,37 @@ $(document).ready(function() {
 
         let total = 0;
         if (modalidad === "Pulito") {
-            total = straight; // no se suma box ni combo
-        } else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
+            // Para Pulito, interpretamos boxVal como una lista de posiciones: "1,2,3"
+            // Cada posición => multiplicar straight. O sea, si inserta 1 => 1 pos, 1,2 => 2 pos, etc.
+            if (boxVal) {
+                const posicionesArray = boxVal.split(",").map(item => item.trim()).filter(Boolean); 
+                // Validamos que cada item sea "1", "2", o "3"
+                const valid = posicionesArray.every(pos => ["1","2","3"].includes(pos));
+                if (!valid) {
+                    // Si no es válido, lo tomamos como 0
+                    fila.find(".total").text("0.00");
+                    return;
+                }
+                // Cantidad de posiciones
+                const cantPosiciones = posicionesArray.length;
+                total = straight * cantPosiciones;
+            } else {
+                // Si no hay nada en boxVal => 0
+                total = 0;
+            }
+        }
+        else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
             total = straight;
-        } else if (modalidad === "Win 4" || modalidad === "Pick 3") {
-            total = straight + box + (combo * combinaciones);
-        } else {
-            // Otros
-            total = straight + box + combo;
+        }
+        else if (modalidad === "Win 4" || modalidad === "Pick 3") {
+            // boxVal = un number => parse Float
+            let numericBox = parseFloat(boxVal) || 0;
+            total = straight + numericBox + (combo * combinaciones);
+        }
+        else {
+            // Modo no reconocido o "Combo"
+            let numericBox = parseFloat(boxVal) || 0;
+            total = straight + numericBox + combo;
         }
 
         fila.find(".total").text(total.toFixed(2));
@@ -229,14 +260,14 @@ $(document).ready(function() {
     }
 
     /**
-     * Calcula combinaciones posibles para combos (ej. 122 => 3 combinaciones).
+     * Calcula combinaciones (para combos) según dígitos repetidos.
      */
     function calcularCombinaciones(numero) {
         const counts = {};
         for (let char of numero) {
             counts[char] = (counts[char] || 0) + 1;
         }
-        const factorial = (n) => (n <= 1 ? 1 : n * factorial(n - 1));
+        let factorial = (n) => (n <= 1 ? 1 : n * factorial(n - 1));
         let totalDigits = numero.length;
         let denominator = 1;
         for (let digit in counts) {
@@ -246,7 +277,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Actualiza placeholders según modalidad.
+     * Actualiza placeholders según la modalidad detectada.
      */
     function actualizarPlaceholders(modalidad, fila) {
         if (limitesApuesta[modalidad]) {
@@ -256,28 +287,36 @@ $(document).ready(function() {
         }
 
         if (modalidad === "Pulito") {
-            fila.find(".box").attr("placeholder", "1, 2 o 3").prop('disabled', false);
+            // Para Pulito, el "box" es un campo de texto con posiciones (1,2,3)
+            fila.find(".box")
+                .attr("placeholder", "Ej: 1,2,3")
+                .prop('disabled', false);
             fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         }
         else if (modalidad === "Venezuela" || modalidad.startsWith("RD-")) {
+            // Se deshabilita box y combo
             fila.find(".box").attr("placeholder", "No aplica").prop('disabled', true).val('');
             fila.find(".combo").attr("placeholder", "No aplica").prop('disabled', true).val('');
         }
         else if (modalidad === "Win 4" || modalidad === "Pick 3") {
-            fila.find(".box").attr("placeholder", `Max $${limitesApuesta[modalidad].box}`).prop('disabled', false);
-            fila.find(".combo").attr("placeholder", `Max $${limitesApuesta[modalidad].combo}`).prop('disabled', false);
+            fila.find(".box")
+                .attr("placeholder", `Max $${limitesApuesta[modalidad].box}`)
+                .prop('disabled', false);
+            fila.find(".combo")
+                .attr("placeholder", `Max $${limitesApuesta[modalidad].combo}`)
+                .prop('disabled', false);
         }
         else {
-            // Otros o no reconocido
-            fila.find(".box").prop('disabled', false);
-            fila.find(".combo").prop('disabled', false);
+            // Otros
+            fila.find(".box").attr("placeholder", "E.g., 2").prop('disabled', false);
+            fila.find(".combo").attr("placeholder", "E.g., 3.00").prop('disabled', false);
         }
 
         guardarEstadoFormulario();
     }
 
     /**
-     * Resalta números duplicados (para detectar jugadas repetidas).
+     * Resalta números apostados duplicados.
      */
     function resaltarDuplicados() {
         const camposNumeros = $('.numeroApostado');
@@ -307,7 +346,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Resetea el formulario entero a su estado inicial.
+     * Resetea el formulario completamente.
      */
     function resetForm() {
         isProgrammaticReset = true;
@@ -316,8 +355,8 @@ $(document).ready(function() {
         jugadaCount = 0;
         selectedTracks = 0;
         selectedDays = 0;
-        window.ticketDataUrl = null; // limpiar imagen
-        agregarJugada(); // Agrega la primera jugada por defecto
+        window.ticketDataUrl = null; 
+        agregarJugada();
         $("#totalJugadas").text("0.00");
         mostrarHorasLimite();
         resaltarDuplicados();
@@ -326,14 +365,14 @@ $(document).ready(function() {
         isProgrammaticReset = false;
     }
 
-    // -------------------- EVENTOS DEL DOM ----------------------------
+    // ------------------ Eventos del DOM ------------------
 
-    // Botón "Agregar Jugada"
+    // Botón Agregar Jugada
     $("#agregarJugada").click(function() {
         agregarJugada();
     });
 
-    // Botón "Eliminar" (quita la última jugada)
+    // Botón Eliminar jugada (última fila)
     $("#eliminarJugada").click(function() {
         if (jugadaCount === 0) {
             alert("No hay jugadas para eliminar.");
@@ -341,49 +380,49 @@ $(document).ready(function() {
         }
         $("#tablaJugadas tr:last").remove();
         jugadaCount--;
-        // Renumerar
+        // Reenumerar filas
         $("#tablaJugadas tr").each(function(index) {
             $(this).find("td:first").text(index + 1);
         });
         calcularTotal();
     });
 
-    // Botón "Resetear Formulario"
+    // Botón Reset Form
     $("#resetForm").click(function() {
         if (confirm("¿Estás seguro de que deseas resetear el formulario? Se eliminarán todas las jugadas.")) {
             resetForm();
         }
     });
 
-    // Cambios en campos dinámicos (numero, straight, box, combo)
+    // Delegación de eventos para actualizar jugadas
     $("#tablaJugadas").on("input", ".numeroApostado, .straight, .box, .combo", function() {
         const fila = $(this).closest("tr");
         const num = fila.find(".numeroApostado").val();
         const tracks = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
         const modalidad = determinarModalidad(tracks, num, fila);
-
         fila.find(".tipoJuego").text(modalidad);
         actualizarPlaceholders(modalidad, fila);
         calcularTotalJugada(fila);
         resaltarDuplicados();
     });
 
-    // Cambio de selección de tracks
+    // Delegación de eventos para checkboxes de tracks
     $(".track-checkbox").change(function() {
         const tracksSeleccionados = $(".track-checkbox:checked").map(function() { return $(this).val(); }).get();
-        // "Venezuela" no cuenta en el multiplicador
+        // "Venezuela" no cuenta para multiplicar
         selectedTracks = tracksSeleccionados.filter(track => track !== "Venezuela").length || 1;
         calcularTotal();
         deshabilitarTracksPorHora();
     });
 
-    // Inicializar el modal (Bootstrap)
+    // ------------------ Modal & Ticket ------------------
+
     const ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
 
-    // ----------------------- LOGICA DE HORARIOS Y CORTE ---------------------
+    // ------------------ Horarios y Habilitación de Tracks ------------------
 
     /**
-     * Devuelve la hora-límite de un track. 
+     * Retorna la hora-límite de un track.
      */
     function obtenerHoraLimite(track) {
         for (let region in horariosCierre) {
@@ -400,16 +439,16 @@ $(document).ready(function() {
     }
 
     /**
-     * Muestra en pantalla la hora de corte para cada track. 
-     * - Si supera las 21:30 => Forzamos a 22:00 sin restar 10 min
-     * - Si no supera => restamos 10 min
+     * Muestra las horas de corte en pantalla, salvo que para "Venezuela" no aplique.
+     * - Si pasa 21:30 => se fuerza 22:00
+     * - Si no pasa => se resta 10 minutos
      */
     function mostrarHorasLimite() {
         $(".cutoff-time").each(function() {
             const track = $(this).data("track");
+            // Para "Venezuela" ocultamos o ignoramos
             if (track === 'Venezuela') {
-                // ocultar para Venezuela
-                $(this).hide();
+                // ya en CSS está oculto, no asignamos
                 return;
             }
             let cierreStr = "";
@@ -423,15 +462,13 @@ $(document).ready(function() {
             if (cierreStr) {
                 let cierreOriginal = dayjs(cierreStr, "HH:mm");
                 let cierreFinal;
-
-                // Si pasa de 21:30 => 22:00 en punto
+                // Si pasa de 21:30 => 22:00
                 if (cierreOriginal.isAfter(dayjs("21:30", "HH:mm"))) {
                     cierreFinal = dayjs("22:00", "HH:mm");
                 } else {
-                    // De lo contrario => restar 10 minutos
+                    // restar 10 min
                     cierreFinal = cierreOriginal.subtract(10, 'minute');
                 }
-
                 const horas = cierreFinal.format("HH");
                 const minutos = cierreFinal.format("mm");
                 const horaLimite = `${horas}:${minutos}`;
@@ -442,7 +479,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Verifica si el usuario incluyó la fecha de HOY en la selección.
+     * Verifica si el usuario incluye la fecha de hoy en el Flatpickr.
      */
     function usuarioIncluyeHoy() {
         const hoy = dayjs().startOf('day');
@@ -461,10 +498,10 @@ $(document).ready(function() {
     }
 
     /**
-     * Deshabilita/habilita tracks según la hora real y su cutoff.
+     * Deshabilita tracks según la hora real, excepto "Venezuela".
      */
     function deshabilitarTracksPorHora() {
-        // Si NO incluye hoy, no deshabilitamos nada
+        // Si no incluye hoy, habilitamos todo
         if (!usuarioIncluyeHoy()) {
             habilitarTodasLasPistas();
             return;
@@ -473,16 +510,19 @@ $(document).ready(function() {
         const ahora = dayjs();
         $(".track-checkbox").each(function() {
             const track = $(this).val();
+            // Excepción: "Venezuela" siempre abierto
+            if (track === "Venezuela") {
+                // no se deshabilita
+                return;
+            }
             const horaLimiteStr = obtenerHoraLimite(track);
             if (horaLimiteStr) {
                 let cierreOriginal = dayjs(horaLimiteStr, "HH:mm");
                 let cierreFinal;
-
-                // Si supera 21:30 => 22:00
+                // si > 21:30 => 22:00
                 if (cierreOriginal.isAfter(dayjs("21:30", "HH:mm"))) {
                     cierreFinal = dayjs("22:00", "HH:mm");
                 } else {
-                    // Resta 10 min
                     cierreFinal = cierreOriginal.subtract(10, 'minute');
                 }
 
@@ -494,7 +534,7 @@ $(document).ready(function() {
                         'cursor': 'not-allowed',
                         'font-size': '1.125rem'
                     });
-                    // Mostrar 22:00 si superaba 21:30
+                    // Cambiar texto
                     if (cierreOriginal.isAfter(dayjs("21:30", "HH:mm"))) {
                         $(this).closest('.form-check').find('.cutoff-time').text("Cutoff Time: 22:00");
                     }
@@ -514,7 +554,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Habilita todas las pistas (usado cuando no es HOY).
+     * Habilita todas las pistas (caso no-hoy).
      */
     function habilitarTodasLasPistas() {
         $(".track-checkbox").each(function() {
@@ -527,10 +567,10 @@ $(document).ready(function() {
         });
     }
 
-    // ----------------------- GUARDADO/RECUPERACIÓN DE ESTADO ---------------------------
+    // ------------------ Guardar y Cargar Estado (localStorage) ------------------
 
     /**
-     * Guarda el estado del formulario en localStorage.
+     * Guarda estado en localStorage.
      */
     function guardarEstadoFormulario() {
         const estado = {
@@ -562,7 +602,7 @@ $(document).ready(function() {
     }
 
     /**
-     * Carga el estado del formulario desde localStorage.
+     * Carga estado desde localStorage.
      */
     function cargarEstadoFormulario() {
         const estado = JSON.parse(localStorage.getItem('estadoFormulario'));
@@ -574,7 +614,7 @@ $(document).ready(function() {
 
             $("#tablaJugadas").empty();
 
-            // Cargar jugadas sin exceder 25
+            // Cargar jugadas sin pasar de 25
             estado.jugadas.forEach((jugada, index) => {
                 if (index >= 25) return;
                 const fila = `
@@ -583,7 +623,7 @@ $(document).ready(function() {
                         <td><input type="number" class="form-control numeroApostado" min="0" max="9999" required value="${jugada.numeroApostado}"></td>
                         <td class="tipoJuego">${jugada.tipoJuego}</td>
                         <td><input type="number" class="form-control straight" min="0" max="100.00" step="1" value="${jugada.straight}"></td>
-                        <td><input type="number" class="form-control box" min="1" max="3" step="1" value="${jugada.box}"></td>
+                        <td><input type="text" class="form-control box" value="${jugada.box}"></td>
                         <td><input type="number" class="form-control combo" min="0" max="50.00" step="0.10" value="${jugada.combo}"></td>
                         <td class="total">${jugada.total}</td>
                     </tr>
@@ -591,7 +631,6 @@ $(document).ready(function() {
                 $("#tablaJugadas").append(fila);
             });
 
-            // Ajustar jugadaCount si localStorage traía más de 25
             if (jugadaCount > 25) {
                 jugadaCount = 25;
             }
@@ -603,7 +642,7 @@ $(document).ready(function() {
         }
     }
 
-    // Cargar al inicio
+    // Cargar estado al iniciar
     cargarEstadoFormulario();
 
     // Evitar reset no deseado
@@ -613,7 +652,7 @@ $(document).ready(function() {
         }
     });
 
-    // -------------------- GENERAR TICKET (Modal) ----------------------
+    // ------------------ Generar Ticket y Modal ------------------
 
     // Botón "Generar Ticket"
     $("#generarTicket").click(function() {
@@ -628,23 +667,23 @@ $(document).ready(function() {
             return;
         }
 
-        // Verificar que si está "Venezuela", haya uno de USA
+        // Si incluye Venezuela, verificar que haya al menos un track USA
         const tracksUSASeleccionados = tracks.filter(track => Object.keys(horariosCierre.USA).includes(track));
         if (tracks.includes("Venezuela") && tracksUSASeleccionados.length === 0) {
             alert("Para jugar en 'Venezuela', debes seleccionar al menos un track de USA además de 'Venezuela'.");
             return;
         }
 
-        // Validar hora de corte si la fecha incluye HOY
+        // Validar horario si es HOY
         const fechasArray = fecha.split(", ");
         const fechaActual = dayjs().startOf('day');
         for (let fechaSeleccionadaStr of fechasArray) {
             const [monthSel, daySel, yearSel] = fechaSeleccionadaStr.split('-').map(Number);
             const fechaSeleccionada = dayjs(new Date(yearSel, monthSel - 1, daySel));
-
             if (fechaSeleccionada.isSame(fechaActual, 'day')) {
                 const horaActual = dayjs();
                 for (let track of tracks) {
+                    // Omite "Venezuela" pues siempre abierto
                     if (track === 'Venezuela') continue;
 
                     const horaLimiteStr = obtenerHoraLimite(track);
@@ -710,19 +749,28 @@ $(document).ready(function() {
                 }
 
                 if (modalidad === "Pulito") {
-                    const boxVal = parseInt(box);
-                    if (![1, 2, 3].includes(boxVal)) {
+                    // Verificar el box de posiciones
+                    // Si no escribió nada => no es válido (porque requiere al menos 1 pos?)
+                    if (!box) {
                         error = true;
                         jugadasConErrores.push(jugadaNumero);
                         $(this).find(".box").addClass('error-field');
                     } else {
-                        $(this).find(".box").removeClass('error-field');
+                        // Verificar que cada item sea 1,2,3
+                        const posArray = box.split(",").map(v => v.trim()).filter(Boolean);
+                        const valid = posArray.every(pos => ["1","2","3"].includes(pos));
+                        if (!valid) {
+                            error = true;
+                            jugadasConErrores.push(jugadaNumero);
+                            $(this).find(".box").addClass('error-field');
+                        } else {
+                            $(this).find(".box").removeClass('error-field');
+                        }
                     }
                 }
             } else if (["Win 4", "Pick 3"].includes(modalidad)) {
-                // Necesita al menos un monto > 0
-                if ((!straight || parseFloat(straight) <= 0) && 
-                    (!box || parseFloat(box) <= 0) && 
+                if ((!straight || parseFloat(straight) <= 0) &&
+                    (!box || parseFloat(box) <= 0) &&
                     (!combo || parseFloat(combo) <= 0)) {
                     error = true;
                     jugadasConErrores.push(jugadaNumero);
@@ -742,14 +790,14 @@ $(document).ready(function() {
                 }
             }
 
-            // Aplicar límites
+            // Aplicar límites (ver si straight > max, etc.)
             if (limitesApuesta[modalidad]) {
                 if (straight && parseFloat(straight) > (limitesApuesta[modalidad].straight || Infinity)) {
                     error = true;
                     jugadasConErrores.push(jugadaNumero);
                     $(this).find(".straight").addClass('error-field');
                 }
-
+                // box
                 if (limitesApuesta[modalidad].box !== undefined && modalidad !== "Pulito") {
                     if (box && parseFloat(box) > (limitesApuesta[modalidad].box || Infinity)) {
                         error = true;
@@ -757,7 +805,7 @@ $(document).ready(function() {
                         $(this).find(".box").addClass('error-field');
                     }
                 }
-
+                // combo
                 if (limitesApuesta[modalidad].combo !== undefined) {
                     if (combo && parseFloat(combo) > (limitesApuesta[modalidad].combo || Infinity)) {
                         error = true;
@@ -770,6 +818,7 @@ $(document).ready(function() {
             if (error) {
                 jugadasValidas = false;
             } else {
+                // Si no hay error, la jugada se agrega a jugadasData
                 jugadasData.push({
                     "Ticket Number": numeroTicket,
                     "Transaction DateTime": fechaTransaccion,
@@ -778,8 +827,8 @@ $(document).ready(function() {
                     "Bet Number": numero,
                     "Game Mode": modalidad,
                     "Straight ($)": straight ? parseFloat(straight).toFixed(2) : "",
-                    "Box ($)": box && box !== "-" ? box : "",
-                    "Combo ($)": combo && combo !== "-" ? parseFloat(combo).toFixed(2) : "",
+                    "Box ($)": box ? box : "",
+                    "Combo ($)": combo ? parseFloat(combo).toFixed(2) : "",
                     "Total ($)": parseFloat(total).toFixed(2),
                     "Jugada Number": generarNumeroUnico(),
                     "Timestamp": dayjs().toISOString()
@@ -801,31 +850,30 @@ $(document).ready(function() {
         $("#tablaJugadas tr").each(function() {
             const num = $(this).find(".numeroApostado").val();
             const modalidad = $(this).find(".tipoJuego").text();
-            const straight = parseFloat($(this).find(".straight").val()) || 0;
-            const boxVal = $(this).find(".box").val();
-            const box = boxVal !== "" ? boxVal : "-";
-            const comboVal = $(this).find(".combo").val();
-            const combo = comboVal !== "" ? parseFloat(comboVal) : "-";
-            const total = parseFloat($(this).find(".total").text()) || 0;
+            const straightVal = parseFloat($(this).find(".straight").val()) || 0;
+            const boxVal = $(this).find(".box").val() || "-";
+            const comboVal = parseFloat($(this).find(".combo").val()) || 0;
+            const totalVal = parseFloat($(this).find(".total").text()) || 0;
 
             const fila = `
                 <tr>
                     <td>${$(this).find("td").first().text()}</td>
                     <td>${num}</td>
                     <td>${modalidad}</td>
-                    <td>${straight.toFixed(2)}</td>
-                    <td>${box !== "-" ? box : "-"}</td>
-                    <td>${combo !== "-" ? combo.toFixed(2) : "-"}</td>
-                    <td>${total.toFixed(2)}</td>
+                    <td>${straightVal.toFixed(2)}</td>
+                    <td>${boxVal !== "-" ? boxVal : "-"}</td>
+                    <td>${comboVal > 0 ? comboVal.toFixed(2) : "-"}</td>
+                    <td>${totalVal.toFixed(2)}</td>
                 </tr>
             `;
             $("#ticketJugadas").append(fila);
         });
+
         $("#ticketTotal").text($("#totalJugadas").text());
         $("#ticketTransaccion").text(fechaTransaccion);
         $("#numeroTicket").text(numeroTicket);
 
-        // Ajustar estilo del modal
+        // Ajustar estilo
         $(".modal-dialog").removeClass("modal-lg").addClass("modal-xl");
         const $preTicket = $("#preTicket");
         $preTicket.css({
@@ -863,7 +911,7 @@ $(document).ready(function() {
             overflowY: $(ticketElement).css("overflow-y")
         };
 
-        // Expandir para capturar con html2canvas
+        // Expandir para capturar
         $(ticketElement).css({
             "width": "auto",
             "height": "auto",
@@ -872,13 +920,12 @@ $(document).ready(function() {
         });
 
         setTimeout(() => {
-            // Aumentar scale a 4 para mayor resolución
+            // Aumentamos scale a 4 para mayor nitidez
             html2canvas(ticketElement, { scale: 4 }).then(canvas => {
-                // Guardar base64
                 const imgData = canvas.toDataURL("image/png");
                 window.ticketDataUrl = imgData;
 
-                // Descargar la imagen
+                // Descargar
                 const link = document.createElement('a');
                 link.href = imgData;
                 link.download = `ticket_${$("#numeroTicket").text()}.png`;
@@ -897,13 +944,13 @@ $(document).ready(function() {
                     }
                     // Imprimir
                     window.print();
-                    // Mostrar el botón de compartir
+                    // Mostrar botón de compartir
                     $("#shareTicket").removeClass("d-none");
                 });
 
             }).catch(error => {
                 console.error("Error al capturar el ticket:", error);
-                alert("Hubo un problema al generar el ticket. Por favor, intenta de nuevo.");
+                alert("Hubo un problema al generar el ticket. Por favor, inténtalo de nuevo.");
             }).finally(() => {
                 // Restaurar estilos
                 $(ticketElement).css(originalStyles);
@@ -912,12 +959,13 @@ $(document).ready(function() {
         }, 500);
     });
 
-    // Botón "Compartir Ticket" (Web Share API con archivos)
+    // Botón "Compartir Ticket"
     $("#shareTicket").click(async function() {
         if (!window.ticketDataUrl) {
             alert("No hay imagen de ticket generada para compartir.");
             return;
         }
+        // Web Share API
         if (navigator.canShare) {
             try {
                 const response = await fetch(window.ticketDataUrl);
@@ -942,11 +990,8 @@ $(document).ready(function() {
         }
     });
 
-    // -------------------- GUARDAR JUGADAS EN SHEETDB -----------------
+    // ------------------ Guardar Jugadas en SheetDB ------------------
 
-    /**
-     * Guarda las jugadas en SheetDB (o la API que uses).
-     */
     function guardarJugadas(jugadasData, callback) {
         console.log("Enviando jugadasData a SheetDB:", JSON.stringify(jugadasData));
 
@@ -980,10 +1025,10 @@ $(document).ready(function() {
         return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
-    // Al cargar la página
+    // Al cargar
     mostrarHorasLimite();
     deshabilitarTracksPorHora();
 
-    // Revisar cada minuto si la hora cambia
+    // Revisar cada minuto si la hora cambia (para deshabilitar tracks si aplica).
     setInterval(deshabilitarTracksPorHora, 60000);
 });
