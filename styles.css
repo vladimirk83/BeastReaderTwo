@@ -39,7 +39,7 @@ h2 {
     margin-bottom: 20px;
     color: var(--color-neon-cian);
     text-shadow: 0 0 10px var(--color-neon-cian);
-    font-size: 1.125rem; /* Ajustar tamaño de fuente a 18px (1.125rem aprox.) */
+    font-size: 1.125rem; /* Ajustar tamaño de fuente a ~18px (1.125rem) */
 }
 
 /* Selección de Fecha */
@@ -57,7 +57,7 @@ h2 {
 /* Selección de Tracks */
 .form-check-label {
     color: var(--color-texto);
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* Aumentar tamaño de fuente a ~18px */
 }
 
 /* Estilos del Accordion */
@@ -66,7 +66,7 @@ h2 {
     color: var(--color-texto-acordeon);
     border: 2px solid var(--color-neon-cian);
     transition: background-color 0.3s, color 0.3s;
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* ~18px */
 }
 
 .accordion-button:not(.collapsed) {
@@ -100,7 +100,7 @@ h2 {
 
 /* Indicador de Hora Límite */
 .cutoff-time {
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* ~18px */
     color: #aaaaaa; /* Color tenue */
 }
 
@@ -117,11 +117,11 @@ h2 {
     background-color: #1e1e1e;
     color: var(--color-neon-cian);
     text-shadow: 0 0 5px var(--color-neon-cian);
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* ~18px */
 }
 
 .table-dark td {
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* ~18px */
 }
 
 /* Botones */
@@ -131,7 +131,7 @@ h2 {
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    font-size: 1.125rem; /* ~18px */
 }
 
 .btn-primary {
@@ -249,7 +249,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
     .btn {
         padding: 8px 16px;
-        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+        font-size: 1.125rem; /* ~18px */
     }
 
     .table-responsive {
@@ -257,15 +257,15 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     }
 
     .accordion-button {
-        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+        font-size: 1.125rem; 
     }
 
     .cutoff-time {
-        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+        font-size: 1.125rem; 
     }
 
     .form-check-label {
-        font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+        font-size: 1.125rem; 
     }
 }
 
@@ -314,31 +314,31 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 #preTicket h4 {
     color: #00ffff; /* Color de título */
     text-shadow: 0 0 5px #00ffff;
-    font-size: 1.5rem; /* Aumentar tamaño de fuente a 24px */
+    font-size: 1.5rem; /* ~24px */
 }
 
 /* Tabla del Ticket */
 #preTicket table {
     background-color: #1e1e1e;
-    width: 100%; /* Ensure table takes full width */
-    table-layout: fixed; /* Fix table layout to prevent overflow */
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a 18px */
+    width: 100%;
+    table-layout: fixed; /* Previene overflow excesivo */
+    font-size: 1.125rem; 
 }
 
 #preTicket th, #preTicket td {
     border: 1px solid #00ffff;
     color: #ffffff;
-    padding: 6px; /* Reducir el padding para ahorrar espacio */
-    word-wrap: break-word; /* Prevent long words from overflowing */
-    font-size: 0.9rem; /* Reducir tamaño de fuente a 14px */
-    white-space: nowrap; /* Evitar que el texto se apile */
-    overflow: hidden; /* Ocultar el texto que se desborda */
-    text-overflow: ellipsis; /* Mostrar puntos suspensivos si el texto es demasiado largo */
+    padding: 6px; 
+    word-wrap: break-word; 
+    font-size: 0.9rem; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
 }
 
 /* Ajustar Anchos de las Columnas en el Ticket */
 #preTicket th:nth-child(1) { /* Número de Jugada */
-    width: 10%; /* Suficiente para 3 caracteres */
+    width: 10%; 
 }
 
 #preTicket th:nth-child(2), /* Bet Number */
@@ -347,7 +347,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 #preTicket th:nth-child(6), /* Combo ($) */
 #preTicket th:nth-child(7)  /* Total ($) */
 {
-    width: 12%; /* Ajustar según sea necesario */
+    width: 12%; 
 }
 
 #preTicket th:nth-child(3) { /* Modalidad */
@@ -356,20 +356,20 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
 /* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
 #preTicket td {
-    font-size: 0.9rem; /* Reducir a 14px */
+    font-size: 0.9rem;
     padding: 6px;
 }
 
 /* Clase para resaltar campos duplicados */
 .duplicado {
-    background-color: #ffff99; /* Fondo amarillo claro */
-    border: 2px solid #ffeb3b; /* Borde amarillo más oscuro */
+    background-color: #ffff99; 
+    border: 2px solid #ffeb3b;
 }
 
 /* Clase para resaltar campos con errores */
 .error-field {
-    background-color: var(--color-neon-morado) !important; /* Fondo morado brillante */
-    border: 2px solid var(--color-neon-cian) !important; /* Borde cian para destacar */
+    background-color: var(--color-neon-morado) !important; 
+    border: 2px solid var(--color-neon-cian) !important; 
 }
 
 /* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
@@ -380,48 +380,48 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 /* Responsividad Mejorada para el Ticket */
 @media (max-width: 600px) {
     #preTicket table, #preTicket th, #preTicket td {
-        font-size: 0.9rem; /* Ajustar a 14px para pantallas más pequeñas */
-        white-space: nowrap; /* Evitar salto de línea */
+        font-size: 0.9rem; 
+        white-space: nowrap;
     }
     #preTicket {
         padding: 10px;
-        overflow-x: auto; /* Permite scroll horizontal si es más ancho */
+        overflow-x: auto;
     }
     #qrcode {
         width: 100px;
         height: 100px;
     }
     #preTicket th, #preTicket td {
-        font-size: 0.8rem; /* Reducir a ~12.8px si gustas */
+        font-size: 0.8rem; 
     }
 }
 
-/* Estilo para asegurar que la tabla no se corte en la imagen capturada */
+/* Evitar que la tabla se corte en la imagen capturada */
 #preTicket {
     max-width: 100%;
     overflow-x: auto;
 }
 
 /* =========================================
-   Ajuste 1: Mismo ancho para Straight, Box y Combo
+   (Ajuste final) 
+   - Mismo ancho para Número Apostado, Straight, Box y Combo
+   - Para aprovechar mejor el espacio
    ========================================= */
+#tablaJugadas input.numeroApostado,
 #tablaJugadas input.straight,
 #tablaJugadas input.box,
 #tablaJugadas input.combo {
-    width: 70px;
-    min-width: 70px; 
-    /* Mismo tamaño para que se vean uniformes */
+    width: 120px;     /* Ajusta si prefieres más/menos */
+    min-width: 120px; 
 }
 
 /* =========================================
-   Ajuste 2: Forzar formato amplio en móviles
-   Sobrescribimos las reglas de @media 
-   para evitar que se encoja demasiado
+   Mantener formato amplio en móviles
    ========================================= */
 @media (max-width: 576px) {
     #preTicket table {
-        font-size: 1rem !important; /* Mantener fuente más grande */
-        white-space: nowrap !important; /* No romper texto en celdas */
+        font-size: 1rem !important; 
+        white-space: nowrap !important; 
     }
     #preTicket th, #preTicket td {
         padding: 0.5rem !important; 
