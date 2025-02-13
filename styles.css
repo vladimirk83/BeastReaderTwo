@@ -309,13 +309,6 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     overflow-x: auto; /* Add horizontal scroll if necessary */
     max-width: 100%;
     overflow-y: visible; /* Asegurar que no haya scroll vertical */
-
-    /* ========================================
-       Ajuste para permitir ancho grande en desktop
-       sin romper móviles:
-    */
-    max-width: 1600px;
-    margin: 0 auto; /* Centra en grandes pantallas */
 }
 
 #preTicket h4 {
@@ -343,41 +336,22 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     text-overflow: ellipsis;
 }
 
-/* 
-   Ajustamos anchos de las columnas
-   #1 => 8%
-   #2 (Bet Number) => 20% (más ancho)
-   #3 (Modalidad) => 14% (más angosto que Bet Number)
-   #4 (Straight), #5 (Box), #6 (Combo), #7 (Total) => reparto
-*/
-#preTicket th:nth-child(1),
-#preTicket td:nth-child(1) { /* Número de Jugada */
-    width: 8%; 
+/* Ajustar Anchos de las Columnas en el Ticket */
+#preTicket th:nth-child(1) { /* Número de Jugada */
+    width: 10%; 
 }
 
-#preTicket th:nth-child(2),
-#preTicket td:nth-child(2) { /* Bet Number => más ancho */
+#preTicket th:nth-child(2), /* Bet Number */
+#preTicket th:nth-child(4), /* Straight ($) */
+#preTicket th:nth-child(5), /* Box ($) */
+#preTicket th:nth-child(6), /* Combo ($) */
+#preTicket th:nth-child(7)  /* Total ($) */
+{
+    width: 12%; 
+}
+
+#preTicket th:nth-child(3) { /* Modalidad */
     width: 20%;
-    min-width: 80px; /* Asegura algo de espacio */
-}
-
-#preTicket th:nth-child(3),
-#preTicket td:nth-child(3) { /* Modalidad => un poco menor */
-    width: 14%;
-    min-width: 60px;
-}
-
-/* Resto: Straight(4), Box(5), Combo(6), Total(7) => 10% c/u (suman 40% mas 42% = 72% */
-#preTicket th:nth-child(4),
-#preTicket td:nth-child(4),
-#preTicket th:nth-child(5),
-#preTicket td:nth-child(5),
-#preTicket th:nth-child(6),
-#preTicket td:nth-child(6),
-#preTicket th:nth-child(7),
-#preTicket td:nth-child(7) {
-    width: 10%;
-    min-width: 60px;
 }
 
 /* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
@@ -412,7 +386,6 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     #preTicket {
         padding: 10px;
         overflow-x: auto;
-        max-width: 100%;
     }
     #qrcode {
         width: 100px;
@@ -431,7 +404,7 @@ input::-ms-input-placeholder { /* Microsoft Edge */
 
 /* =========================================
    (Ajuste final) 
-   - Mismo ancho para Número Apostado, Straight, Box y Combo en el formulario
+   - Mismo ancho para Número Apostado, Straight, Box y Combo
    - Para aprovechar mejor el espacio
    ========================================= */
 #tablaJugadas input.numeroApostado,
@@ -455,6 +428,29 @@ input::-ms-input-placeholder { /* Microsoft Edge */
     }
     #preTicket {
         overflow-x: auto !important;
-        max-width: 100% !important;
+    }
+}
+
+/* 
+   =========================================
+   OVERRIDE: Forzar "aspecto desktop" en móvil
+   para que siempre sea ancho y scroll-h
+   =========================================
+*/
+@media (max-width: 768px) {
+    #preTicket {
+        width: 1200px !important;     /* Fijar ancho grande */
+        max-width: none !important;   /* Quitar cualquier limitación */
+        margin: 0 auto !important;    /* Centrar en pantallas anchas */
+        overflow-x: auto !important;  /* Scroll horizontal si no cabe */
+    }
+    #preTicket table {
+        min-width: 1200px !important;
+        table-layout: fixed !important;
+        white-space: nowrap !important;
+    }
+    #preTicket th, #preTicket td {
+        font-size: 1rem !important; /* No reducir demasiado */
+        text-overflow: ellipsis;
     }
 }
