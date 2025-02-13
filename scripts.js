@@ -767,7 +767,7 @@ $(document).ready(function() {
         });
 
         setTimeout(()=>{
-            html2canvas(ticketElement,{scale:4})
+            html2canvas(ticketElement,{scale:6})
             .then(canvas=>{
                 const dataUrl=canvas.toDataURL("image/png");
                 window.ticketImageDataUrl=dataUrl;
