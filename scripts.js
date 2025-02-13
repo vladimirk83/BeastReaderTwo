@@ -1,23 +1,12 @@
  // scripts.js
 
 /*
-  In this version, we fix the “double-confirm” vulnerability in the final ticket modal:
-
-  1) The "Confirm & Download" button can only be used once per cycle. After it runs,
-     it stays disabled so the user can’t generate multiple tickets with the same plays.
-
-  2) The "Edit" button should only appear in the **preview** stage (the modal
-     shown after the user clicks “Generate Ticket”). Once we reach the final
-     ticket (with QR code and ticket number), the "Edit" button is hidden, so
-     the user can’t go back and change data or re-generate multiple times.
-
-  We keep all other logic intact:
-   - Brooklyn/Front => exactly 3 digits
-   - QR code + 8-digit ticket only on final confirmation
-   - Print is commented out
-   - In English
-   - Flatpickr date picker works on mobile/desktop
-   - Horizontal layout for the final ticket in mobile
+  Updated to ensure:
+  1) Once the user clicks "Confirm & Download," the Confirm button stays disabled forever.
+     It never re-enables, preventing repeated QR/ticket generation with the same data.
+  2) The "Edit" button is hidden as soon as the user clicks "Confirm & Download," so they
+     cannot return to edit the same ticket after a final code/QR is generated.
+  3) Only the "Share Ticket" button remains accessible at that final stage.
 */
 
 /* Replace with your real SheetDB (or API) endpoint */
@@ -103,8 +92,8 @@ $(document).ready(function() {
         "RD-Pale":       { straight: 20 }
     };
 
-    // Force horizontal layout in the final ticket (especially on mobile)
     function fixTicketLayoutForMobile() {
+        // Ensure horizontal layout in the final ticket
         $("#preTicket table, #preTicket th, #preTicket td").css("white-space", "nowrap");
         $("#preTicket").css("overflow-x", "auto");
     }
@@ -164,7 +153,7 @@ $(document).ready(function() {
         $("#tablaJugadas tr:last .betNumber").focus();
     }
 
-    addPlayRow(); 
+    addPlayRow(); // Start with one row
 
     function calculateTotal() {
         let sum = 0;
@@ -334,29 +323,39 @@ $(document).ready(function() {
         }
 
         if (mode === "Pulito") {
-            row.find(".box").attr("placeholder","Positions (1,2,3)?")
-                            .prop("disabled",false);
-            row.find(".combo").attr("placeholder","N/A")
-                              .prop("disabled",true)
-                              .val("");
+            row.find(".box")
+                .attr("placeholder","Positions (1,2,3)?")
+                .prop("disabled",false);
+            row.find(".combo")
+                .attr("placeholder","N/A")
+                .prop("disabled",true)
+                .val("");
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
-            row.find(".box").attr("placeholder","N/A")
-                            .prop("disabled",true)
-                            .val("");
-            row.find(".combo").attr("placeholder","N/A")
-                              .prop("disabled",true)
-                              .val("");
+            row.find(".box")
+                .attr("placeholder","N/A")
+                .prop("disabled",true)
+                .val("");
+            row.find(".combo")
+                .attr("placeholder","N/A")
+                .prop("disabled",true)
+                .val("");
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
-            row.find(".box").attr("placeholder",`Max $${betLimits[mode].box}`)
-                            .prop("disabled",false);
-            row.find(".combo").attr("placeholder",`Max $${betLimits[mode].combo}`)
-                              .prop("disabled",false);
+            row.find(".box")
+                .attr("placeholder",`Max $${betLimits[mode].box}`)
+                .prop("disabled",false);
+            row.find(".combo")
+                .attr("placeholder",`Max $${betLimits[mode].combo}`)
+                .prop("disabled",false);
         }
         else {
-            row.find(".box").attr("placeholder","e.g. 2.00").prop("disabled",false);
-            row.find(".combo").attr("placeholder","e.g. 3.00").prop("disabled",false);
+            row.find(".box")
+                .attr("placeholder","e.g. 2.00")
+                .prop("disabled",false);
+            row.find(".combo")
+                .attr("placeholder","e.g. 3.00")
+                .prop("disabled",false);
         }
         storeFormState();
     }
@@ -376,9 +375,9 @@ $(document).ready(function() {
         const arr = val.split(", ");
         const today = dayjs().startOf("day");
         for (let ds of arr) {
-            const [mm, dd, yyyy] = ds.split("-").map(Number);
-            const pick = dayjs(new Date(yyyy, mm-1, dd)).startOf("day");
-            if (pick.isSame(today,"day")) {
+            const [mm, dd, yy] = ds.split("-").map(Number);
+            const picked = dayjs(new Date(yy, mm-1, dd)).startOf("day");
+            if (picked.isSame(today,"day")) {
                 return true;
             }
         }
@@ -400,12 +399,12 @@ $(document).ready(function() {
                 raw = cutoffTimes.Venezuela[track];
             }
             if (raw) {
-                let co = dayjs(raw,"HH:mm");
+                let co=dayjs(raw,"HH:mm");
                 let cf;
-                if (co.isAfter(dayjs("21:30","HH:mm"))) {
-                    cf = dayjs("22:00","HH:mm");
-                } else {
-                    cf = co.subtract(10,"minute");
+                if(co.isAfter(dayjs("21:30","HH:mm"))){
+                    cf=dayjs("22:00","HH:mm");
+                }else{
+                    cf=co.subtract(10,"minute");
                 }
                 const hh=cf.format("HH");
                 const mm=cf.format("mm");
@@ -419,26 +418,24 @@ $(document).ready(function() {
             enableAllTracks();
             return;
         }
-        const now = dayjs();
+        const now=dayjs();
         $(".track-checkbox").each(function(){
             const val=$(this).val();
-            if (val==="Venezuela") {
-                return;
-            }
+            if(val==="Venezuela"){ return; }
             const raw=getTrackCutoff(val);
-            if (raw) {
+            if(raw){
                 let co=dayjs(raw,"HH:mm");
                 let cf;
-                if (co.isAfter(dayjs("21:30","HH:mm"))) {
+                if(co.isAfter(dayjs("21:30","HH:mm"))){
                     cf=dayjs("22:00","HH:mm");
-                } else {
+                }else{
                     cf=co.subtract(10,"minute");
                 }
-                if (now.isAfter(cf)||now.isSame(cf)) {
+                if(now.isAfter(cf)||now.isSame(cf)){
                     $(this).prop("disabled",true).prop("checked",false);
                     $(this).closest(".form-check").find(".form-check-label").css({
-                        opacity: 0.5,
-                        cursor: "not-allowed"
+                        opacity:0.5,
+                        cursor:"not-allowed"
                     });
                 } else {
                     $(this).prop("disabled",false);
@@ -452,16 +449,16 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    function getTrackCutoff(tn) {
-        for (let region in cutoffTimes) {
-            if (cutoffTimes[region][tn]) {
+    function getTrackCutoff(tn){
+        for(let region in cutoffTimes){
+            if(cutoffTimes[region][tn]){
                 return cutoffTimes[region][tn];
             }
         }
         return null;
     }
 
-    function enableAllTracks() {
+    function enableAllTracks(){
         $(".track-checkbox").each(function(){
             $(this).prop("disabled",false);
             $(this).closest(".form-check").find(".form-check-label").css({
@@ -471,12 +468,12 @@ $(document).ready(function() {
         });
     }
 
-    function storeFormState() {
+    function storeFormState(){
         const st={
             playCount,
             selectedTracksCount,
             selectedDaysCount,
-            dateVal: $("#fecha").val(),
+            dateVal:$("#fecha").val(),
             plays:[]
         };
         $("#tablaJugadas tr").each(function(){
@@ -498,11 +495,11 @@ $(document).ready(function() {
         localStorage.setItem("formState",JSON.stringify(st));
     }
 
-    function loadFormState() {
+    function loadFormState(){
         const data=JSON.parse(localStorage.getItem("formState"));
         if(data){
             $("#fecha").val(data.dateVal);
-            selectedDaysCount= data.selectedDaysCount;
+            selectedDaysCount=data.selectedDaysCount;
             selectedTracksCount=data.selectedTracksCount;
             playCount=data.playCount;
             $("#tablaJugadas").empty();
@@ -521,7 +518,7 @@ $(document).ready(function() {
                 `;
                 $("#tablaJugadas").append(row);
             });
-            if(playCount>MAX_PLAYS) {
+            if(playCount>MAX_PLAYS){
                 playCount=MAX_PLAYS;
             }
             calculateTotal();
@@ -539,7 +536,7 @@ $(document).ready(function() {
         }
     });
 
-    // Previsualization (no QR or ticket # yet)
+    // "Generate Ticket" => preview (no QR or ticket #)
     $("#generarTicket").click(function(){
         const dateVal=$("#fecha").val();
         if(!dateVal){
@@ -552,12 +549,12 @@ $(document).ready(function() {
             return;
         }
         const usaTracks=chosenTracks.filter(t=>Object.keys(cutoffTimes.USA).includes(t));
-        if(chosenTracks.includes("Venezuela")&&usaTracks.length===0){
+        if(chosenTracks.includes("Venezuela") && usaTracks.length===0){
             alert("To play 'Venezuela', you must also select at least one track from 'USA'.");
             return;
         }
 
-        // Check cutoff
+        // Check cutoffs if user selected "today"
         const arrDates=dateVal.split(", ");
         const today=dayjs().startOf("day");
         for(let ds of arrDates){
@@ -566,14 +563,14 @@ $(document).ready(function() {
             if(picked.isSame(today,"day")){
                 const now=dayjs();
                 for(let t of chosenTracks){
-                    if(t==="Venezuela")continue;
+                    if(t==="Venezuela") continue;
                     const raw=getTrackCutoff(t);
                     if(raw){
                         let co=dayjs(raw,"HH:mm");
                         let cf;
                         if(co.isAfter(dayjs("21:30","HH:mm"))){
                             cf=dayjs("22:00","HH:mm");
-                        }else{
+                        } else {
                             cf=co.subtract(10,"minute");
                         }
                         if(now.isAfter(cf)||now.isSame(cf)){
@@ -663,14 +660,15 @@ $(document).ready(function() {
             return;
         }
 
-        // Fill the modal table
-        $("#ticketTracks").text(chosenTracks.join(", "));
+        // Fill the preview
         $("#ticketJugadas").empty();
+        chosenTracks.forEach(t => {});
+        $("#ticketTracks").text(chosenTracks.join(", "));
         rows.each(function(){
             const rowNum=$(this).find("td:first").text();
-            const betN=$(this).find(".betNumber").val();
-            const mod=$(this).find(".gameMode").text();
-            const strVal=parseFloat($(this).find(".straight").val())||0;
+            const bn=$(this).find(".betNumber").val();
+            const gm=$(this).find(".gameMode").text();
+            const stVal=parseFloat($(this).find(".straight").val())||0;
             let bxVal=$(this).find(".box").val()||"";
             if(bxVal==="") bxVal="-";
             const coVal=parseFloat($(this).find(".combo").val())||0;
@@ -679,10 +677,10 @@ $(document).ready(function() {
             const rowHTML=`
                 <tr>
                     <td>${rowNum}</td>
-                    <td>${betN}</td>
-                    <td>${mod}</td>
-                    <td>${strVal>0?strVal.toFixed(2):"-"}</td>
-                    <td>${bxVal !== "-" ? bxVal : "-"}</td>
+                    <td>${bn}</td>
+                    <td>${gm}</td>
+                    <td>${stVal>0?stVal.toFixed(2):"-"}</td>
+                    <td>${bxVal!=="-"?bxVal:"-"}</td>
                     <td>${coVal>0?coVal.toFixed(2):"-"}</td>
                     <td>${rowT.toFixed(2)}</td>
                 </tr>
@@ -694,52 +692,48 @@ $(document).ready(function() {
         $("#numeroTicket").text("(Not assigned yet)");
         $("#qrcode").empty();
 
-        // We want the "Edit" button to be visible in this preview step,
-        // and the "Confirm & Download" button enabled
+        // Show "Edit" button in the preview, hide share, enable confirm
         $("#editButton").removeClass("d-none");
+        $("#shareTicket").addClass("d-none");
         $("#confirmarTicket").prop("disabled", false);
 
-        // The share button is hidden at this stage
-        $("#shareTicket").addClass("d-none");
-
         fixTicketLayoutForMobile();
-
         ticketModal.show();
         storeFormState();
     });
 
-    // Now the final step: "Confirm & Download"
+    // "Confirm & Download"
     $("#confirmarTicket").click(function(){
         const confirmBtn=$(this);
 
-        // Once user clicks, we disable so they can't multi-click
+        // 1) Hide edit button as soon as user confirms
+        $("#editButton").addClass("d-none");
+
+        // 2) Disable confirm so it won't re-enable
         confirmBtn.prop("disabled", true);
 
-        // Generate the unique 8-digit ticket
+        // Generate unique ID
         const uniqueTicket=generateUniqueTicketNumber();
         $("#numeroTicket").text(uniqueTicket);
 
         transactionDateTime=dayjs().format("MM/DD/YYYY hh:mm A");
         $("#ticketTransaccion").text(transactionDateTime);
 
-        // Actually create the QR code
+        // Create QR
         $("#qrcode").empty();
-        new QRCode(document.getElementById("qrcode"), {
-            text: uniqueTicket,
+        new QRCode(document.getElementById("qrcode"),{
+            text:uniqueTicket,
             width:128,
             height:128
         });
 
-        fixTicketLayoutForMobile();
-
-        // Hide the "Edit" button in the final ticket
-        $("#editButton").addClass("d-none");
-
-        // The share button is now shown
+        // Now we show the share button
         $("#shareTicket").removeClass("d-none");
 
-        const ticketElement = document.getElementById("preTicket");
-        const originalStyles = {
+        fixTicketLayoutForMobile();
+
+        const ticketElement=document.getElementById("preTicket");
+        const originalStyles={
             width: $(ticketElement).css("width"),
             height: $(ticketElement).css("height"),
             maxHeight: $(ticketElement).css("max-height"),
@@ -757,6 +751,7 @@ $(document).ready(function() {
             .then(canvas=>{
                 const dataUrl=canvas.toDataURL("image/png");
                 window.ticketImageDataUrl=dataUrl;
+
                 // Download
                 const link=document.createElement("a");
                 link.href=dataUrl;
@@ -767,17 +762,15 @@ $(document).ready(function() {
 
                 alert("Your ticket image was downloaded successfully.");
 
-                saveBetDataToSheetDB(uniqueTicket, success=>{
+                saveBetDataToSheetDB(uniqueTicket,success=>{
                     if(success){
-                        console.log("Bet data was successfully sent to SheetDB.");
-                    }else{
+                        console.log("Bet data successfully sent to SheetDB.");
+                    } else {
                         console.error("Failed to send bet data to SheetDB.");
                     }
                 });
 
-                // Comment out printing 
-                // window.print();
-
+                // window.print(); // commented out
             })
             .catch(err=>{
                 console.error("Error capturing ticket:",err);
@@ -785,21 +778,18 @@ $(document).ready(function() {
             })
             .finally(()=>{
                 $(ticketElement).css(originalStyles);
-
-                // The confirm button remains disabled to avoid re-trigger
-                // confirmBtn.prop("disabled", false); // Not setting this back to false to avoid repeated clicks
+                // Not re-enabling confirm => user cannot re-generate
             });
         },500);
 
     });
 
-    // We assume there's an "Edit" button in the modal with ID #editButton
-    // that closes the modal so user can fix the form
+    // "Edit" => go back to form
     $("#editButton").click(function(){
-        // Just close the modal to go back to the form
         ticketModal.hide();
     });
 
+    // "Share Ticket"
     $("#shareTicket").click(async function(){
         if(!window.ticketImageDataUrl){
             alert("No ticket image is available to share.");
