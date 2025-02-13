@@ -390,7 +390,7 @@
                 </table>
             </div>
 
-            <!-- Botones para Agregar, Eliminar, Resetear, y nuevo "Scan Ticket" -->
+            <!-- Botones para Agregar, Eliminar y Resetear -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="button-group">
                     <button type="button" class="btn btn-primary" id="agregarJugada">
@@ -402,18 +402,6 @@
                     <button type="button" class="btn btn-warning" id="resetForm">
                         <i class="bi bi-arrow-clockwise"></i> Resetear Formulario
                     </button>
-                    <!-- Nuevo botón para escanear ticket manuscrito -->
-                    <button type="button" class="btn btn-secondary" id="scanTicket">
-                        <i class="bi bi-camera"></i> Scan Ticket
-                    </button>
-                    <!-- Input oculto para la imagen -->
-                    <input 
-                        type="file" 
-                        id="scanImageInput" 
-                        accept="image/*" 
-                        capture="environment" 
-                        style="display: none;" 
-                    />
                 </div>
                 <div class="total-section">
                     Total de Jugadas: $<span id="totalJugadas">0.00</span>
@@ -518,8 +506,6 @@
     </script>
     <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Librería Tesseract.js (Opcional, si vas a usar OCR en frontend) -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
     <!-- Nuestro JS personalizado -->
     <script src="scripts.js"></script>
 </body>
