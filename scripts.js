@@ -1,20 +1,22 @@
  // scripts.js
 
 /* 
-  This version implements the following changes:
+  Revised version focusing on:
+  1) Re-enabling the Flatpickr calendar on both mobile and desktop so users can pick dates visually,
+     rather than typing them. 
+     - We ensure `allowInput: false`, `clickOpens: true`, and attach the calendar in a high z-index container.
+  2) Keeping the final ticket layout horizontal even on mobile, avoiding “vertical stacking”
+     that was causing data to get squashed. We'll enforce a horizontal table with scroll if needed.
+  3) Previous logic remains intact: Brooklyn/Front => exactly 3 digits, QR code + ticket # only on "Confirm" click,
+     printing disabled, and everything in English.
 
-  1) All user-facing text (messages, labels, alerts) is now in English by default.
-  2) If the user selects any Brooklyn or Front track (Brooklyn Midday, Brooklyn Evening, Front Midday, Front Evening),
-     the "Bet Number" for that play MUST be exactly 3 digits. Anything else is invalid.
-  3) The unique 8-digit ticket number and the QR code are generated ONLY after the user clicks "Confirm & Download" 
-     in the preview modal, not at the time the preview is shown.
-  4) The print functionality (window.print()) is commented out, since printing is not required for now.
+  This file is intended to REPLACE your existing scripts.js code. 
+  (No changes to HTML/CSS unless you specifically allow them.)
 */
 
 /* Replace with your real SheetDB (or API) endpoint */
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
-/* Global variables */
 let transactionDateTime = '';
 let betData = [];
 let isProgrammaticReset = false;
@@ -22,16 +24,38 @@ window.ticketImageDataUrl = null; // We'll store the final ticket image here
 
 $(document).ready(function() {
 
-    /* Initialize Day.js with plugins as needed */
-    dayjs.extend(dayjs_plugin_customParseFormat);
-    dayjs.extend(dayjs_plugin_arraySupport);
+    /* 
+       1) Initialize Flatpickr for #fecha
+          - `allowInput: false` so user must pick from the calendar
+          - `clickOpens: true` ensures the calendar pops up on click
+          - `appendTo: document.body` + `zIndex` fix to ensure it's not hidden
+          - `mode: "multiple"` so user can pick multiple dates 
+    */
+    flatpickr("#fecha", {
+        mode: "multiple",
+        dateFormat: "m-d-Y",
+        minDate: "today",
+        clickOpens: true,
+        allowInput: false,
+        appendTo: document.body,
+        onReady: function(selectedDates, dateStr, instance) {
+            // Ensure high z-index so it’s above other elements
+            instance.calendarContainer.style.zIndex = 999999; 
+        },
+        onChange: function(selectedDates, dateStr, instance) {
+            // Update selectedDaysCount
+            selectedDaysCount = selectedDates.length;
+            calculateTotal();
+            storeFormState();
+            disableTracksByTime();
+        }
+    });
 
-    // Variables for counting plays/tracks/days
+    // We'll store how many rows the user has, how many tracks, how many days, etc.
     let playCount = 0;
     let selectedTracksCount = 0;
     let selectedDaysCount = 0;
 
-    // The user can only add up to 25 plays
     const MAX_PLAYS = 25;
 
     // Schedules/cutoff times
@@ -51,7 +75,7 @@ $(document).ready(function() {
             "Pensilvania AM": "12:45",
             "Pensilvania PM": "18:15",
 
-            // Brooklyn / Front (same logic as Win4, but must be exactly 3 digits)
+            // Brooklyn & Front (must be exactly 3 digits)
             "Brooklyn Midday": "14:20",
             "Brooklyn Evening": "22:00",
             "Front Midday": "14:20",
@@ -72,11 +96,11 @@ $(document).ready(function() {
             "Panama": "16:00"
         },
         "Venezuela": {
-            "Venezuela": "00:00" // Always open, effectively ignored in cutoff checks
+            "Venezuela": "00:00" // Always open
         }
     };
 
-    // Betting limits per game mode
+    // Limits
     const betLimits = {
         "Win 4":         { straight: 6,  box: 30, combo: 6 },
         "Pick 3":        { straight: 35, box: 50, combo: 35 },
@@ -87,21 +111,30 @@ $(document).ready(function() {
         "RD-Pale":       { straight: 20 }
     };
 
-    /* 
-       Determine the game mode based on selected tracks and the bet number length.
-       This is primarily used to label the row with the correct type of game.
+    /*
+      2) Keep the final ticket layout horizontal (in mobile as well).
+      We'll ensure #preTicket table doesn't get stacked vertically:
+      We can do it with a helper function that sets "white-space:nowrap; overflow-x:auto;"
+      We'll call it after building the preview table so it looks correct on mobile.
+    */
+    function fixTicketLayoutForMobile() {
+        // Force horizontal layout and allow scrolling
+        $("#preTicket table, #preTicket th, #preTicket td").css("white-space", "nowrap");
+        $("#preTicket").css("overflow-x", "auto");
+    }
+
+    /*
+       Determine the game mode
     */
     function determineGameMode(tracks, betNumber, rowElement) {
         let mode = "-";
 
         const isUSA = tracks.some(t => Object.keys(cutoffTimes.USA).includes(t));
-        const isSD = tracks.some(t => Object.keys(cutoffTimes["Santo Domingo"]).includes(t));
+        const isSD  = tracks.some(t => Object.keys(cutoffTimes["Santo Domingo"]).includes(t));
         const includesVenezuela = tracks.includes("Venezuela");
 
         const length = betNumber.length;
-        const boxValue = rowElement.find(".box").val() || "";
 
-        // For combined Venezuela + USA
         if (includesVenezuela && isUSA) {
             if (length === 2) {
                 mode = "Venezuela";
@@ -109,17 +142,15 @@ $(document).ready(function() {
                 mode = "Venezuela-Pale";
             }
         }
-        // Only USA
         else if (isUSA && !isSD) {
             if (length === 4) {
                 mode = "Win 4";
             } else if (length === 3) {
-                mode = "Pick 3"; 
+                mode = "Pick 3";
             } else if (length === 2) {
                 mode = "Pulito";
             }
         }
-        // Only Santo Domingo
         else if (isSD && !isUSA) {
             if (length === 2) {
                 mode = "RD-Quiniela";
@@ -130,8 +161,8 @@ $(document).ready(function() {
         return mode;
     }
 
-    /* 
-       Add a new row for the plays, up to 25 total
+    /*
+       Create a new play row
     */
     function addPlayRow() {
         if (playCount >= MAX_PLAYS) {
@@ -153,19 +184,14 @@ $(document).ready(function() {
         $("#tablaJugadas").append(rowHTML);
         storeFormState();
 
-        // Automatically focus betNumber in the newly added row
         $("#tablaJugadas tr:last .betNumber").focus();
     }
 
-    // Initialize with one row
-    addPlayRow();
+    addPlayRow(); // Start with 1 row
 
-    /*
-       Calculate the total for the entire form (sum of each row's "total"), multiplied by selected tracks * days
-    */
     function calculateTotal() {
         let sum = 0;
-        $(".total").each(function() {
+        $(".total").each(function(){
             sum += parseFloat($(this).text()) || 0;
         });
         if (selectedDaysCount === 0) {
@@ -177,93 +203,74 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    /*
-       Calculate the total for a specific row
-    */
-    function calculateRowTotal(rowElement) {
-        const mode = rowElement.find(".gameMode").text();
-        const betNumber = rowElement.find(".betNumber").val();
-        if (!betNumber || betNumber.length < 2 || betNumber.length > 4) {
-            rowElement.find(".total").text("0.00");
+    function calculateRowTotal(row) {
+        const mode = row.find(".gameMode").text();
+        const bn   = row.find(".betNumber").val();
+        if (!bn || bn.length < 2 || bn.length > 4) {
+            row.find(".total").text("0.00");
             return;
         }
+        let st  = parseFloat(row.find(".straight").val()) || 0;
+        let box = row.find(".box").val() || "";
+        let co  = parseFloat(row.find(".combo").val()) || 0;
 
-        let straightVal = parseFloat(rowElement.find(".straight").val()) || 0;
-        let boxValText = rowElement.find(".box").val() || "";
-        let comboVal = parseFloat(rowElement.find(".combo").val()) || 0;
-
-        // Enforce bet limits if needed
         if (betLimits[mode]) {
-            straightVal = Math.min(straightVal, betLimits[mode].straight ?? straightVal);
+            st  = Math.min(st, betLimits[mode].straight  ?? st);
             if (betLimits[mode].box !== undefined && mode !== "Pulito") {
-                const numericBox = parseFloat(boxValText) || 0;
-                boxValText = Math.min(numericBox, betLimits[mode].box).toString();
+                const numericBox = parseFloat(box) || 0;
+                box = Math.min(numericBox, betLimits[mode].box).toString();
             }
             if (betLimits[mode].combo !== undefined) {
-                comboVal = Math.min(comboVal, betLimits[mode].combo ?? comboVal);
+                co = Math.min(co, betLimits[mode].combo  ?? co);
             }
         }
 
         let totalVal = 0;
 
         if (mode === "Pulito") {
-            // Pulito uses "straight" * the count of positions in box
-            if (boxValText) {
-                const positions = boxValText.split(",").map(v => v.trim()).filter(Boolean);
-                totalVal = straightVal * positions.length;
+            if (box) {
+                const positions = box.split(",").map(v => v.trim()).filter(Boolean);
+                totalVal = st * positions.length;
             }
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
-            totalVal = straightVal;
+            totalVal = st;
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
-            const combosCount = calculateCombosCount(betNumber);
-            const numericBox = parseFloat(boxValText) || 0;
-            totalVal = straightVal + numericBox + (comboVal * combosCount);
+            const combosCount = calcCombos(bn);
+            const numericBox = parseFloat(box) || 0;
+            totalVal = st + numericBox + (co * combosCount);
         }
         else {
-            // Other or unknown
-            const numericBox = parseFloat(boxValText) || 0;
-            totalVal = straightVal + numericBox + comboVal;
+            const numericBox = parseFloat(box) || 0;
+            totalVal = st + numericBox + co;
         }
-
-        rowElement.find(".total").text(totalVal.toFixed(2));
+        row.find(".total").text(totalVal.toFixed(2));
         calculateTotal();
     }
 
-    /*
-       For combos: how many unique permutations are possible for the given betNumber
-       e.g. "112" => 3 combos, "123" => 6 combos, etc.
-    */
-    function calculateCombosCount(betNumber) {
+    function calcCombos(bn) {
         const freq = {};
-        for (let ch of betNumber) {
+        for (let ch of bn) {
             freq[ch] = (freq[ch] || 0) + 1;
         }
-        const factorial = (n) => n <= 1 ? 1 : n * factorial(n - 1);
+        const factorial = n => (n <= 1 ? 1 : n * factorial(n - 1));
         let denom = 1;
         for (const d in freq) {
             denom *= factorial(freq[d]);
         }
-        return factorial(betNumber.length) / denom;
+        return factorial(bn.length) / denom;
     }
 
-    /*
-       Check if the user selected any track from Brooklyn or Front
-       So we can enforce 3-digit only for the betNumber
-    */
+    // Check if user selected Brooklyn/Front
     function hasBrooklynOrFront(tracks) {
         const setBF = new Set([
             "Brooklyn Midday", "Brooklyn Evening",
             "Front Midday", "Front Evening"
         ]);
-        // Return true if any selected track is in that set
         return tracks.some(t => setBF.has(t));
     }
 
-    /*
-       Resets the entire form
-    */
     function resetForm() {
         isProgrammaticReset = true;
         $("#lotteryForm")[0].reset();
@@ -272,26 +279,20 @@ $(document).ready(function() {
         selectedTracksCount = 0;
         selectedDaysCount = 0;
         window.ticketImageDataUrl = null;
-
         addPlayRow();
         $("#totalJugadas").text("0.00");
-
         showCutoffTimes();
         highlightDuplicates();
         disableTracksByTime();
-
-        localStorage.removeItem('formState');
+        localStorage.removeItem("formState");
         isProgrammaticReset = false;
     }
 
-    /*
-       Highlight duplicate betNumbers
-    */
     function highlightDuplicates() {
         const betFields = $(".betNumber");
         const seen = {};
         const dups = new Set();
-        betFields.each(function() {
+        betFields.each(function(){
             const val = $(this).val().trim();
             if (val) {
                 if (seen[val]) {
@@ -301,7 +302,7 @@ $(document).ready(function() {
                 }
             }
         });
-        betFields.each(function() {
+        betFields.each(function(){
             const val = $(this).val().trim();
             if (dups.has(val)) {
                 $(this).addClass("duplicado");
@@ -312,14 +313,8 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    /*
-       Adds 1 row when the page loads, so we do that above
-    */
-    
-    // Button to add a row
+    // Buttons
     $("#agregarJugada").click(() => addPlayRow());
-
-    // Button to remove the last row
     $("#eliminarJugada").click(() => {
         if (playCount === 0) {
             alert("No plays to remove.");
@@ -327,192 +322,165 @@ $(document).ready(function() {
         }
         $("#tablaJugadas tr:last").remove();
         playCount--;
-        // Re-enumerate
-        $("#tablaJugadas tr").each(function(i) {
-            $(this).find("td:first").text(i + 1);
+        $("#tablaJugadas tr").each((i, el) => {
+            $(el).find("td:first").text(i+1);
         });
         calculateTotal();
     });
-
-    // Button to reset
     $("#resetForm").click(() => {
         if (confirm("Are you sure you want to reset the form? This will remove all current plays.")) {
             resetForm();
         }
     });
 
-    /*
-       Event delegation: when user types in betNumber, straight, box, combo, etc.
-    */
-    $("#tablaJugadas").on("input", ".betNumber, .straight, .box, .combo", function() {
+    // Input events
+    $("#tablaJugadas").on("input", ".betNumber, .straight, .box, .combo", function(){
         const row = $(this).closest("tr");
-        const betNumber = row.find(".betNumber").val();
-        const selectedTracks = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
-        const gameMode = determineGameMode(selectedTracks, betNumber, row);
-        row.find(".gameMode").text(gameMode);
+        const bn = row.find(".betNumber").val();
+        const tracks = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
+        const mode = determineGameMode(tracks, bn, row);
+        row.find(".gameMode").text(mode);
 
-        // Re-check if we must enforce 3-digit for Brooklyn/Front
-        if (hasBrooklynOrFront(selectedTracks)) {
-            // If there's at least one Brooklyn/Front track selected, 
-            // we strictly require 3-digit betNumber in that row.
-            // If the length is not 3, the row total = 0
-            if (betNumber.length !== 3) {
+        // If user selected any Brooklyn/Front => strictly 3 digits
+        if (hasBrooklynOrFront(tracks)) {
+            if (bn.length !== 3) {
+                // We'll just set total=0, user can keep typing
                 row.find(".total").text("0.00");
-                // We won't return here, because user might keep typing
             }
         }
 
-        updatePlaceholders(gameMode, row);
+        updatePlaceholders(mode, row);
         calculateRowTotal(row);
         highlightDuplicates();
     });
 
-    /*
-       Update placeholders (and enable/disable) straight/box/combo, according to the game mode
-    */
-    function updatePlaceholders(mode, rowElement) {
+    function updatePlaceholders(mode, row) {
         if (betLimits[mode]) {
-            rowElement.find(".straight")
+            row.find(".straight")
                 .attr("placeholder", `Max $${betLimits[mode].straight ?? 100}`)
                 .prop("disabled", false);
         } else {
-            rowElement.find(".straight")
+            row.find(".straight")
                 .attr("placeholder", "e.g. 5.00")
                 .prop("disabled", false);
         }
 
         if (mode === "Pulito") {
-            rowElement.find(".box")
-                .attr("placeholder", "Positions? e.g. 1,2,3")
+            row.find(".box")
+                .attr("placeholder", "Positions (1,2,3)?")
                 .prop("disabled", false);
-            rowElement.find(".combo")
+            row.find(".combo")
                 .attr("placeholder", "N/A")
                 .prop("disabled", true)
                 .val("");
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
-            rowElement.find(".box")
+            row.find(".box")
                 .attr("placeholder", "N/A")
                 .prop("disabled", true)
                 .val("");
-            rowElement.find(".combo")
+            row.find(".combo")
                 .attr("placeholder", "N/A")
                 .prop("disabled", true)
                 .val("");
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
-            rowElement.find(".box")
+            row.find(".box")
                 .attr("placeholder", `Max $${betLimits[mode].box}`)
                 .prop("disabled", false);
-            rowElement.find(".combo")
+            row.find(".combo")
                 .attr("placeholder", `Max $${betLimits[mode].combo}`)
                 .prop("disabled", false);
         }
         else {
-            rowElement.find(".box")
+            row.find(".box")
                 .attr("placeholder", "e.g. 2.00")
                 .prop("disabled", false);
-            rowElement.find(".combo")
+            row.find(".combo")
                 .attr("placeholder", "e.g. 3.00")
                 .prop("disabled", false);
         }
-
         storeFormState();
     }
 
-    /*
-       Track selection changes
-    */
-    $(".track-checkbox").change(function() {
-        const selectedT = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
-        // "Venezuela" doesn't count in the multiplier
-        selectedTracksCount = selectedT.filter(t => t !== "Venezuela").length || 1;
+    // Track checkboxes
+    $(".track-checkbox").change(function(){
+        const arr = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
+        // "Venezuela" doesn't count for multiplier
+        selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
         calculateTotal();
         disableTracksByTime();
     });
 
-    /* 
-       Initialize the modal 
-    */
+    // Initialize the modal
     const ticketModal = new bootstrap.Modal(document.getElementById("ticketModal"));
 
-    /*
-       Determine if the user includes "today" among selected dates
-    */
-    function userSelectedToday() {
+    // Helper: see if user selected "today"
+    function userChoseToday() {
         const val = $("#fecha").val();
         if (!val) return false;
         const arr = val.split(", ");
-        const today = dayjs().startOf("day");
-        for (let dateStr of arr) {
-            const [mm, dd, yyyy] = dateStr.split("-").map(Number);
+        const nowDay = dayjs().startOf("day");
+        for (let dStr of arr) {
+            const [mm, dd, yyyy] = dStr.split("-").map(Number);
             const pick = dayjs(new Date(yyyy, mm-1, dd)).startOf("day");
-            if (pick.isSame(today, "day")) {
+            if (pick.isSame(nowDay, "day")) {
                 return true;
             }
         }
         return false;
     }
 
-    /*
-       Show cutoff times in the UI
-       (except for Venezuela, which is always open)
-    */
     function showCutoffTimes() {
         $(".cutoff-time").each(function(){
             const track = $(this).data("track");
             if (track === "Venezuela") {
-                return; // hide or ignore
+                return; // no cutoff displayed
             }
-            let rawTime = "";
+            let raw = "";
             if (cutoffTimes.USA[track]) {
-                rawTime = cutoffTimes.USA[track];
+                raw = cutoffTimes.USA[track];
             } else if (cutoffTimes["Santo Domingo"][track]) {
-                rawTime = cutoffTimes["Santo Domingo"][track];
+                raw = cutoffTimes["Santo Domingo"][track];
             } else if (cutoffTimes.Venezuela[track]) {
-                rawTime = cutoffTimes.Venezuela[track];
+                raw = cutoffTimes.Venezuela[track];
             }
-            if (rawTime) {
-                let original = dayjs(rawTime, "HH:mm");
-                let finalCutoff;
-                if (original.isAfter(dayjs("21:30", "HH:mm"))) {
-                    finalCutoff = dayjs("22:00", "HH:mm");
+            if (raw) {
+                let cO = dayjs(raw, "HH:mm");
+                let cF;
+                if (cO.isAfter(dayjs("21:30", "HH:mm"))) {
+                    cF = dayjs("22:00", "HH:mm");
                 } else {
-                    finalCutoff = original.subtract(10, "minute");
+                    cF = cO.subtract(10, "minute");
                 }
-                const h = finalCutoff.format("HH");
-                const m = finalCutoff.format("mm");
-                $(this).text(`Cutoff Time: ${h}:${m}`);
+                const hh = cF.format("HH");
+                const mm = cF.format("mm");
+                $(this).text(`Cutoff Time: ${hh}:${mm}`);
             }
         });
     }
 
-    /*
-       Enable/disable tracks depending on real time,
-       except "Venezuela" which is always open
-    */
     function disableTracksByTime() {
-        if (!userSelectedToday()) {
+        if (!userChoseToday()) {
             enableAllTracks();
             return;
         }
         const now = dayjs();
         $(".track-checkbox").each(function(){
-            const track = $(this).val();
-            if (track === "Venezuela") {
-                // always enabled
-                return;
+            const val = $(this).val();
+            if (val === "Venezuela") {
+                return; // always open
             }
-            const raw = getTrackCutoff(track);
+            const raw = getTrackCutoff(val);
             if (raw) {
-                let orig = dayjs(raw, "HH:mm");
-                let finalCut;
-                if (orig.isAfter(dayjs("21:30", "HH:mm"))) {
-                    finalCut = dayjs("22:00", "HH:mm");
+                let co = dayjs(raw, "HH:mm");
+                let cF;
+                if (co.isAfter(dayjs("21:30", "HH:mm"))) {
+                    cF = dayjs("22:00", "HH:mm");
                 } else {
-                    finalCut = orig.subtract(10, "minute");
+                    cF = co.subtract(10, "minute");
                 }
-                if (now.isAfter(finalCut) || now.isSame(finalCut)) {
+                if (now.isAfter(cF) || now.isSame(cF)) {
                     $(this).prop("disabled", true).prop("checked", false);
                     $(this).closest(".form-check").find(".form-check-label").css({
                         opacity: 0.5,
@@ -530,9 +498,6 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    /*
-       Helper: get the raw closing time for a given track
-    */
     function getTrackCutoff(trackName) {
         for (let region in cutoffTimes) {
             if (cutoffTimes[region][trackName]) {
@@ -542,9 +507,6 @@ $(document).ready(function() {
         return null;
     }
 
-    /*
-       Enable all tracks if not playing today
-    */
     function enableAllTracks() {
         $(".track-checkbox").each(function(){
             $(this).prop("disabled", false);
@@ -555,52 +517,48 @@ $(document).ready(function() {
         });
     }
 
-    /*
-       Save the form state to localStorage
-    */
     function storeFormState() {
-        const formState = {
+        const st = {
             playCount,
             selectedTracksCount,
             selectedDaysCount,
-            dateValue: $("#fecha").val(),
+            dateVal: $("#fecha").val(),
             plays: []
         };
         $("#tablaJugadas tr").each(function(){
-            const betNum = $(this).find(".betNumber").val();
-            const mode = $(this).find(".gameMode").text();
-            const straight = $(this).find(".straight").val();
-            const box = $(this).find(".box").val();
-            const combo = $(this).find(".combo").val();
-            const total = $(this).find(".total").text();
-            formState.plays.push({
-                betNumber: betNum,
-                gameMode: mode,
-                straight: straight,
-                box: box,
-                combo: combo,
-                total: total
+            const bn = $(this).find(".betNumber").val();
+            const gm = $(this).find(".gameMode").text();
+            const str = $(this).find(".straight").val();
+            const bx  = $(this).find(".box").val();
+            const co  = $(this).find(".combo").val();
+            const tot = $(this).find(".total").text();
+            st.plays.push({
+                betNumber: bn,
+                gameMode: gm,
+                straight: str,
+                box: bx,
+                combo: co,
+                total: tot
             });
         });
-        localStorage.setItem("formState", JSON.stringify(formState));
+        localStorage.setItem("formState", JSON.stringify(st));
     }
 
-    /*
-       Load the form state from localStorage
-    */
     function loadFormState() {
         const data = JSON.parse(localStorage.getItem("formState"));
         if (data) {
-            $("#fecha").val(data.dateValue);
+            $("#fecha").val(data.dateVal);
             selectedDaysCount = data.selectedDaysCount;
             selectedTracksCount = data.selectedTracksCount;
             playCount = data.playCount;
+
             $("#tablaJugadas").empty();
-            data.plays.forEach((p, index) => {
-                if (index >= MAX_PLAYS) return;
+
+            data.plays.forEach((p, i) => {
+                if (i >= MAX_PLAYS) return;
                 const row = `
                     <tr>
-                        <td>${index + 1}</td>
+                        <td>${i+1}</td>
                         <td><input type="number" class="form-control betNumber" required value="${p.betNumber}"></td>
                         <td class="gameMode">${p.gameMode}</td>
                         <td><input type="number" class="form-control straight" value="${p.straight}"></td>
@@ -611,7 +569,6 @@ $(document).ready(function() {
                 `;
                 $("#tablaJugadas").append(row);
             });
-            // if localStorage had more than 25 plays, we limit
             if (playCount > MAX_PLAYS) {
                 playCount = MAX_PLAYS;
             }
@@ -619,29 +576,21 @@ $(document).ready(function() {
             showCutoffTimes();
             disableTracksByTime();
             highlightDuplicates();
-        } else {
-            // No existing state
         }
     }
 
-    // Load existing form state if present
     loadFormState();
 
-    /*
-       Prevent unwanted reset events
-    */
     $("#lotteryForm").on("reset", function(e){
         if (!isProgrammaticReset && (!e.originalEvent || !$(e.originalEvent.submitter).hasClass("btn-reset"))) {
             e.preventDefault();
         }
     });
 
-    /*
-       "Generate Ticket" => just a preview, but does NOT generate QR code or ticket number yet
-    */
+    // "Generate Ticket" => preview but no QR or ticket ID
     $("#generarTicket").click(function(){
-        const dateValue = $("#fecha").val();
-        if (!dateValue) {
+        const dateVal = $("#fecha").val();
+        if (!dateVal) {
             alert("Please select at least one date.");
             return;
         }
@@ -650,34 +599,33 @@ $(document).ready(function() {
             alert("Please select at least one track.");
             return;
         }
-        // If Venezuela is chosen, ensure at least one track from USA also chosen
         const usaTracks = chosenTracks.filter(t => Object.keys(cutoffTimes.USA).includes(t));
         if (chosenTracks.includes("Venezuela") && usaTracks.length === 0) {
             alert("To play 'Venezuela', you must also select at least one track from 'USA'.");
             return;
         }
 
-        // Check time cutoffs if user selected "today"
-        const arrayDates = dateValue.split(", ");
+        // Check cutoff if user included today
+        const arrDates = dateVal.split(", ");
         const today = dayjs().startOf("day");
-        for (let strDate of arrayDates) {
-            const [mm, dd, yyyy] = strDate.split("-").map(Number);
-            const betDate = dayjs(new Date(yyyy, mm-1, dd)).startOf("day");
-            if (betDate.isSame(today, "day")) {
+        for (let ds of arrDates) {
+            const [mm, dd, yyyy] = ds.split("-").map(Number);
+            const picked = dayjs(new Date(yyyy, mm-1, dd)).startOf("day");
+            if (picked.isSame(today, "day")) {
                 const now = dayjs();
                 for (let t of chosenTracks) {
-                    if (t === "Venezuela") continue; // skip
-                    const rawCutoff = getTrackCutoff(t);
-                    if (rawCutoff) {
-                        let cOriginal = dayjs(rawCutoff, "HH:mm");
-                        let cFinal;
-                        if (cOriginal.isAfter(dayjs("21:30", "HH:mm"))) {
-                            cFinal = dayjs("22:00", "HH:mm");
+                    if (t === "Venezuela") continue;
+                    const raw = getTrackCutoff(t);
+                    if (raw) {
+                        let cO = dayjs(raw, "HH:mm");
+                        let cF;
+                        if (cO.isAfter(dayjs("21:30", "HH:mm"))) {
+                            cF = dayjs("22:00", "HH:mm");
                         } else {
-                            cFinal = cOriginal.subtract(10, "minute");
+                            cF = cO.subtract(10, "minute");
                         }
-                        if (now.isAfter(cFinal) || now.isSame(cFinal)) {
-                            alert(`The track "${t}" is already closed for today. Please choose another track or a future date.`);
+                        if (now.isAfter(cF) || now.isSame(cF)) {
+                            alert(`The track "${t}" is already closed for today. Choose another track or future date.`);
                             return;
                         }
                     }
@@ -687,54 +635,50 @@ $(document).ready(function() {
 
         // Validate each row
         let allValid = true;
-        const errorsFound = [];
+        const errors = [];
         const rows = $("#tablaJugadas tr");
-        rows.each(function() {
+        rows.each(function(){
             const rowNum = parseInt($(this).find("td:first").text());
-            const betNumber = $(this).find(".betNumber").val();
+            const bn   = $(this).find(".betNumber").val();
             const mode = $(this).find(".gameMode").text();
-            const straight = $(this).find(".straight").val();
-            const box = $(this).find(".box").val();
-            const combo = $(this).find(".combo").val();
-            const total = $(this).find(".total").text();
+            const str  = $(this).find(".straight").val();
+            const bx   = $(this).find(".box").val();
+            const co   = $(this).find(".combo").val();
+            const tot  = $(this).find(".total").text();
 
-            // Basic validations
-            if (!betNumber || betNumber.length < 2 || betNumber.length > 4) {
+            if (!bn || bn.length < 2 || bn.length > 4) {
                 allValid = false;
-                errorsFound.push(rowNum);
+                errors.push(rowNum);
                 $(this).find(".betNumber").addClass("error-field");
             } else {
                 $(this).find(".betNumber").removeClass("error-field");
             }
 
-            // If user selected any Brooklyn/Front track => strictly 3 digits
+            // If Brooklyn/Front => must be exactly 3 digits
             if (hasBrooklynOrFront(chosenTracks)) {
-                if (betNumber.length !== 3) {
+                if (bn.length !== 3) {
                     allValid = false;
-                    errorsFound.push(rowNum);
+                    errors.push(rowNum);
                 }
             }
 
             if (mode === "-") {
                 allValid = false;
-                errorsFound.push(rowNum);
+                errors.push(rowNum);
             }
 
-            // Extra checks if needed
-            // e.g. for Pulito, we need a straight > 0, box something, etc.
             if (["Venezuela", "Venezuela-Pale", "Pulito", "RD-Quiniela", "RD-Pale"].includes(mode)) {
-                if (!straight || parseFloat(straight) <= 0) {
+                if (!str || parseFloat(str) <= 0) {
                     allValid = false;
-                    errorsFound.push(rowNum);
+                    errors.push(rowNum);
                     $(this).find(".straight").addClass("error-field");
                 } else {
                     $(this).find(".straight").removeClass("error-field");
                 }
                 if (mode === "Pulito") {
-                    // If box is empty => invalid
-                    if (!box) {
+                    if (!bx) {
                         allValid = false;
-                        errorsFound.push(rowNum);
+                        errors.push(rowNum);
                         $(this).find(".box").addClass("error-field");
                     } else {
                         $(this).find(".box").removeClass("error-field");
@@ -742,23 +686,22 @@ $(document).ready(function() {
                 }
             }
             else if (["Win 4", "Pick 3"].includes(mode)) {
-                // At least one > 0 among straight/box/combo
-                if ((!straight || parseFloat(straight) <= 0) &&
-                    (!box || parseFloat(box) <= 0) &&
-                    (!combo || parseFloat(combo) <= 0)) {
+                if ((!str || parseFloat(str) <= 0) &&
+                    (!bx || parseFloat(bx) <= 0) &&
+                    (!co || parseFloat(co) <= 0)) {
                     allValid = false;
-                    errorsFound.push(rowNum);
+                    errors.push(rowNum);
                     $(this).find(".straight").addClass("error-field");
                     $(this).find(".box").addClass("error-field");
                     $(this).find(".combo").addClass("error-field");
                 } else {
-                    if (straight && parseFloat(straight) > 0) {
+                    if (str && parseFloat(str) > 0) {
                         $(this).find(".straight").removeClass("error-field");
                     }
-                    if (box && parseFloat(box) > 0) {
+                    if (bx && parseFloat(bx) > 0) {
                         $(this).find(".box").removeClass("error-field");
                     }
-                    if (combo && parseFloat(combo) > 0) {
+                    if (co && parseFloat(co) > 0) {
                         $(this).find(".combo").removeClass("error-field");
                     }
                 }
@@ -766,90 +709,83 @@ $(document).ready(function() {
         });
 
         if (!allValid) {
-            const uniq = [...new Set(errorsFound)].join(", ");
-            alert(`Some plays have errors (rows: ${uniq}). Please fix them before generating the ticket preview.`);
+            const uniqueErr = [...new Set(errors)].join(", ");
+            alert(`Some plays have errors (row(s): ${uniqueErr}). Please fix them before generating the ticket preview.`);
             return;
         }
 
-        // Show the modal WITHOUT generating QR code or unique ticket number
-        // We simply fill the table so the user can review
+        // Fill the modal table WITHOUT ticket number or QR
         $("#ticketTracks").text(chosenTracks.join(", "));
         $("#ticketJugadas").empty();
 
         rows.each(function(){
-            const rowNumber = $(this).find("td").first().text();
-            const betNumber = $(this).find(".betNumber").val();
-            const mode = $(this).find(".gameMode").text();
-            const straightVal = parseFloat($(this).find(".straight").val()) || 0;
-            let boxVal = $(this).find(".box").val();
-            boxVal = (boxVal === "") ? "-" : boxVal;
-            const comboVal = parseFloat($(this).find(".combo").val()) || 0;
-            const rowTotal = parseFloat($(this).find(".total").text()) || 0;
-            
+            const rowNum = $(this).find("td:first").text();
+            const bn  = $(this).find(".betNumber").val();
+            const mod = $(this).find(".gameMode").text();
+            const stVal = parseFloat($(this).find(".straight").val()) || 0;
+            let boxVal  = $(this).find(".box").val() || "";
+            if (boxVal === "") boxVal = "-";
+            const coVal  = parseFloat($(this).find(".combo").val()) || 0;
+            const rowTot = parseFloat($(this).find(".total").text()) || 0;
+
             const rowHTML = `
                 <tr>
-                    <td>${rowNumber}</td>
-                    <td>${betNumber}</td>
-                    <td>${mode}</td>
-                    <td>${straightVal > 0 ? straightVal.toFixed(2) : "-"}</td>
+                    <td>${rowNum}</td>
+                    <td>${bn}</td>
+                    <td>${mod}</td>
+                    <td>${stVal > 0 ? stVal.toFixed(2) : "-"}</td>
                     <td>${boxVal !== "-" ? boxVal : "-"}</td>
-                    <td>${comboVal > 0 ? comboVal.toFixed(2) : "-"}</td>
-                    <td>${rowTotal.toFixed(2)}</td>
+                    <td>${coVal > 0 ? coVal.toFixed(2) : "-"}</td>
+                    <td>${rowTot.toFixed(2)}</td>
                 </tr>
             `;
             $("#ticketJugadas").append(rowHTML);
         });
 
-        // We do NOT generate "Ticket Number" or QR code here
         $("#ticketTotal").text($("#totalJugadas").text());
-        // The "transaction date" is also not generated here as final
-        // But we can show the date/time of this generation if needed. 
-        // For now, let's keep it blank or use a preview text
+        // We'll just show today's time as "preview" 
         $("#ticketTransaccion").text(dayjs().format("MM/DD/YYYY hh:mm A"));
         $("#numeroTicket").text("(Not assigned yet)");
-
-        // Clear QR code container (so user sees none)
         $("#qrcode").empty();
+
+        // Force horizontal table layout for the preview (especially on mobile)
+        fixTicketLayoutForMobile();
 
         // Show the modal
         ticketModal.show();
         storeFormState();
     });
 
-    /*
-       "Confirm & Download" button => now we generate the final unique ticket number + QR code
-       Then we create the final image, and remove the call to window.print() (comment out).
-    */
+    // "Confirm & Download" => now generate the final unique ticket + QR
     $("#confirmarTicket").click(function(){
         const confirmBtn = $(this);
         confirmBtn.prop("disabled", true);
 
-        // Now we generate the unique 8-digit ticket number
-        const uniqueNumber = generateUniqueTicketNumber();
-        // Insert it into the UI
-        $("#numeroTicket").text(uniqueNumber);
+        // Generate the unique 8-digit ticket number
+        const uniqueTicket = generateUniqueTicketNumber();
+        $("#numeroTicket").text(uniqueTicket);
 
-        // Also set the final transaction date/time
         transactionDateTime = dayjs().format("MM/DD/YYYY hh:mm A");
         $("#ticketTransaccion").text(transactionDateTime);
 
-        // Create the QR code
+        // Actually create the QR code
         $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"), {
-            text: uniqueNumber,
+            text: uniqueTicket,
             width: 128,
             height: 128
         });
 
+        // Again ensure horizontal layout
+        fixTicketLayoutForMobile();
+
         const ticketElement = document.getElementById("preTicket");
-        const originalStyles = {
+        const origStyles = {
             width: $(ticketElement).css("width"),
             height: $(ticketElement).css("height"),
             maxHeight: $(ticketElement).css("max-height"),
             overflowY: $(ticketElement).css("overflow-y")
         };
-
-        // Expand to capture everything with html2canvas
         $(ticketElement).css({
             width: "auto",
             height: "auto",
@@ -863,51 +799,46 @@ $(document).ready(function() {
                     const dataUrl = canvas.toDataURL("image/png");
                     window.ticketImageDataUrl = dataUrl;
 
-                    // Auto-download the image
+                    // Auto-download
                     const link = document.createElement("a");
                     link.href = dataUrl;
-                    link.download = `ticket_${uniqueNumber}.png`;
+                    link.download = `ticket_${uniqueTicket}.png`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
 
-                    alert("Your ticket image has been downloaded.");
+                    alert("Your ticket image was downloaded successfully.");
 
                     // Save bet data to SheetDB
-                    saveBetDataToSheetDB(uniqueNumber, function(success){
+                    saveBetDataToSheetDB(uniqueTicket, (success) => {
                         if (success) {
-                            console.log("Bet data was successfully sent to SheetDB.");
+                            console.log("Bet data successfully sent to SheetDB.");
                         } else {
-                            console.error("Error sending bet data to SheetDB.");
+                            console.error("Failed to send bet data to SheetDB.");
                         }
                     });
 
-                    // The print function is currently NOT needed, so we comment it out:
+                    // Print is commented out since it's not needed
                     // window.print();
-
-                    // Show the share button
+                    
+                    // Show share button
                     $("#shareTicket").removeClass("d-none");
-
                 })
-                .catch(err => {
-                    console.error("Error capturing the ticket:", err);
-                    alert("There was a problem generating the ticket image. Please try again.");
+                .catch(error => {
+                    console.error("Error capturing ticket:", error);
+                    alert("There was a problem generating the final ticket image. Please try again.");
                 })
                 .finally(() => {
-                    $(ticketElement).css(originalStyles);
+                    $(ticketElement).css(origStyles);
                     confirmBtn.prop("disabled", false);
                 });
-
         }, 500);
-
     });
 
-    /*
-       "Share Ticket" button => Web Share API
-    */
+    // "Share Ticket" => Web Share API
     $("#shareTicket").click(async function(){
         if (!window.ticketImageDataUrl) {
-            alert("No ticket image available to share.");
+            alert("No ticket image is available to share.");
             return;
         }
         if (navigator.canShare) {
@@ -919,27 +850,23 @@ $(document).ready(function() {
                     await navigator.share({
                         files: [file],
                         title: "Ticket",
-                        text: "Sharing my Ticket"
+                        text: "Sharing Ticket"
                     });
                 } else {
                     alert("Your browser does not support file sharing. Please share the downloaded image manually.");
                 }
             } catch(err) {
-                console.error("Share error:", err);
-                alert("Error trying to share the ticket image.");
+                console.error("Error sharing ticket:", err);
+                alert("Could not share the ticket image. Please try manually.");
             }
         } else {
-            alert("Your browser does not support the Web Share API with files. Please share manually.");
+            alert("Your browser doesn't support the Web Share API with files. Please share manually.");
         }
     });
 
-    /*
-       Save the final bet data to SheetDB or other endpoint
-       Here we assume betData is built from the final plays
-    */
+    // Build final bet data for saving
     function saveBetDataToSheetDB(uniqueTicket, callback) {
-        // Re-build betData from the final table
-        betData = []; 
+        betData = [];
         const dateValue = $("#fecha").val() || "";
         const chosenTracks = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
         const joinedTracks = chosenTracks.join(", ");
@@ -954,7 +881,6 @@ $(document).ready(function() {
             const combo = $(this).find(".combo").val();
             const total = $(this).find(".total").text();
 
-            // Only push if valid
             if (mode !== "-") {
                 betData.push({
                     "Ticket Number": uniqueTicket,
@@ -977,39 +903,31 @@ $(document).ready(function() {
 
         fetch(SHEETDB_API_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ data: betData })
         })
-        .then(resp => {
-            if (!resp.ok) {
-                throw new Error(`SheetDB error, status: ${resp.status}`);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`SheetDB error, status ${response.status}`);
             }
-            return resp.json();
+            return response.json();
         })
         .then(data => {
             console.log("Data stored in SheetDB:", data);
             callback(true);
         })
         .catch(error => {
-            console.error("Error sending to SheetDB:", error);
+            console.error("Error posting to SheetDB:", error);
             callback(false);
         });
     }
 
-    /*
-       Generate a unique 8-digit ticket number
-    */
     function generateUniqueTicketNumber() {
         return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
-    // Show cutoff times on page load
     showCutoffTimes();
-    // Check track availability by current time
     disableTracksByTime();
-    // Re-check every minute
     setInterval(disableTracksByTime, 60000);
 
 });
