@@ -1,7 +1,7 @@
   <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Beast Reader (BETA) East New York</title>
   <!-- Bootstrap CSS -->
   <link
@@ -23,7 +23,7 @@
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <!-- Custom CSS (optional) -->
+  <!-- Custom CSS (lo generarás luego) -->
   <link href="styles.css" rel="stylesheet" />
 </head>
 <body>
@@ -71,7 +71,6 @@
               data-bs-parent="#tracksAccordion"
             >
               <div class="accordion-body">
-                <!-- Example of big buttons instead of checkboxes -->
                 <div class="track-button-container">
                   <input
                     class="track-checkbox"
@@ -308,7 +307,7 @@
                   </label>
                 </div>
 
-                <!-- Brooklyn / Front -->
+                <!-- Additional: Brooklyn / Front -->
                 <div class="track-button-container">
                   <input
                     class="track-checkbox"
@@ -316,7 +315,10 @@
                     value="Brooklyn Midday"
                     id="trackBrooklynMidday"
                   />
-                  <label class="track-button" for="trackBrooklynMidday">
+                  <label
+                    class="track-button"
+                    for="trackBrooklynMidday"
+                  >
                     <span class="track-name">Brooklyn Midday</span>
                     <span
                       class="cutoff-time"
@@ -331,7 +333,10 @@
                     value="Brooklyn Evening"
                     id="trackBrooklynEvening"
                   />
-                  <label class="track-button" for="trackBrooklynEvening">
+                  <label
+                    class="track-button"
+                    for="trackBrooklynEvening"
+                  >
                     <span class="track-name">Brooklyn Evening</span>
                     <span
                       class="cutoff-time"
@@ -432,7 +437,10 @@
                   />
                   <label class="track-button" for="trackLoteka">
                     <span class="track-name">Loteka</span>
-                    <span class="cutoff-time" data-track="Loteka"></span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Loteka"
+                    ></span>
                   </label>
                 </div>
 
@@ -597,7 +605,7 @@
         </div>
       </div>
 
-      <!-- Plays Table -->
+      <!-- Plays Table (Editable) -->
       <div class="table-responsive mb-4">
         <table
           class="table table-dark table-bordered glow-table"
@@ -605,7 +613,8 @@
         >
           <thead>
             <tr>
-              <th>#</th>
+              <!-- First col: red button for removing -->
+              <th style="width: 40px;">#</th>
               <th>Bet Number</th>
               <th>Game Mode</th>
               <th>Straight ($)</th>
@@ -615,16 +624,13 @@
             </tr>
           </thead>
           <tbody id="tablaJugadas">
-            <!-- Rows added dynamically -->
-            <!-- Notice: We'll transform the first cell (#) into a button in scripts.js -->
+            <!-- Rows added dynamically in scripts.js -->
           </tbody>
         </table>
       </div>
 
-      <!-- Buttons: Add, Remove, Reset, and Wizard -->
-      <div
-        class="d-flex justify-content-between align-items-center mb-4"
-      >
+      <!-- Buttons: Add, Wizard, Remove Last, Reset -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="button-group">
           <button
             type="button"
@@ -719,7 +725,7 @@
                   </tr>
                 </thead>
                 <tbody id="ticketJugadas">
-                  <!-- Filled dynamically -->
+                  <!-- Filled dynamically in scripts.js -->
                 </tbody>
               </table>
             </div>
@@ -739,7 +745,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <!-- Edit (close modal) -->
+          <!-- Edit (close modal) => user can come back to edit main table -->
           <button
             type="button"
             class="btn btn-secondary"
@@ -769,7 +775,7 @@
     </div>
   </div>
 
-  <!-- WIZARD MODAL (New) -->
+  <!-- WIZARD MODAL (Quick Entry + Quick Pick + Round Down) -->
   <div
     class="modal fade"
     id="wizardModal"
@@ -777,13 +783,11 @@
     aria-labelledby="wizardModalLabel"
     aria-hidden="true"
   >
-    <!-- Full screen on small devices -->
+    <!-- Fullscreen on small devices -->
     <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="wizardModalLabel">
-            Quick Entry Wizard
-          </h5>
+          <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
           <button
             type="button"
             class="btn-close"
@@ -791,74 +795,220 @@
             aria-label="Close"
           ></button>
         </div>
+
         <div class="modal-body">
-          <!-- Fields for Bet Number, Straight, Box, Combo -->
-          <div class="mb-3">
-            <label for="wizardBetNumber" class="form-label">Bet Number</label>
-            <input
-              type="number"
-              class="form-control"
-              id="wizardBetNumber"
-              placeholder="2–4 digits"
-              min="0"
-              max="9999"
-            />
+          <!-- Manual Entry (Bet Number + Add & Next + Straight/Box/Combo with candados) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div class="me-2">
+                <label for="wizardBetNumber" class="form-label"
+                  >Bet Number</label
+                >
+                <!-- type="number" to enforce numeric keypad -->
+                <input
+                  type="number"
+                  class="form-control"
+                  id="wizardBetNumber"
+                  placeholder="2–4 digits"
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="btn btn-primary mt-4"
+                  id="wizardAddNext"
+                >
+                  <i class="bi bi-check2-circle"></i> Add & Next
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-2">
+              <label for="wizardStraight" class="form-label">Straight</label>
+              <div class="d-flex align-items-center">
+                <input
+                  type="number"
+                  step="1"
+                  class="form-control"
+                  id="wizardStraight"
+                  placeholder="e.g. 5"
+                />
+                <!-- Candadito Straight -->
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary ms-1 lockBtn"
+                  data-field="straight"
+                  id="lockStraight"
+                >
+                  <i class="bi bi-unlock"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-2">
+              <label for="wizardBox" class="form-label">Box</label>
+              <div class="d-flex align-items-center">
+                <!-- box -> type="text" ya que Pulito puede requerir comas -->
+                <input
+                  type="text"
+                  class="form-control"
+                  id="wizardBox"
+                  placeholder="e.g. 1,2 or 3"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary ms-1 lockBtn"
+                  data-field="box"
+                  id="lockBox"
+                >
+                  <i class="bi bi-unlock"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-2">
+              <label for="wizardCombo" class="form-label">Combo</label>
+              <div class="d-flex align-items-center">
+                <input
+                  type="number"
+                  step="0.1"
+                  class="form-control"
+                  id="wizardCombo"
+                  placeholder="e.g. 3.00"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary ms-1 lockBtn"
+                  data-field="combo"
+                  id="lockCombo"
+                >
+                  <i class="bi bi-unlock"></i>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="wizardStraight" class="form-label">Straight ($)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="wizardStraight"
-              placeholder="e.g. 5"
-              min="0"
-              step="1"
-            />
+
+          <!-- Wizard Table (internal) -->
+          <div class="table-responsive mb-3">
+            <table class="table table-dark table-bordered" id="wizardTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Bet Number</th>
+                  <th>Game Mode</th>
+                  <th>Straight ($)</th>
+                  <th>Box ($)</th>
+                  <th>Combo ($)</th>
+                  <th>Total ($)</th>
+                </tr>
+              </thead>
+              <tbody id="wizardTableBody"></tbody>
+            </table>
           </div>
-          <div class="mb-3">
-            <label for="wizardBox" class="form-label">Box ($)</label>
-            <input
-              type="text"
-              class="form-control"
-              id="wizardBox"
-              placeholder="e.g. 1,2 or 3"
-            />
+
+          <!-- Quick Pick Section -->
+          <div class="border p-2 mb-3">
+            <h6>Quick Pick</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="qpGameMode" class="form-label">Game Mode</label>
+                <select class="form-select" id="qpGameMode">
+                  <option value="Pick 3">Pick 3</option>
+                  <option value="Win 4">Win 4</option>
+                  <option value="Venezuela">Venezuela</option>
+                  <option value="Venezuela-Pale">Venezuela-Pale</option>
+                  <option value="Pulito">Pulito</option>
+                  <option value="RD-Quiniela">RD-Quiniela</option>
+                  <option value="RD-Pale">RD-Pale</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="qpCount" class="form-label">How many plays?</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="qpCount"
+                  placeholder="1–25"
+                  min="1"
+                  max="25"
+                  value="5"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="btnGenerateQuickPick"
+            >
+              Generate Random Plays
+            </button>
           </div>
-          <div class="mb-3">
-            <label for="wizardCombo" class="form-label">Combo ($)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="wizardCombo"
-              placeholder="e.g. 3.00"
-              min="0"
-              step="0.1"
-            />
+
+          <!-- Round Down Section -->
+          <div class="border p-2 mb-3">
+            <h6>Round Down</h6>
+            <p class="small text-muted">
+              Insert first and last number, but only one digit differs
+              from '0'...'9' between them. We'll generate exactly 10
+              plays. E.g.: 12X => 12X, from 120..129.
+            </p>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="rdFirstNumber" class="form-label"
+                  >First Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdFirstNumber"
+                  placeholder="e.g. 120"
+                />
+              </div>
+              <div class="col-6">
+                <label for="rdLastNumber" class="form-label"
+                  >Last Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdLastNumber"
+                  placeholder="e.g. 129"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="btnGenerateRoundDown"
+            >
+              Generate Round Down
+            </button>
           </div>
-          <!-- Could show read-only 'Game Mode' if desired -->
-          <!-- <div class="mb-3">
-            <label class="form-label">Detected Game Mode:</label>
-            <input type="text" class="form-control" id="wizardGameMode" readonly />
-          </div> -->
         </div>
+
+        <!-- Wizard Modal Footer -->
         <div class="modal-footer">
-          <!-- A copy of the "Generate Ticket" logic, to go directly from wizard -->
-          <button type="button" class="btn btn-info" id="wizardGenerateTicket">
+          <button
+            type="button"
+            class="btn btn-warning"
+            id="wizardAddAllToMain"
+          >
+            <i class="bi bi-hdd-fill"></i> Add All to Main
+          </button>
+          <button
+            type="button"
+            class="btn btn-info"
+            id="wizardGenerateTicket"
+          >
             <i class="bi bi-ticket-detailed"></i> Generate Ticket
           </button>
-          <!-- A button to edit the main form (close wizard + show the table) -->
           <button
             type="button"
             class="btn btn-secondary"
             id="wizardEditMainForm"
           >
-            Edit Main Form
+            <i class="bi bi-pencil-square"></i> Edit Main Form
           </button>
-          <!-- Add & Next: Insert row to table, then clear fields -->
-          <button type="button" class="btn btn-primary" id="wizardAddNext">
-            <i class="bi bi-check-circle"></i> Add & Next
-          </button>
-          <!-- Close Wizard -->
           <button
             type="button"
             class="btn btn-danger"
@@ -871,7 +1021,7 @@
     </div>
   </div>
 
-  <!-- JS Libraries at the end of the body -->
+  <!-- JS Libraries at the end -->
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- Popper.js (for Bootstrap) -->
@@ -885,7 +1035,9 @@
   <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- QRCode.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+  ></script>
   <!-- Day.js -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
   <!-- Day.js Plugins -->
@@ -899,7 +1051,7 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
-  <!-- Our custom JS -->
+  <!-- Our custom JS (lo pegarás en scripts.js) -->
   <script src="scripts.js"></script>
 </body>
 </html>
