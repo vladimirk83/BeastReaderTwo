@@ -1,5 +1,5 @@
   /* ===========================
-   BASE COLORS & FONTS
+   1) BASE COLORS & FONTS
    =========================== */
 :root {
   --color-fondo: #0a0a0a; /* Dark background */
@@ -14,6 +14,7 @@
   --color-error: #ff00ff;
 }
 
+/* Fondo general + tipografía */
 body {
   background-color: var(--color-fondo);
   color: var(--color-texto);
@@ -23,7 +24,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Container principal */
+/* Contenedor principal */
 .container {
   max-width: 1000px;
   margin: 0 auto;
@@ -33,6 +34,7 @@ body {
   box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
 }
 
+/* Título principal */
 h2 {
   text-align: center;
   margin-bottom: 20px;
@@ -42,8 +44,10 @@ h2 {
 }
 
 /* ===========================
-   FLATPICKR INPUT
+   2) FLATPICKR INPUT
+   (Revirtiendo a un estilo sencillo/clásico)
    =========================== */
+/* Mantén tu input con halo “glow” */
 .glow-input {
   box-shadow: 0 0 10px var(--color-neon-cian);
   transition: box-shadow 0.3s, border-color 0.3s;
@@ -53,9 +57,10 @@ h2 {
   box-shadow: 0 0 15px var(--color-neon-morado);
   outline: none;
 }
+/* No sobreescribimos .flatpickr-day, etc. => usará el estilo por defecto de la librería */
 
 /* ===========================
-   ACCORDION & TRACKS
+   3) ACCORDION & TRACKS
    =========================== */
 .accordion-button {
   background-color: var(--color-fondo-acordeon);
@@ -93,7 +98,7 @@ h2 {
 }
 
 /* ===========================
-   TRACK BUTTONS (3D + Ripple)
+   4) TRACK BUTTONS (3D + Ripple)
    =========================== */
 .track-button-container {
   display: inline-block;
@@ -132,14 +137,11 @@ h2 {
   overflow: hidden; /* Para el ripple */
   padding: 0.5rem;
 }
-
-/* Hover: se eleva un poco */
 .track-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 7px #111;
   background: linear-gradient(#666, #444);
 }
-
 /* Al hacer click => hundimiento + ripple */
 .track-button:active {
   transform: translateY(2px);
@@ -160,8 +162,6 @@ h2 {
   width: 250px;
   height: 250px;
 }
-
-/* Texto y subtexto */
 .track-button .track-name {
   font-weight: 700;
   font-size: 1.1rem;
@@ -171,23 +171,19 @@ h2 {
   font-size: 1rem;
   color: #cccccc;
 }
-
-/* Estado CHECKED => color dorado */
 .track-button-container input[type="checkbox"]:checked + .track-button {
   background: linear-gradient(#ffd966, #d1a824);
   color: #000;
   box-shadow: 0 5px #666;
   transform: none;
 }
-
-/* Disabled => opaco */
 .track-button-container input[type="checkbox"]:disabled + .track-button {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* ===========================
-   TABLES
+   5) TABLES
    =========================== */
 .table-dark {
   box-shadow: 0 0 10px var(--color-neon-cian);
@@ -224,7 +220,7 @@ h2 {
 }
 
 /* ===========================
-   BUTTONS
+   6) BUTTONS
    =========================== */
 .btn {
   padding: 10px 20px;
@@ -321,7 +317,7 @@ h2 {
 }
 
 /* ===========================
-   MODAL
+   7) MODAL
    =========================== */
 .modal-content {
   background-color: #0a0a0a;
@@ -347,7 +343,7 @@ h2 {
 }
 
 /* ===========================
-   RESPONSIVE & PRINT
+   8) RESPONSIVE & PRINT
    =========================== */
 @media (max-width: 768px) {
   .container {
@@ -384,7 +380,7 @@ h2 {
 }
 
 /* ===========================
-   TICKET CONTAINER
+   9) TICKET CONTAINER
    =========================== */
 #preTicket {
   background-color: #0a0a0a;
@@ -434,17 +430,29 @@ h2 {
   font-size: 0.9rem;
   padding: 6px;
 }
-.duplicado {
-  background-color: #ffff99;
-  border: 2px solid #ffeb3b;
+.cutoff-time[data-track='Venezuela'] {
+  color: var(--color-fondo);
 }
+
+/* 
+   -> Cambiamos el color de texto
+      en duplicados a #000 (negro)
+*/
+.duplicado {
+  background-color: #ffff99 !important; /* Amarillo */
+  border: 2px solid #ffe600 !important;
+  color: #000 !important; /* Texto negro para legibilidad */
+}
+
+/* 
+   -> Errores en morado 
+*/
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
-.cutoff-time[data-track='Venezuela'] {
-  color: var(--color-fondo);
-}
+
+/* Ajustes responsive ticket */
 @media (max-width: 600px) {
   #preTicket table,
   #preTicket th,
@@ -490,9 +498,8 @@ h2 {
 }
 
 /* ===========================
-   WIZARD
+   10) WIZARD
    =========================== */
-/* Campos un poco más compactos */
 #wizardBetNumber,
 #wizardStraight,
 #wizardCombo {
@@ -504,18 +511,21 @@ h2 {
   text-align: center;
 }
 
-/* Candaditos */
+/* Candaditos => 3 veces más grandes */
 .lockBtn {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.4rem;
+  font-size: 2.4rem; /* triplicado */
+  padding: 0.9rem 1.2rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .lockBtn:hover {
   background-color: #333;
+  transform: scale(1.05);
 }
 
-/* Wizard table (#wizardTable) */
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
