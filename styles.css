@@ -1,4 +1,3 @@
-  
   /* ===========================
    1) BASE COLORS & FONTS
    =========================== */
@@ -41,14 +40,12 @@ h2 {
   margin-bottom: 20px;
   color: var(--color-neon-cian);
   text-shadow: 0 0 10px var(--color-neon-cian);
-  font-size: 1.125rem; /* ~18px */
+  font-size: 1.125rem; 
 }
 
 /* ===========================
    2) FLATPICKR INPUT
-   (Revirtiendo a un estilo sencillo/clásico)
    =========================== */
-/* Mantén tu input con halo “glow” */
 .glow-input {
   box-shadow: 0 0 10px var(--color-neon-cian);
   transition: box-shadow 0.3s, border-color 0.3s;
@@ -58,7 +55,6 @@ h2 {
   box-shadow: 0 0 15px var(--color-neon-morado);
   outline: none;
 }
-/* No sobreescribimos .flatpickr-day, etc. => usará el estilo por defecto de la librería */
 
 /* ===========================
    3) ACCORDION & TRACKS
@@ -112,8 +108,6 @@ h2 {
 .track-button-container input[type="checkbox"] {
   display: none;
 }
-
-/* Botón con estilo 3D + ripple */
 .track-button {
   position: relative;
   display: flex;
@@ -126,16 +120,12 @@ h2 {
   cursor: pointer;
   user-select: none;
   text-align: center;
-
-  /* Efecto 3D principal */
   background: linear-gradient(#555, #333);
   color: #ffffff;
   box-shadow: 0 5px #111;
   border: 1px solid #444;
-
-  /* Animaciones */
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
-  overflow: hidden; /* Para el ripple */
+  overflow: hidden;
   padding: 0.5rem;
 }
 .track-button:hover {
@@ -143,7 +133,6 @@ h2 {
   box-shadow: 0 7px #111;
   background: linear-gradient(#666, #444);
 }
-/* Al hacer click => hundimiento + ripple */
 .track-button:active {
   transform: translateY(2px);
   box-shadow: 0 3px #111;
@@ -204,8 +193,6 @@ h2 {
   white-space: nowrap;
   vertical-align: middle;
 }
-
-/* Editable inputs */
 .table-dark td .form-control {
   background: #333333;
   color: #fff;
@@ -299,8 +286,6 @@ h2 {
 .button-group .btn {
   flex: 1;
 }
-
-/* BOTÓN ROJO para remover jugadas (1ra col) */
 .btnRemovePlay {
   background-color: #ff0044 !important;
   color: #fff !important;
@@ -324,9 +309,8 @@ h2 {
   background-color: #0a0a0a;
   color: #ffffff;
   box-shadow: 0 0 20px var(--color-neon-cian);
-  max-height: 90vh;
-  overflow: auto;
-  resize: both;
+  max-height: 90vh; 
+  overflow: hidden; 
   border: 2px solid var(--color-neon-cian);
 }
 .modal-header,
@@ -341,6 +325,11 @@ h2 {
   margin: 0 auto;
   width: 128px;
   height: 128px;
+}
+.modal-body {
+  max-height: 70vh; 
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===========================
@@ -383,119 +372,115 @@ h2 {
 /* ===========================
    9) TICKET CONTAINER
    =========================== */
+
+/* Forzamos ancho 1200px y una fuente ~2rem */
 #preTicket {
   background-color: #0a0a0a;
   color: #ffffff;
   padding: 20px;
   border-radius: 10px;
+  min-width: 1200px;
+  width: 1200px;
+  max-width: none;
+  margin: 0 auto;
   overflow-x: auto;
-  max-width: 100%;
   overflow-y: visible;
 }
+
 #preTicket h4 {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
-  font-size: 1.5rem;
+  font-size: 2rem;
 }
+
 #preTicket table {
   background-color: #1e1e1e;
-  width: 100%;
+  min-width: 1200px;
   table-layout: fixed;
-  font-size: 1.125rem;
+  font-size: 2rem; 
 }
+
+/* Ajustar la 1ra col (#) y Bet Number a algo más angosto */
 #preTicket th,
 #preTicket td {
   border: 1px solid #00ffff;
   color: #ffffff;
-  padding: 6px;
-  word-wrap: break-word;
-  font-size: 0.9rem;
+  font-size: 2rem;
+  padding: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* La 1ra col (#) => 4%, Bet => 10%, Game Mode => 8%, 
+   Straight => 10%, Box => 8%, Combo =>10%, Total =>10%.
+   => Suma ~60%. Queda 40% para “aire” si se distribuye. */
 #preTicket th:nth-child(1) {
+  width: 4%;
+}
+#preTicket th:nth-child(2) {
   width: 10%;
 }
-#preTicket th:nth-child(2),
-#preTicket th:nth-child(4),
-#preTicket th:nth-child(5),
-#preTicket th:nth-child(6),
-#preTicket th:nth-child(7) {
-  width: 12%;
-}
 #preTicket th:nth-child(3) {
-  width: 20%;
+  width: 8%;
 }
-#preTicket td {
-  font-size: 0.9rem;
-  padding: 6px;
+#preTicket th:nth-child(4) {
+  width: 10%;
+}
+#preTicket th:nth-child(5) {
+  width: 8%;
+}
+#preTicket th:nth-child(6) {
+  width: 10%;
+}
+#preTicket th:nth-child(7) {
+  width: 10%;
+}
+
+.total-section {
+  font-size: 2rem;
+  margin: 1.5rem 0;
+}
+#ticketTotal {
+  font-size: 2rem !important;
+}
+#numeroTicket,
+#ticketTransaccion {
+  font-size: 2rem !important;
+}
+#ticketFecha {
+  color: #ffffff !important;
 }
 .cutoff-time[data-track='Venezuela'] {
   color: var(--color-fondo);
 }
 
-/* 
-   -> Cambiamos el color de texto
-      en duplicados a #000 (negro)
-*/
+/* duplicados => amarillo */
 .duplicado {
-  background-color: #ffff99 !important; /* Amarillo */
+  background-color: #ffff99 !important;
   border: 2px solid #ffe600 !important;
-  color: #000 !important; /* Texto negro para legibilidad */
+  color: #000 !important;
 }
-
-/* 
-   -> Errores en morado 
-*/
+/* errores => morado */
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
 
-/* Ajustes responsive ticket */
+/* Móvil < 600px => scroll horizontal y fuente algo menor */
 @media (max-width: 600px) {
+  #preTicket {
+    overflow-x: auto;
+  }
   #preTicket table,
   #preTicket th,
   #preTicket td {
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-  #preTicket {
-    padding: 10px;
-    overflow-x: auto;
+    font-size: 1.8rem;
   }
   #qrcode {
     width: 100px;
     height: 100px;
   }
-  #preTicket th,
-  #preTicket td {
-    font-size: 0.8rem;
-  }
-}
-@media (max-width: 768px) {
-  #preTicket {
-    width: 1200px !important;
-    max-width: none !important;
-    margin: 0 auto !important;
-    overflow-x: auto !important;
-  }
-  #preTicket table {
-    min-width: 1200px !important;
-    table-layout: fixed !important;
-    white-space: nowrap !important;
-  }
-  #preTicket th,
-  #preTicket td {
-    font-size: 1rem !important;
-    text-overflow: ellipsis;
-  }
-}
-
-/* Fijar color de Bet Dates en ticket */
-#ticketFecha {
-  color: #ffffff !important;
 }
 
 /* ===========================
@@ -511,10 +496,8 @@ h2 {
   width: 7ch;
   text-align: center;
 }
-
-/* Candaditos => 3 veces más grandes */
 .lockBtn {
-  font-size: 2.4rem; /* triplicado */
+  font-size: 2.4rem;
   padding: 0.9rem 1.2rem;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
@@ -526,7 +509,10 @@ h2 {
   background-color: #333;
   transform: scale(1.05);
 }
-
+#wizardTable {
+  min-width: 100%;
+  table-layout: auto;
+}
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
@@ -536,8 +522,4 @@ h2 {
 #wizardTable td {
   font-size: 1rem;
   white-space: nowrap;
-}
-#wizardTable {
-  min-width: 100%;
-  table-layout: auto;
 }
