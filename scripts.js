@@ -1,6 +1,13 @@
-  const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
+ /* =========================================================
+   SCRIPTS.JS COMPLETO
+   (Con scale=2, JPEG 0.8, tutorial Intro.js, wizard, etc.)
+   + Ajuste de manual => mostrar en la MISMA pestaña
+========================================================= */
+
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 $(document).ready(function() {
+
   // Extensiones dayjs
   dayjs.extend(dayjs_plugin_customParseFormat);
   dayjs.extend(dayjs_plugin_arraySupport);
@@ -67,7 +74,7 @@ $(document).ready(function() {
   };
 
   // =========================================================
-  // INIT FLATPICKR (Forzar fecha de hoy en el input)
+  // INIT FLATPICKR (Forzar fecha hoy)
   // =========================================================
   const fp = flatpickr("#fecha", {
     mode: "multiple",
@@ -110,7 +117,7 @@ $(document).ready(function() {
   });
 
   // =========================================================
-  // MAIN TABLE => Add, Remove
+  // MAIN TABLE => Add/Remove
   // =========================================================
   $("#agregarJugada").click(function(){
     const row = addMainRow();
@@ -248,7 +255,7 @@ $(document).ready(function() {
 
     // 3) Pale => 2 dígitos, - o x, 2 dígitos
     const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
-    if( paleRegex.test(betNumber) ){
+    if(paleRegex.test(betNumber)){
       if(includesVenezuela && isUSA) {
         return "Pale-Ven";
       }
@@ -261,22 +268,21 @@ $(document).ready(function() {
     const length = betNumber.length;
     if(length<2 || length>4) return "-";
 
-    // 4) Venezuela => (2 dig) + track USA
+    // 4) Venezuela => 2 dig + track USA
     if(length===2 && includesVenezuela && isUSA){
       return "Venezuela";
     }
-    // 5) Pulito => (2 dig) + track USA sin SD
+    // 5) Pulito => 2 dig + track USA sin SD
     if(isUSA && !isSD && length===2){
       return "Pulito";
     }
-    // 6) RD-Quiniela => (2 dig) + track SD sin USA
+    // 6) RD-Quiniela => 2 dig + track SD sin USA
     if(length===2 && isSD && !isUSA){
       return "RD-Quiniela";
     }
-
-    // 7) 3 dígitos => pick3
+    // 7) 3 díg => pick 3
     if(length===3) return "Pick 3";
-    // 8) 4 dígitos => Win4
+    // 8) 4 díg => win 4
     if(length===4) return "Win 4";
 
     return "-";
@@ -290,7 +296,7 @@ $(document).ready(function() {
     const st = parseFloat(stVal) || 0;
     const combo = parseFloat(coVal)||0;
 
-    // Pulito => multiplicar st * #posiciones
+    // Pulito => si hay box, se multiplica st * #posiciones en box
     if(gm==="Pulito"){
       if(bxVal){
         const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
@@ -311,12 +317,12 @@ $(document).ready(function() {
       return (st + numericBox + combo).toFixed(2);
     }
 
-    // Venezuela/Pale-RD/Pale-Ven/RD-Quiniela => st
-    if(gm==="Venezuela" || gm==="Pale-RD" || gm==="Pale-Ven" || gm==="RD-Quiniela"){
+    // Venezuela, Pale-RD, Pale-Ven, RD-Quiniela => solo st
+    if(["Venezuela","Pale-RD","Pale-Ven","RD-Quiniela"].includes(gm)){
       return st.toFixed(2);
     }
 
-    // Win4 / Pick3 => combosCount
+    // Win4 / Pick3 => combosCount en "combo"
     if(gm==="Win 4" || gm==="Pick 3"){
       const numericBox = parseFloat(bxVal)||0;
       const combosCount = calcCombos(bn);
@@ -326,8 +332,7 @@ $(document).ready(function() {
 
     // default
     const numericBox = parseFloat(bxVal)||0;
-    let totalD = st + numericBox + combo;
-    return totalD.toFixed(2);
+    return (st + numericBox + combo).toFixed(2);
   }
 
   function calcCombos(str){
@@ -344,7 +349,7 @@ $(document).ready(function() {
   }
 
   // =========================================================
-  // LOCALSTORAGE => store / load
+  // LOCALSTORAGE => store/load
   // =========================================================
   function storeFormState(){
     const st = {
@@ -559,7 +564,7 @@ $(document).ready(function() {
         }
       }
 
-      // LIMITES DE APUESTA
+      // LIMITES
       if(gm==="Win 4"){
         if(st>6){
           errorHere=true;
@@ -594,7 +599,6 @@ $(document).ready(function() {
           $(this).find(".box").addClass("error-field");
         }
       }
-      // Venezuela y Pulito => st<=100
       if(gm==="Venezuela"){
         if(st>100){
           errorHere=true;
@@ -691,13 +695,13 @@ $(document).ready(function() {
     });
 
     setTimeout(()=>{
-      // [MODIFICADO] scale=2, JPEG (calidad 0.8)
+      // *** scale=2, JPEG ***
       html2canvas(ticketElement,{scale:2})
       .then(canvas=>{
         const dataUrl=canvas.toDataURL("image/jpeg",0.8);
         window.ticketImageDataUrl=dataUrl;
 
-        // Descarga automática => .jpg
+        // auto download => ticket_{uniqueTicket}.jpg
         const link=document.createElement("a");
         link.href=dataUrl;
         link.download=`ticket_${uniqueTicket}.jpg`;
@@ -739,7 +743,6 @@ $(document).ready(function() {
       try{
         const resp=await fetch(window.ticketImageDataUrl);
         const blob=await resp.blob();
-        // [MODIFICADO] => JPEG
         const file=new File([blob],"ticket.jpg",{type:"image/jpeg"});
         if(navigator.canShare({files:[file]})){
           await navigator.share({files:[file], title:"Ticket", text:"Sharing Ticket"});
@@ -910,7 +913,7 @@ $(document).ready(function() {
   disableTracksByTime();
   setInterval(disableTracksByTime,60000);
 
-  // AUTO-SELECT NY TRACK
+  // AUTO-SELECT NY
   autoSelectNYTrack();
   function autoSelectNYTrack(){
     const anyChecked = $(".track-checkbox:checked").length>0;
@@ -925,7 +928,7 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-  // DUPLICATES en main table
+  // Duplicates highlight
   function highlightDuplicatesInMain(){
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
     let counts={};
@@ -943,7 +946,7 @@ $(document).ready(function() {
   }
 
   // =========================================================
-  // WIZARD (Ventana)
+  // WIZARD
   // =========================================================
   const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
 
@@ -1262,50 +1265,122 @@ $(document).ready(function() {
     });
   }
 
-  // =========================================================
-  // INTRO.JS TUTORIAL (3 idiomas)
-  // =========================================================
-  // ... [TUTORIAL STEPS YA DEFINIDOS] ...
 
-  // Aquí están tus tutorialStepsEN, ES, HT (igual que antes)
-  // (omitiendo el largo, pues ya está en tu código)
+  // ======== SECCIÓN AJUSTADA: INTRO.JS + BOTONES DEL MANUAL ========
 
-  // =========================================================
-  // MANUAL DETALLADO (3 idiomas)
-  // =========================================================
+  // ----------------------------------------------------------
+  // 1) ACTIVAR TUTORIAL CON INTRO.JS EN TRES IDIOMAS
+  // ----------------------------------------------------------
+  const tutorialStepsEN = [
+    {
+      element: '#fecha',
+      intro: 'Select one or multiple dates here.',
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Choose your tracks in this accordion.',
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Add individual plays (Bet Number, Straight/Box/Combo).'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Or use the Wizard for quick entry.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'When ready, click here to generate the ticket.'
+    }
+    // Agrega más pasos según necesites
+  ];
+  const tutorialStepsES = [
+    {
+      element: '#fecha',
+      intro: 'Seleccione una o varias fechas de apuesta aquí.',
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Elija los tracks en este acordeón.',
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Agregue jugadas (número, Straight/Box/Combo).'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Use el Wizard para entrada rápida.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'Cuando termine, presione aquí para generar el ticket.'
+    }
+  ];
+  const tutorialStepsHT = [
+    {
+      element: '#fecha',
+      intro: 'Chwazi youn oswa plizyè dat paryaj.',
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Chwazi tracks ou yo nan akòdeyon an.',
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Ajoute jwet yo (Bet Number, Straight/Box/Combo).'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Ou ka sèvi ak Wizard pou antre rapid.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'Lè w fini, klike la pou jenere tikè a.'
+    }
+  ];
 
-  const manualEnglishHTML = `
-    <h4>Complete Lottery App Manual (English)</h4>
-    <p><strong>1. Calendario (Bet Dates):</strong> Lorem ipsum ...<br>
-       [Aquí restauras tu texto completo en inglés tal como lo tenías con todos los detalles...]
-    </p>
-    <p><strong>2. Tracks (USA/Santo Domingo):</strong> ...</p>
-    ...
-  `;
-  const manualSpanishHTML = `
-    <h4>Manual Completo de la App de Loterías (Español)</h4>
-    <p><strong>1. Calendario (Selección de Fechas):</strong> Lorem ipsum ...<br>
-       [Texto completo en español...]
-    </p>
-    <p><strong>2. Selección de Tracks:</strong> ...</p>
-    ...
-  `;
-  const manualCreoleHTML = `
-    <h4>Manyèl Konplè pou Aplikasyon Lòtri (Kreyòl)</h4>
-    <p><strong>1. Dat Pari:</strong> Lorem ipsum ...</p>
-    <p><strong>2. Tracks (USA / RD):</strong> ...</p>
-    ...
-  `;
+  function startTutorial(lang) {
+    let steps = tutorialStepsEN; // por defecto
+    let nextLabel='Next', prevLabel='Back', skipLabel='Skip', doneLabel='Done';
 
-  // Insertamos al DOM:
-  $("#manualEnglishText").html(manualEnglishHTML);
-  $("#manualSpanishText").html(manualSpanishHTML);
-  $("#manualCreoleText").html(manualCreoleHTML);
+    if(lang==='es'){
+      steps = tutorialStepsES;
+      nextLabel='Siguiente'; 
+      prevLabel='Atrás';
+      skipLabel='Omitir';
+      doneLabel='Listo';
+    } else if(lang==='ht'){
+      steps = tutorialStepsHT;
+      nextLabel='Next';
+      prevLabel='Back';
+      skipLabel='Skip';
+      doneLabel='OK'; 
+      // (Puedes personalizar más en creole)
+    }
 
-  // Aseguramos que solo uno se vea
-  $("#manualSpanishText").addClass("d-none");
-  $("#manualCreoleText").addClass("d-none");
+    introJs().setOptions({
+      steps: steps,
+      showStepNumbers: true,
+      showProgress: false,
+      exitOnOverlayClick: true,
+      scrollToElement: false,
+      nextLabel,
+      prevLabel,
+      skipLabel,
+      doneLabel
+    }).start();
+  }
 
+  // Al hacer clic en los botones E, S, C => arrancamos tutorial
+  $("#helpEnglish").click(()=> startTutorial('en'));
+  $("#helpSpanish").click(()=> startTutorial('es'));
+  $("#helpCreole").click(()=> startTutorial('ht'));
+
+
+  // ----------------------------------------------------------
+  // 2) MOSTRAR EL MANUAL EN LA MISMA PÁGINA
+  // ----------------------------------------------------------
+  // En lugar de location.href, aquí solo cambiamos la visibilidad.
   $("#manualEnglishBtn").click(function(){
     $("#manualEnglishText").removeClass("d-none");
     $("#manualSpanishText").addClass("d-none");
@@ -1322,16 +1397,5 @@ $(document).ready(function() {
     $("#manualCreoleText").removeClass("d-none");
   });
 
-  // Botones tutorial
-  const tutorialStepsEN = [ /* ...Tus pasos en inglés... */ ];
-  const tutorialStepsES = [ /* ...Tus pasos en español... */ ];
-  const tutorialStepsHT = [ /* ...Tus pasos en criollo... */ ];
-
-  function startTutorial(lang) {
-    // (igual que antes)
-  }
-  $("#helpEnglish").click(()=>startTutorial('en'));
-  $("#helpSpanish").click(()=>startTutorial('es'));
-  $("#helpCreole").click(()=>startTutorial('ht'));
-
 });
+// fin document.ready
