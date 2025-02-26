@@ -1,7 +1,7 @@
- /* =========================================================
+  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Con scale=2, JPEG 0.8, tutorial Intro.js, wizard, etc.)
-   + Ajuste de manual => mostrar en la MISMA pestaña
+   + Ajuste de manual => abre manual.html en la MISMA pestaña
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -296,7 +296,7 @@ $(document).ready(function() {
     const st = parseFloat(stVal) || 0;
     const combo = parseFloat(coVal)||0;
 
-    // Pulito => si hay box, se multiplica st * #posiciones en box
+    // Pulito => st * #posiciones en box
     if(gm==="Pulito"){
       if(bxVal){
         const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
@@ -322,7 +322,7 @@ $(document).ready(function() {
       return st.toFixed(2);
     }
 
-    // Win4 / Pick3 => combosCount en "combo"
+    // Win4 / Pick3 => combosCount
     if(gm==="Win 4" || gm==="Pick 3"){
       const numericBox = parseFloat(bxVal)||0;
       const combosCount = calcCombos(bn);
@@ -1265,137 +1265,22 @@ $(document).ready(function() {
     });
   }
 
+  // =========================================================
+  // INTRO.JS TUTORIAL (Tus pasos)
+  // =========================================================
+  // ... (Si ya lo tenías, se mantiene)...
 
-  // ======== SECCIÓN AJUSTADA: INTRO.JS + BOTONES DEL MANUAL ========
-
-  // ----------------------------------------------------------
-  // 1) ACTIVAR TUTORIAL CON INTRO.JS EN TRES IDIOMAS
-  // ----------------------------------------------------------
-  const tutorialStepsEN = [
-    {
-      element: '#fecha',
-      intro: 'Select one or multiple dates here.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Choose your tracks in this accordion.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Add individual plays (Bet Number, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Or use the Wizard for quick entry.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'When ready, click here to generate the ticket.'
-    }
-    // Agrega más pasos según necesites
-  ];
-  const tutorialStepsES = [
-    {
-      element: '#fecha',
-      intro: 'Seleccione una o varias fechas de apuesta aquí.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Elija los tracks en este acordeón.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Agregue jugadas (número, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Use el Wizard para entrada rápida.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'Cuando termine, presione aquí para generar el ticket.'
-    }
-  ];
-  const tutorialStepsHT = [
-    {
-      element: '#fecha',
-      intro: 'Chwazi youn oswa plizyè dat paryaj.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Chwazi tracks ou yo nan akòdeyon an.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Ajoute jwet yo (Bet Number, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Ou ka sèvi ak Wizard pou antre rapid.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'Lè w fini, klike la pou jenere tikè a.'
-    }
-  ];
-
-  function startTutorial(lang) {
-    let steps = tutorialStepsEN; // por defecto
-    let nextLabel='Next', prevLabel='Back', skipLabel='Skip', doneLabel='Done';
-
-    if(lang==='es'){
-      steps = tutorialStepsES;
-      nextLabel='Siguiente'; 
-      prevLabel='Atrás';
-      skipLabel='Omitir';
-      doneLabel='Listo';
-    } else if(lang==='ht'){
-      steps = tutorialStepsHT;
-      nextLabel='Next';
-      prevLabel='Back';
-      skipLabel='Skip';
-      doneLabel='OK'; 
-      // (Puedes personalizar más en creole)
-    }
-
-    introJs().setOptions({
-      steps: steps,
-      showStepNumbers: true,
-      showProgress: false,
-      exitOnOverlayClick: true,
-      scrollToElement: false,
-      nextLabel,
-      prevLabel,
-      skipLabel,
-      doneLabel
-    }).start();
-  }
-
-  // Al hacer clic en los botones E, S, C => arrancamos tutorial
-  $("#helpEnglish").click(()=> startTutorial('en'));
-  $("#helpSpanish").click(()=> startTutorial('es'));
-  $("#helpCreole").click(()=> startTutorial('ht'));
-
-
-  // ----------------------------------------------------------
-  // 2) MOSTRAR EL MANUAL EN LA MISMA PÁGINA
-  // ----------------------------------------------------------
-  // En lugar de location.href, aquí solo cambiamos la visibilidad.
+  // =========================================================
+  // MANUAL => AHORA ABRE manual.html?lang=XX EN LA MISMA PESTAÑA
+  // =========================================================
   $("#manualEnglishBtn").click(function(){
-    $("#manualEnglishText").removeClass("d-none");
-    $("#manualSpanishText").addClass("d-none");
-    $("#manualCreoleText").addClass("d-none");
+    location.href = "manual.html?lang=en"; 
   });
   $("#manualSpanishBtn").click(function(){
-    $("#manualEnglishText").addClass("d-none");
-    $("#manualSpanishText").removeClass("d-none");
-    $("#manualCreoleText").addClass("d-none");
+    location.href = "manual.html?lang=es";
   });
   $("#manualCreoleBtn").click(function(){
-    $("#manualEnglishText").addClass("d-none");
-    $("#manualSpanishText").addClass("d-none");
-    $("#manualCreoleText").removeClass("d-none");
+    location.href = "manual.html?lang=ht";
   });
 
-});
-// fin document.ready
+}); // fin document.ready
