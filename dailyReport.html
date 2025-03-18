@@ -142,10 +142,9 @@
       border-color: var(--light-accent) !important;
       text-shadow: none !important;
     }
-    /* Pequeño ajuste a los h3/h4 dentro del acordeón en modo claro */
-    body.light-mode .accordion-content h3,
-    body.light-mode .accordion-content h4 {
-      color: #000 !important;
+    .accordion-content h3,
+    .accordion-content h4 {
+      color: inherit !important;
       text-shadow: none !important;
     }
 
@@ -881,55 +880,45 @@
     // Guardamos si el PIN ya fue validado
     let pinValidated = localStorage.getItem("pinValidated") === "true";
 
-    /* Estructura de data */
+    /* Estructura de data (ahora con overlookNote y overlookExtra) */
     let dataStore = {
       globalSucursal: "",
       day1:{
-        pages:[], overlook:0, 
-        overlookExtra:[], /* NUEVO array para Overlook múltiple */
+        pages:[], 
+        overlook:0, 
+        overlookNote:"", 
+        overlookExtra:[], 
         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day2:{
-        pages:[], overlook:0, 
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day3:{
-        pages:[], overlook:0, 
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day4:{
-        pages:[], overlook:0, 
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day5:{
-        pages:[], overlook:0,
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day6:{
-        pages:[], overlook:0,
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       day7:{
-        pages:[], overlook:0,
-        overlookExtra:[],
-        cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+        pages:[], overlook:0, overlookNote:"", overlookExtra:[], cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       },
       weekly:{ caidas:0, adelantoOficina:0 }
     };
 
-    // Para manejar si el acordeón está abierto/cerrado. Ej: { day1_cuadre: true/false, day1_credit: true/false }
+    // Para manejar si el acordeón está abierto/cerrado.
     let accordionStates = {};
 
     const dayMappings = [
@@ -966,10 +955,8 @@
             });
           }
         }
-        // Aseguramos que overlookExtra exista
-        if(!dataStore[dk].overlookExtra) {
-          dataStore[dk].overlookExtra = [];
-        }
+        // Aseguramos arrays extra
+        if(!dataStore[dk].overlookExtra) dataStore[dk].overlookExtra=[];
       }
 
       // PIN
@@ -1128,6 +1115,7 @@
       let dayData = dataStore[dayKey];
       let locked = lockedDays[dayKey] || lockedAll;
 
+      // Tabla de páginas (igual que tu código original)
       let html=`
         <table class="report-table">
           <thead>
@@ -1194,18 +1182,20 @@
         totalPending += p.pendingPrizes.reduce((acc,v)=>acc+v,0);
       });
 
+      // Cálculos de totales
       let t = calcDayTotals(dayKey);
       let subT = t.totalVentas - t.totalSalidas;
       let sumOptional = (dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets);
       let netBal = subT - sumOptional + totalPending;
-
       let nbColor = "#000";
       if(netBal < 0) nbColor="#0f0";
       else if(netBal > 0) nbColor="#f33";
 
+      // Overlook principal
       let ovVal = (dayData.overlook!==0 ? dayData.overlook : "");
+      let ovNote = dayData.overlookNote || "";
 
-      // TOTALSECTION (aquí agregamos Overlook MÚLTIPLE)
+      // Sección de Totales, con Overlook principal + nota + ADD/DEL
       html += `
         <div class="totals-section">
           <h3>Totales</h3>
@@ -1218,7 +1208,8 @@
             <input type="text" readonly value="$${t.totalPulitos.toFixed(2)}">
           </div>
 
-          <div class="form-group">
+          <!-- Overlook principal + nota, con ADD/DEL a la derecha -->
+          <div class="form-group" style="align-items:center;">
             <label>Overlook</label>
             <input type="number"
                    data-day="${dayKey}"
@@ -1227,25 +1218,40 @@
                    value="${ovVal}"
                    onchange="updateDayField(this)"
                    ${locked?'disabled':''}>
-            <!-- Botón para añadir fila extra de Overlook -->
-            <button class="pageBtn" style="background:green;margin-left:10px;"
-              onclick="addOverlookRow('${dayKey}')" ${locked?'disabled':''}>
-              Add Overlook
+            <input type="text"
+                   data-day="${dayKey}"
+                   data-field="overlookNote"
+                   style="margin-left:8px;width:400px;"
+                   placeholder="Nota Overlook"
+                   value="${ovNote}"
+                   oninput="updateDayNoteField(this)"
+                   ${locked?'disabled':''}>
+            <!-- Botón verde Add -->
+            <button class="pageBtn" style="background:green;margin-left:8px;"
+                    onclick="addOverlookRow('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Add
+            </button>
+            <!-- Botón rojo Del (para “borrar” Overlook principal) -->
+            <button class="pageBtn" style="background:red;margin-left:8px;"
+                    onclick="clearMainOverlook('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Del
             </button>
           </div>
 
-          <!-- Sección para pintar las filas extras de Overlook -->
-          <div id="overlookExtraContainer_${dayKey}" style="margin-left:20px;">
+          <!-- Aquí se listan las filas extra de Overlook -->
+          <div id="overlookExtraContainer_${dayKey}">
       `;
-      dayData.overlookExtra.forEach((item, oidx)=>{
-        let val = (item.amount!==0 ? item.amount : "");
-        let note = item.note || "";
+      dayData.overlookExtra.forEach((row, idx)=>{
+        let val = (row.amount!==0 ? row.amount : "");
+        let note = row.note || "";
         html += `
           <div class="form-group" style="align-items:center;">
-            <label>Extra</label>
+            <label>Overlook</label>
             <input type="number"
                    data-day="${dayKey}"
-                   data-oidx="${oidx}"
+                   data-oidx="${idx}"
                    data-field="amount"
                    max="900000"
                    value="${val}"
@@ -1253,20 +1259,29 @@
                    ${locked?'disabled':''}>
             <input type="text"
                    data-day="${dayKey}"
-                   data-oidx="${oidx}"
+                   data-oidx="${idx}"
                    data-field="note"
+                   style="margin-left:8px;width:400px;"
+                   placeholder="Nota Overlook"
                    value="${note}"
                    oninput="updateOverlookExtra(this)"
-                   placeholder="Nota Overlook"
-                   style="margin-left:8px;width:400px;"
                    ${locked?'disabled':''}>
-            <button class="pageBtn" style="background:red;margin-left:10px;"
-              onclick="deleteOverlookRow('${dayKey}',${oidx})" ${locked?'disabled':''}>
+            <!-- Botón verde Add (para insertar otra fila) -->
+            <button class="pageBtn" style="background:green;margin-left:8px;"
+                    onclick="addOverlookRow('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Add
+            </button>
+            <!-- Botón rojo Del (para esta fila) -->
+            <button class="pageBtn" style="background:red;margin-left:8px;"
+                    onclick="deleteOverlookRow('${dayKey}', ${idx})"
+                    ${locked?'disabled':''}>
               Del
             </button>
           </div>
         `;
       });
+
       html += `
           </div>
 
@@ -1281,7 +1296,7 @@
         </div>
       `;
 
-      // Cuadre y Créditos en acordeones
+      // Cuadre y créditos
       let isCuadreOpen = accordionStates[dayKey+"_cuadre"] ? "block" : "none";
       let isCreditOpen = accordionStates[dayKey+"_credit"] ? "block" : "none";
 
@@ -1327,7 +1342,6 @@
                        onchange="updateDayField(this)"
                        ${locked?'disabled':''}>
               </div>
-              <!-- crédito (readonly) -->
               <div class="form-group">
                 <label>Crédito</label>
                 <input type="number" readonly value="${dayData.credito||0}" style="color:var(--purple-color);">
@@ -1371,10 +1385,9 @@
       container.innerHTML = html;
     }
 
-    /* Guardar la apertura/cierre del acordeón */
     function toggleAccordion(key){
       accordionStates[key] = !accordionStates[key];
-      renderAllDays(); // re-render sin perder estados
+      renderAllDays(); 
     }
 
     function createCreditSection(dayKey, locked){
@@ -1516,7 +1529,7 @@
     }
 
     /****************************************************
-     * CALC DAY TOTALS (ahora suma Overlook Extra)
+     * CÁLCULO DE TOTALES (incluyendo Overlook + Overlook Extra)
      ****************************************************/
     function calcDayTotals(dayKey){
       let d = dataStore[dayKey];
@@ -1526,22 +1539,22 @@
         tp+=(p.pulitos||0);
         ts+=(p.totalSalidas||0);
       });
-      // Overlook principal
+      // Sumar Overlook principal
       ts += (d.overlook||0);
-      // Sumar Overlook Extra
-      d.overlookExtra.forEach(row=>{
-        ts += (row.amount||0);
+      // Sumar Overlook extra
+      d.overlookExtra.forEach(ov=>{
+        ts += (ov.amount||0);
       });
       return {
-        totalCentenas:tc,
-        totalPulitos:tp,
-        totalSalidas:ts,
-        totalVentas:tc+tp
+        totalCentenas: tc,
+        totalPulitos: tp,
+        totalSalidas: ts,
+        totalVentas: tc + tp
       };
     }
 
     /****************************************************
-     * MANEJO DE FILAS Y CAMPOS
+     * MANEJO DE CAMPOS
      ****************************************************/
     function updatePageField(input){
       let dayKey = input.dataset.day;
@@ -1566,6 +1579,13 @@
       storeData();
       renderDay(dayKey);
     }
+    // Para la nota principal de Overlook
+    function updateDayNoteField(input){
+      let dayKey = input.dataset.day;
+      dataStore[dayKey].overlookNote = input.value;
+      storeData();
+    }
+
     function deletePageRow(dayKey, idx){
       if(!confirm("¿Eliminar esta página?")) return;
       dataStore[dayKey].pages.splice(idx,1);
@@ -1587,15 +1607,16 @@
     }
 
     /****************************************************
-     * OVERLOOK EXTRA
+     * OVERLOOK EXTRA: Add, Delete, Update
      ****************************************************/
     function addOverlookRow(dayKey){
+      // Agrega una nueva fila de Overlook
       dataStore[dayKey].overlookExtra.push({ amount:0, note:"" });
       storeData();
       renderDay(dayKey);
     }
     function deleteOverlookRow(dayKey, idx){
-      if(!confirm("¿Eliminar este Overlook Extra?")) return;
+      if(!confirm("¿Eliminar esta fila Overlook?")) return;
       dataStore[dayKey].overlookExtra.splice(idx,1);
       storeData();
       renderDay(dayKey);
@@ -1605,16 +1626,22 @@
       let idx = parseInt(input.dataset.oidx);
       let field= input.dataset.field;
       let valStr = input.value.trim();
-
-      let row = dataStore[dayKey].overlookExtra[idx];
+      let row = dataStore[dayKey].overlookExtra[idx] || { amount:0, note:"" };
       if(field==="amount"){
-        let val = (valStr===""?0:parseFloat(valStr));
-        if(isNaN(val)) val=0;
+        let val = parseFloat(valStr)||0;
         if(val>900000) val=900000;
         row.amount = val;
       } else {
         row.note = valStr;
       }
+      dataStore[dayKey].overlookExtra[idx] = row;
+      storeData();
+      renderDay(dayKey);
+    }
+    // Eliminar Overlook principal (ponerlo en 0 y sin nota)
+    function clearMainOverlook(dayKey){
+      dataStore[dayKey].overlook = 0;
+      dataStore[dayKey].overlookNote = "";
       storeData();
       renderDay(dayKey);
     }
@@ -1860,8 +1887,10 @@
     function resetDay(dayKey){
       if(!confirm("¿Resetear todos los datos del día?")) return;
       dataStore[dayKey] = {
-        pages:[], overlook:0,
-        overlookExtra:[], // importante re-inicializar el array
+        pages:[], 
+        overlook:0,
+        overlookNote:"",
+        overlookExtra:[],
         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       };
@@ -1882,8 +1911,7 @@
       for(let i=1;i<=7;i++){
         let dk="day"+i;
         dataStore[dk] = {
-          pages:[], overlook:0,
-          overlookExtra:[],
+          pages:[], overlook:0, overlookNote:"", overlookExtra:[],
           cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
           creditTracker:{pending:[], paid:[]}
         };
@@ -1909,8 +1937,6 @@
 
     /****************************************************
      * EXPORT PDF
-       (6) Aumentamos scale a 2 y ocultamos solo los acordeones 
-       antes de hacer la captura, para no capturar Cuadre/Créditos.
      ****************************************************/
     document.getElementById("btnExportPDF").addEventListener("click", ()=>{
       let activeTab= document.querySelector(".tabContent.active");
@@ -1974,7 +2000,7 @@
     });
 
     /****************************************************
-     * (11) TAB/ENTER NAVIGATION
+     * TAB/ENTER NAVIGATION
      ****************************************************/
     function addTabKeyNavigation(){
       document.addEventListener("keydown",(e)=>{
