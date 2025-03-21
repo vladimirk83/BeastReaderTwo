@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -1107,6 +1107,7 @@
         renderDay("day"+i);
       }
       storeData();
+      updateWeeklyView();
     }
 
     function renderDay(dayKey){
@@ -1255,7 +1256,7 @@
                    data-field="amount"
                    max="900000"
                    value="${val}"
-                   onchange="updateOverlookExtra(this)"
+                   oninput="updateOverlookExtra(this)"
                    ${locked?'disabled':''}>
             <input type="text"
                    data-day="${dayKey}"
@@ -1567,6 +1568,7 @@
       dataStore[dayKey].pages[idx][field] = val;
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     function updateDayField(input){
       let dayKey = input.dataset.day;
@@ -1578,6 +1580,7 @@
       dataStore[dayKey][field] = val;
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     // Para la nota principal de Overlook
     function updateDayNoteField(input){
@@ -1592,6 +1595,7 @@
       dataStore[dayKey].pages.forEach((p,i)=> p.pageNo=i+1);
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     function addPageRow(dayKey){
       let d = dataStore[dayKey];
@@ -1604,6 +1608,7 @@
       });
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
 
     /****************************************************
@@ -1614,12 +1619,14 @@
       dataStore[dayKey].overlookExtra.push({ amount:0, note:"" });
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     function deleteOverlookRow(dayKey, idx){
       if(!confirm("¿Eliminar esta fila Overlook?")) return;
       dataStore[dayKey].overlookExtra.splice(idx,1);
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     function updateOverlookExtra(input){
       let dayKey = input.dataset.day;
@@ -1636,7 +1643,8 @@
       }
       dataStore[dayKey].overlookExtra[idx] = row;
       storeData();
-      
+      renderDay(dayKey);
+      updateWeeklyView();
     }
     // Eliminar Overlook principal (ponerlo en 0 y sin nota)
     function clearMainOverlook(dayKey){
@@ -1644,6 +1652,7 @@
       dataStore[dayKey].overlookNote = "";
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
 
     /****************************************************
@@ -1755,6 +1764,7 @@
       pageData.totalSalidas = sumPend + sumPaid;
       storeData();
       renderDay(currentModalDayKey);
+      updateWeeklyView();
     }
 
     /****************************************************
@@ -1902,6 +1912,7 @@
       }
       storeData();
       renderDay(dayKey);
+      updateWeeklyView();
     }
     function sendWeekToSheets(){
       alert("Guardando la semana completa (placeholder).");
