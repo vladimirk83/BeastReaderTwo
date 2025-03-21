@@ -593,25 +593,30 @@
       padding: 1rem;
     }
 
-@media (max-width: 600px) {
-  .container {
-    flex-direction: column;
-  }
-  .sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 2px solid var(--accent-color);
-  }
-  .sidebar button {
-    flex: 1;
-    text-align: center;
-    padding: 0.5rem;
-    font-size: 0.9rem;
-  }
-}
+    /* =============== ESTILOS PARA DISPOSITIVOS MÓVILES =============== */
+    @media (max-width: 600px) {
+      body {
+        overflow: auto;
+      }
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap; /* Permite que los botones se envuelvan en varias filas */
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--accent-color);
+      }
+      .sidebar button {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+    }
    
   </style>
 </head>
@@ -1876,10 +1881,6 @@
           <div class="form-group">
             <label>Total Salidas</label>
             <input type="text" readonly style="color:var(--danger-color);" value="${sumSal.toFixed(2)}">
-          </div>
-          <div class="form-group">
-            <label>Sub Total</label>
-            <input type="text" readonly style="color:var(--purple-strong);" value="${subTotal.toFixed(2)}">
           </div>
           <div class="form-group">
             <label>Caídas (20%)</label>
