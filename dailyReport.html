@@ -131,7 +131,7 @@
     }
 
     /*
-      (2) Añadimos estilos para .accordion, .accordion-header, .accordion-content en modo claro,
+      (2) Estilos para .accordion, .accordion-header, .accordion-content en modo claro,
       para que NO se queden con fondo negro ni texto neón.
     */
     body.light-mode .accordion,
@@ -598,23 +598,25 @@
       body {
         overflow: auto;
       }
+      /* Para que en móviles la vista sea en fila y se reserve espacio para la barra lateral */
       .container {
-        flex-direction: column;
+        flex-direction: row;
       }
       .sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        flex-wrap: wrap; /* Permite que los botones se envuelvan en varias filas */
-        overflow-x: auto;
-        border-right: none;
-        border-bottom: 2px solid var(--accent-color);
+        width: 240px;
+        height: 100vh;
+        flex-direction: column;
+        overflow-y: auto;
+        border-right: 2px solid var(--accent-color);
+        border-bottom: none;
       }
       .sidebar button {
-        flex: 1;
-        text-align: center;
+        text-align: left;
         padding: 0.5rem;
         font-size: 0.9rem;
+      }
+      .main-content {
+        width: calc(100vw - 240px);
       }
     }
    
