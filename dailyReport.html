@@ -153,10 +153,11 @@
     /* =============== LAYOUT PRINCIPAL =============== */
     .container {
   display: flex;
-  width: 100vw;
+  /* En vez de width: 100vw, puedes usar: */
+  width: auto;       /* o min-width: 100vw;  */
   height: 100vh;
-  overflow-x: auto;    /* permite scroll horizontal */
-  overflow-y: hidden;  /* o auto, si quieres scroll vertical en el contenedor */
+  overflow-x: auto;  /* Para permitir scroll horizontal */
+  overflow-y: hidden; /* o auto, según prefieras */
     }
     .hidden { display: none !important; }
     input[type=number]::-webkit-outer-spin-button,
