@@ -620,12 +620,13 @@
       }
       /* Área principal: se ajusta el ancho según el ancho de la sidebar */
       .main-content {
-        width: calc(100vw - 60px);
-        transition: width 0.3s ease;
-      }
+  flex: 1;
+  transition: all 0.3s ease;
+}
       .sidebar.expanded ~ .main-content {
-        width: calc(100vw - 240px);
-      }
+  flex: 1;
+  transition: all 0.3s ease;
+}
       .sidebar button {
         text-align: left;
         padding: 0.5rem;
