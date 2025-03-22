@@ -151,9 +151,10 @@
 
     /* =============== LAYOUT PRINCIPAL =============== */
     .container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow-x: hidden; /* Evita desbordamiento horizontal */
     }
     .hidden { display: none !important; }
     input[type=number]::-webkit-outer-spin-button,
@@ -620,12 +621,10 @@
       }
       /* Área principal: se ajusta el ancho según el ancho de la sidebar */
       .main-content {
-        width: calc(100vw - 60px);
-        transition: width 0.3s ease;
-      }
-      .sidebar.expanded ~ .main-content {
-        width: calc(100vw - 240px);
-      }
+  flex: 1;
+  min-width: 0; /* Permite que el contenido se reduzca sin desbordar */
+  transition: all 0.3s ease;
+}
       .sidebar button {
         text-align: left;
         padding: 0.5rem;
@@ -1027,7 +1026,7 @@
 
       // Evento para expandir la sidebar en móviles al hacer clic en el botón de hamburguesa
       document.getElementById("btnExpandSidebar").addEventListener("click", () => {
-        document.getElementById("sidebar").classList.add("expanded");
+  document.getElementById("sidebar").classList.toggle("expanded");
       });
 
       renderAllDays();
