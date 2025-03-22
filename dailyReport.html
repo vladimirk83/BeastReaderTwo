@@ -131,7 +131,7 @@
     }
 
     /*
-      (2) Estilos para .accordion, .accordion-header, .accordion-content en modo claro,
+      Estilos para .accordion, .accordion-header, .accordion-content en modo claro,
       para que NO se queden con fondo negro ni texto neón.
     */
     body.light-mode .accordion,
@@ -218,7 +218,8 @@
 
     /* =============== SIDEBAR (TABS) =============== */
     .sidebar {
-      width: 320px;
+      /* En desktop se mantiene 240px */
+      width: 240px;
       background: #000;
       border-right: 2px solid var(--accent-color);
       display: flex;
@@ -598,25 +599,37 @@
       body {
         overflow: auto;
       }
-      /* Para que en móviles la vista sea en fila y se reserve espacio para la barra lateral */
+      /* En móviles queremos que el layout se muestre en fila */
       .container {
         flex-direction: row;
       }
+      /* La barra lateral estará por defecto colapsada (ancho reducido) */
       .sidebar {
-        width: 300px;
+        width: 60px; /* Ajusta este valor para el ancho colapsado */
         height: 100vh;
         flex-direction: column;
         overflow-y: auto;
         border-right: 2px solid var(--accent-color);
         border-bottom: none;
+        transition: width 0.3s ease;
+      }
+      /* Cuando se expanda, aumenta su ancho */
+      .sidebar.expanded {
+        width: 240px; /* Ajusta este valor para el ancho expandido */
+      }
+      /* El área principal ocupa el resto del viewport */
+      .main-content {
+        width: calc(100vw - 60px);
+        transition: width 0.3s ease;
+      }
+      /* Si la sidebar está expandida, se reduce el ancho del main-content */
+      .sidebar.expanded ~ .main-content {
+        width: calc(100vw - 240px);
       }
       .sidebar button {
         text-align: left;
         padding: 0.5rem;
         font-size: 0.9rem;
-      }
-      .main-content {
-        width: calc(100vw - 180px);
       }
     }
    
@@ -654,6 +667,8 @@
       <!-- TOP BAR -->
       <div class="top-bar">
         <div class="top-bar-left">
+          <!-- Botón para alternar el despliegue de la sidebar en móviles -->
+          <button class="btnNeon" id="btnExpandSidebar">☰</button>
           <button class="btnNeon" id="btnToggleTheme">Dark/Light</button>
         </div>
         <div class="top-bar-right">
@@ -1016,6 +1031,11 @@
       initLockButtons();
       initToggleTheme();
 
+      // Evento para expandir la sidebar en móviles
+      document.getElementById("btnExpandSidebar").addEventListener("click", ()=>{
+        document.getElementById("sidebar").classList.add("expanded");
+      });
+
       renderAllDays();
       updateWeeklyView();
 
@@ -1069,6 +1089,8 @@
           let targetId = e.currentTarget.dataset.tab;
           document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
           document.getElementById(targetId).classList.add("active");
+          // Al seleccionar una pestaña, se contrae la sidebar (si está expandida)
+          document.getElementById("sidebar").classList.remove("expanded");
         });
       });
     }
@@ -1657,23 +1679,23 @@
       renderDay(dayKey);
       updateWeeklyView();
     }
-     function updateOverlookExtraBlur(input){
-  let dayKey = input.dataset.day;
-  let idx = parseInt(input.dataset.oidx);
-  let field = input.dataset.field;
-  let row = dataStore[dayKey].overlookExtra[idx] || { amount: 0, note: "" };
-  if(field === "amount"){
-    let val = parseFloat(input.value) || 0;
-    if(val > 900000) val = 900000;
-    row.amount = val;
-  } else {
-    row.note = input.value;
-  }
-  dataStore[dayKey].overlookExtra[idx] = row;
-  storeData();
-  renderDay(dayKey);
-  updateWeeklyView();
-}
+    function updateOverlookExtraBlur(input){
+      let dayKey = input.dataset.day;
+      let idx = parseInt(input.dataset.oidx);
+      let field = input.dataset.field;
+      let row = dataStore[dayKey].overlookExtra[idx] || { amount: 0, note: "" };
+      if(field === "amount"){
+        let val = parseFloat(input.value) || 0;
+        if(val > 900000) val = 900000;
+        row.amount = val;
+      } else {
+        row.note = input.value;
+      }
+      dataStore[dayKey].overlookExtra[idx] = row;
+      storeData();
+      renderDay(dayKey);
+      updateWeeklyView();
+    }
 
     // Eliminar Overlook principal (ponerlo en 0 y sin nota)
     function clearMainOverlook(dayKey){
