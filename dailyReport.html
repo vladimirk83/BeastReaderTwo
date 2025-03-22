@@ -1251,13 +1251,14 @@
           <div class="form-group" style="align-items:center;">
             <label>Overlook</label>
             <input type="number"
-                   data-day="${dayKey}"
-                   data-oidx="${idx}"
-                   data-field="amount"
-                   max="900000"
-                   value="${val}"
-                   oninput="updateOverlookExtra(this)"
-                   ${locked?'disabled':''}>
+       data-day="${dayKey}"
+       data-oidx="${idx}"
+       data-field="amount"
+       max="900000"
+       value="${val}"
+       oninput="updateOverlookExtra(this)"
+       onblur="updateOverlookExtraBlur(this)"
+       ${locked?'disabled':''}>
             <input type="text"
                    data-day="${dayKey}"
                    data-oidx="${idx}"
@@ -1628,24 +1629,23 @@
       renderDay(dayKey);
       updateWeeklyView();
     }
-    function updateOverlookExtra(input){
-      let dayKey = input.dataset.day;
-      let idx = parseInt(input.dataset.oidx);
-      let field= input.dataset.field;
-      let valStr = input.value.trim();
-      let row = dataStore[dayKey].overlookExtra[idx] || { amount:0, note:"" };
-      if(field==="amount"){
-        let val = parseFloat(valStr)||0;
-        if(val>900000) val=900000;
-        row.amount = val;
-      } else {
-        row.note = valStr;
-      }
-      dataStore[dayKey].overlookExtra[idx] = row;
-      storeData();
-       
-      updateWeeklyView();
-    }
+    function updateOverlookExtraBlur(input){
+  let dayKey = input.dataset.day;
+  let idx = parseInt(input.dataset.oidx);
+  let field = input.dataset.field;
+  let row = dataStore[dayKey].overlookExtra[idx] || { amount: 0, note: "" };
+  if(field === "amount"){
+    let val = parseFloat(input.value) || 0;
+    if(val > 900000) val = 900000;
+    row.amount = val;
+  } else {
+    row.note = input.value;
+  }
+  dataStore[dayKey].overlookExtra[idx] = row;
+  storeData();
+  renderDay(dayKey);
+  updateWeeklyView();
+}
     // Eliminar Overlook principal (ponerlo en 0 y sin nota)
     function clearMainOverlook(dayKey){
       dataStore[dayKey].overlook = 0;
