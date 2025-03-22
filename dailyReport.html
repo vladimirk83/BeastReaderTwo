@@ -152,9 +152,11 @@
 
     /* =============== LAYOUT PRINCIPAL =============== */
     .container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: auto;    /* permite scroll horizontal */
+  overflow-y: hidden;  /* o auto, si quieres scroll vertical en el contenedor */
     }
     .hidden { display: none !important; }
     input[type=number]::-webkit-outer-spin-button,
