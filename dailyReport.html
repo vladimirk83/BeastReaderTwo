@@ -618,10 +618,13 @@
       .sidebar.expanded {
         width: 240px; /* ancho expandido */
       }
-      /* Área principal: se ajusta el espacio restante de forma flexible */
+      /* Área principal: se ajusta el ancho según el ancho de la sidebar */
       .main-content {
-        flex: 1;
-        transition: all 0.3s ease;
+        width: calc(100vw - 60px);
+        transition: width 0.3s ease;
+      }
+      .sidebar.expanded ~ .main-content {
+        width: calc(100vw - 240px);
       }
       .sidebar button {
         text-align: left;
@@ -629,6 +632,7 @@
         font-size: 0.9rem;
       }
     }
+   
   </style>
 </head>
 <body>
@@ -1008,11 +1012,11 @@
         thisDate.setDate(thisDate.getDate() + dm.offset);
         let dStrTab = formatDateMMDDYYYY(thisDate);
         let dStrTitle = formatDateDDMMM(thisDate);
-        let btn = document.querySelector(`.sidebar button[data-tab="tabDay${index+1}"]`);
-        if(btn) btn.textContent = `${dm.label} (${dStrTab})`;
-        let h2title = document.getElementById(`titleDay${index+1}`);
+        let btn = document.querySelector(.sidebar button[data-tab="tabDay${index+1}"]);
+        if(btn) btn.textContent = ${dm.label} (${dStrTab});
+        let h2title = document.getElementById(titleDay${index+1});
         if(h2title) {
-          h2title.textContent = `Reporte Diario - ${dm.label} - ${dStrTitle}`;
+          h2title.textContent = Reporte Diario - ${dm.label} - ${dStrTitle};
         }
       });
 
@@ -1036,13 +1040,13 @@
       const day = date.getDate().toString().padStart(2, '0');
       const monthAbbrs = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
       let m = monthAbbrs[date.getMonth()] || "???";
-      return `${day}/${m}`;
+      return ${day}/${m};
     }
     function formatDateMMDDYYYY(date) {
       let mm = (date.getMonth() + 1).toString().padStart(2, "0");
       let dd = date.getDate().toString().padStart(2, "0");
       let yyyy = date.getFullYear();
-      return `${mm}/${dd}/${yyyy}`;
+      return ${mm}/${dd}/${yyyy};
     }
     function findMondayOfCurrentWeek() {
       let now = new Date();
@@ -1097,7 +1101,7 @@
         lockedAll = true;
         for(let i = 1; i <= 7; i++){
           lockedDays["day" + i] = true;
-          let b = document.getElementById(`lockDay${i}Btn`);
+          let b = document.getElementById(lockDay${i}Btn);
           b.classList.add("locked");
           b.innerHTML = "<i>🔒</i>";
         }
@@ -1107,7 +1111,7 @@
         lockedAll = false;
         for(let i = 1; i <= 7; i++){
           lockedDays["day" + i] = false;
-          let b = document.getElementById(`lockDay${i}Btn`);
+          let b = document.getElementById(lockDay${i}Btn);
           b.classList.remove("locked");
           b.innerHTML = "<i>🔓</i>";
         }
@@ -1154,7 +1158,7 @@
       let locked = lockedDays[dayKey] || lockedAll;
 
       // Genera la tabla de páginas (igual a tu código original)
-      let html = `
+      let html = 
         <table class="report-table">
           <thead>
             <tr>
@@ -1166,7 +1170,7 @@
             </tr>
           </thead>
           <tbody>
-      `;
+      ;
       dayData.pages.forEach((p, idx) => {
         let cVal = (p.centenas !== 0 ? p.centenas : "");
         let puVal = (p.pulitos !== 0 ? p.pulitos : "");
@@ -1175,7 +1179,7 @@
         let hasPending = (sumPend > 0);
         let salidasColor = hasPending ? "var(--purple-color)" : "var(--danger-color)";
         let salidasVal = p.totalSalidas.toFixed(2);
-        html += `
+        html += 
           <tr>
             <td>
               <button class="pageBtn" onclick="deletePageRow('${dayKey}', ${idx})" ${locked ? 'disabled' : ''}>${p.pageNo}</button>
@@ -1191,7 +1195,7 @@
             </td>
             <td>$${totalCP.toFixed(2)}</td>
           </tr>
-        `;
+        ;
       });
       html += "</tbody></table>";
 
@@ -1214,7 +1218,7 @@
       let ovVal = (dayData.overlook !== 0 ? dayData.overlook : "");
       let ovNote = dayData.overlookNote || "";
 
-      html += `
+      html += 
         <div class="totals-section">
           <h3>Totales</h3>
           <div class="form-group">
@@ -1233,11 +1237,11 @@
             <button class="pageBtn" style="background:red;margin-left:8px;" onclick="clearMainOverlook('${dayKey}')" ${locked ? 'disabled' : ''}>Del</button>
           </div>
           <div id="overlookExtraContainer_${dayKey}">
-      `;
+      ;
       dayData.overlookExtra.forEach((row, idx) => {
         let val = (row.amount !== 0 ? row.amount : "");
         let note = row.note || "";
-        html += `
+        html += 
           <div class="form-group" style="align-items:center;">
             <label>Overlook</label>
             <input type="number" data-day="${dayKey}" data-oidx="${idx}" data-field="amount" max="900000" value="${val}" oninput="updateOverlookExtra(this)" onblur="updateOverlookExtraBlur(this)" ${locked ? 'disabled' : ''}>
@@ -1245,9 +1249,9 @@
             <button class="pageBtn" style="background:green;margin-left:8px;" onclick="addOverlookRow('${dayKey}')" ${locked ? 'disabled' : ''}>Add</button>
             <button class="pageBtn" style="background:red;margin-left:8px;" onclick="deleteOverlookRow('${dayKey}', ${idx})" ${locked ? 'disabled' : ''}>Del</button>
           </div>
-        `;
+        ;
       });
-      html += `
+      html += 
           </div>
           <div class="form-group">
             <label>Total Salidas</label>
@@ -1258,12 +1262,12 @@
             <input type="text" readonly value="$${t.totalVentas.toFixed(2)}">
           </div>
         </div>
-      `;
+      ;
 
       let isCuadreOpen = accordionStates[dayKey + "_cuadre"] ? "block" : "none";
       let isCreditOpen = accordionStates[dayKey + "_credit"] ? "block" : "none";
 
-      html += `
+      html += 
         <div class="accordion">
           <div class="accordion-header" onclick="toggleAccordion('${dayKey}_cuadre')">Cuadre del Día</div>
           <div class="accordion-content" style="display:${isCuadreOpen};">
@@ -1319,7 +1323,7 @@
             ${createCreditSection(dayKey, locked)}
           </div>
         </div>
-      `;
+      ;
       container.innerHTML = html;
     }
 
@@ -1332,7 +1336,7 @@
       let c = dataStore[dayKey].creditTracker;
       let pendingHTML = "";
       c.pending.forEach((item, idx) => {
-        pendingHTML += `
+        pendingHTML += 
           <tr>
             <td>
               <button class="pageBtn" style="font-size:1rem;" onclick="deleteCreditRow('${dayKey}','pending', ${idx})" ${locked ? 'disabled' : ''}>
@@ -1351,11 +1355,11 @@
               </button>
             </td>
           </tr>
-        `;
+        ;
       });
       let paidHTML = "";
       c.paid.forEach((item, idx) => {
-        paidHTML += `
+        paidHTML += 
           <tr>
             <td>
               <button class="pageBtn" style="font-size:1rem;" onclick="deleteCreditRow('${dayKey}','paid', ${idx})" ${locked ? 'disabled' : ''}>
@@ -1374,13 +1378,13 @@
               </button>
             </td>
           </tr>
-        `;
+        ;
       });
 
       let totalPend = c.pending.reduce((acc, obj) => acc + (obj.amount || 0), 0);
       let totalPaid = c.paid.reduce((acc, obj) => acc + (obj.amount || 0), 0);
 
-      return `
+      return 
         <div style="padding:1rem;">
           <div style="display:flex; gap:2rem; flex-wrap:wrap;">
             <div style="flex:1; min-width:220px;">
@@ -1411,7 +1415,7 @@
             </div>
           </div>
         </div>
-      `;
+      ;
     }
 
     function addCreditItem(dayKey, type){
@@ -1594,7 +1598,7 @@
       let paidTbody = document.getElementById("paidTbody");
       let pendHTML = "";
       pageData.pendingPrizes.forEach((v, i) => {
-        pendHTML += `
+        pendHTML += 
           <tr>
             <td>
               <input type="number" max="900000" value="${v || ""}" onchange="updatePrizeValue(${i}, 'pending', this.value)">
@@ -1604,12 +1608,12 @@
               <button class="paidBtn" onclick="deletePrize(${i}, 'pending')">X</button>
             </td>
           </tr>
-        `;
+        ;
       });
       pendingTbody.innerHTML = pendHTML;
       let paidHTML = "";
       pageData.paidPrizes.forEach((v, i) => {
-        paidHTML += `
+        paidHTML += 
           <tr>
             <td>
               <input type="number" max="900000" value="${v || ""}" onchange="updatePrizeValue(${i}, 'paid', this.value)">
@@ -1619,7 +1623,7 @@
               <button class="paidBtn" onclick="deletePrize(${i}, 'paid')">X</button>
             </td>
           </tr>
-        `;
+        ;
       });
       paidTbody.innerHTML = paidHTML;
     }
@@ -1704,7 +1708,7 @@
       if(balOfic > 0) boColor = "#f33";
       else if(balOfic < 0) boColor = "#0f0";
       const dayNames = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-      let html = `
+      let html = 
         <table class="weekly-table">
           <thead>
             <tr>
@@ -1716,9 +1720,9 @@
             </tr>
           </thead>
           <tbody>
-      `;
+      ;
       for(let i = 0; i < 7; i++){
-        html += `
+        html += 
           <tr>
             <td>${dayNames[i]}</td>
             <td>$${dayTotals[i].totalCentenas.toFixed(2)}</td>
@@ -1726,9 +1730,9 @@
             <td style="color:var(--danger-color);">$${dayTotals[i].totalSalidas.toFixed(2)}</td>
             <td>$${dayTotals[i].totalVentas.toFixed(2)}</td>
           </tr>
-        `;
+        ;
       }
-      html += `
+      html += 
           <tr style="font-weight:bold;">
             <td>Totales</td>
             <td>$${sumCent.toFixed(2)}</td>
@@ -1773,7 +1777,7 @@
             <input type="text" readonly style="color:${boColor};" value="${balOfic.toFixed(2)}">
           </div>
         </div>
-      `;
+      ;
       wCont.innerHTML = html;
     }
     function updateWeeklyField(field, valStr){
@@ -1892,7 +1896,7 @@
       let lines = [];
       lines.push("Página,Centenas,Pulitos");
       dayData.pages.forEach(p => {
-        lines.push(`${p.pageNo},${p.centenas},${p.pulitos}`);
+        lines.push(${p.pageNo},${p.centenas},${p.pulitos});
       });
       let csv = lines.join("\n");
       let blob = new Blob([csv], { type:"text/csv" });
@@ -1915,7 +1919,7 @@
         if(!el.dataset.day) return;
         e.preventDefault();
         let dayKey = el.dataset.day;
-        let inputs = Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
+        let inputs = Array.from(document.querySelectorAll(#${dayKey}Container input[type='number']));
         let idx = inputs.indexOf(el);
         if(idx < 0) return;
         let nextIdx = idx + 1;
