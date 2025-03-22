@@ -255,10 +255,12 @@
 
     /* =============== MAIN CONTENT =============== */
     .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Esto puede ayudar a evitar desbordamientos */
+  transition: all 0.3s ease;
+}
     .top-bar {
       display: flex;
       align-items: center;
