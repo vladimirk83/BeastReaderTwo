@@ -1,9 +1,7 @@
- <!DOCTYPE html> 
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <!-- Etiqueta viewport necesaria para que las media queries funcionen correctamente en móviles -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reporte Diario y Semanal (Neón/Dark)</title>
 
   <style>
@@ -133,7 +131,8 @@
     }
 
     /*
-      Estilos para .accordion, .accordion-header, .accordion-content en modo claro.
+      (2) Añadimos estilos para .accordion, .accordion-header, .accordion-content en modo claro,
+      para que NO se queden con fondo negro ni texto neón.
     */
     body.light-mode .accordion,
     body.light-mode .accordion-header,
@@ -164,9 +163,61 @@
       -moz-appearance: textfield;
     }
 
+    /* =============== OVERLAY PIN =============== */
+    .pin-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+    }
+    .pin-dialog {
+      background: #222;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 2rem;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 0 10px var(--accent-color);
+    }
+    .pin-dialog h2 {
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+      font-size: 1.5rem;
+      text-shadow: 0 0 5px var(--accent-color);
+    }
+    .pin-dialog input {
+      font-size: 2rem;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      box-shadow: inset 0 0 5px var(--accent-color);
+    }
+    .pin-dialog button {
+      font-size: 1.5rem;
+      padding: 0.5rem 2rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+    }
+    .pin-dialog button:hover {
+      background: var(--accent-color);
+      color: #000;
+    }
+
     /* =============== SIDEBAR (TABS) =============== */
     .sidebar {
-      /* En desktop se mantiene 240px */
       width: 240px;
       background: #000;
       border-right: 2px solid var(--accent-color);
@@ -541,51 +592,21 @@
       display: none; /* colapsada por defecto */
       padding: 1rem;
     }
-
-    /* =============== ESTILOS PARA DISPOSITIVOS MÓVILES =============== */
-    @media (max-width: 600px) {
-      body {
-        overflow: auto;
-      }
-      /* Layout en fila para móviles */
-      .container {
-        flex-direction: row;
-      }
-      /* Sidebar: por defecto colapsada */
-      .sidebar {
-        width: 60px; /* ancho colapsado */
-        height: 100vh;
-        flex-direction: column;
-        overflow-y: auto;
-        border-right: 2px solid var(--accent-color);
-        border-bottom: none;
-        transition: width 0.3s ease;
-      }
-      /* Cuando se expanda, su ancho aumenta */
-      .sidebar.expanded {
-        width: 240px; /* ancho expandido */
-      }
-      /* Área principal: se ajusta el ancho según el ancho de la sidebar */
-      .main-content {
-        width: calc(100vw - 60px);
-        transition: width 0.3s ease;
-      }
-      .sidebar.expanded ~ .main-content {
-        width: calc(100vw - 240px);
-      }
-      .sidebar button {
-        text-align: left;
-        padding: 0.5rem;
-        font-size: 0.9rem;
-      }
-    }
-   
   </style>
 </head>
 <body>
 
+  <!-- OVERLAY DEL PIN (ahora con recordatorio en localStorage) -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-dialog">
+      <h2>Ingrese PIN (4 dígitos)</h2>
+      <input type="password" id="pinInput" maxlength="4" />
+      <button id="btnPinSubmit">Acceder</button>
+    </div>
+  </div>
+
   <!-- CONTENEDOR PRINCIPAL -->
-  <div class="container" id="mainContainer">
+  <div class="container hidden" id="mainContainer">
     <!-- SIDEBAR con 7 días + Semanal + Manual + Cálculo Premios -->
     <div class="sidebar" id="sidebar">
       <button class="tabBtn active" data-tab="tabDay1">Lunes (XX/XX/XXXX)</button>
@@ -605,8 +626,6 @@
       <!-- TOP BAR -->
       <div class="top-bar">
         <div class="top-bar-left">
-          <!-- Botón para expandir la sidebar en móviles -->
-          <button class="btnNeon" id="btnExpandSidebar">☰</button>
           <button class="btnNeon" id="btnToggleTheme">Dark/Light</button>
         </div>
         <div class="top-bar-right">
@@ -805,7 +824,7 @@
               9: Cálculo Premios<br/>
               10: Manual
             </p>
-            <p>Ahora ya no se requiere ingresar un PIN para acceder.</p>
+            <p>PIN de acceso 8325. Se almacena en localStorage para no volverlo a pedir.</p>
             <p>Botones “Reset”, “Guardar Día”, “Export PDF” y “Export Excel”. Data en localStorage.</p>
             <p>Campo “Sucursal” se replica a todos los días y al semanal.</p>
             <p>Se ha cambiado la lógica de Net Balance (&lt;0 => verde, =0 => negro, &gt;0 => rojo).</p>
@@ -853,11 +872,15 @@
     /****************************************************
      * CONFIGURACIONES Y ESTADO GLOBAL
      ****************************************************/
+    const REAL_PIN = "8325";
     let lockedDays = {};
     let lockedAll = false;
     let isDarkMode = true;
 
-    /* Estructura de data (con overlookNote, overlookExtra, etc.) */
+    // Guardamos si el PIN ya fue validado
+    let pinValidated = localStorage.getItem("pinValidated") === "true";
+
+    /* Estructura de data (ahora con overlookNote y overlookExtra) */
     let dataStore = {
       globalSucursal: "",
       day1:{
@@ -895,7 +918,7 @@
       weekly:{ caidas:0, adelantoOficina:0 }
     };
 
-    // Para manejar el estado de los acordeones
+    // Para manejar si el acordeón está abierto/cerrado.
     let accordionStates = {};
 
     const dayMappings = [
@@ -908,45 +931,52 @@
       { key:"day7", label:"Domingo", offset:6 }
     ];
 
-    window.addEventListener("DOMContentLoaded", () => {
-      // Cargar data del localStorage si existe
+    window.addEventListener("DOMContentLoaded", ()=>{
+      // Cargar data
       let stored = localStorage.getItem("dailyReportNeonData2");
       if(stored){
         dataStore = JSON.parse(stored);
       }
-      for(let i = 1; i <= 7; i++){
-        if(lockedDays["day" + i] === undefined) lockedDays["day" + i] = false;
+      for(let i=1;i<=7;i++){
+        if(lockedDays["day"+i]===undefined) lockedDays["day"+i]=false;
       }
 
-      // Generar 20 filas por día si no existen
-      for(let i = 1; i <= 7; i++){
-        let dk = "day" + i;
-        if(!dataStore[dk].pages) dataStore[dk].pages = [];
-        if(dataStore[dk].pages.length < 1){
-          for(let r = 1; r <= 20; r++){
+      // Generar 20 filas default si hace falta
+      for(let i=1;i<=7;i++){
+        let dk="day"+i;
+        if(!dataStore[dk].pages) dataStore[dk].pages=[];
+        if(dataStore[dk].pages.length<1){
+          for(let r=1;r<=20;r++){
             dataStore[dk].pages.push({
-              pageNo: r,
-              centenas: 0, pulitos: 0,
-              pendingPrizes: [], paidPrizes: [],
-              totalSalidas: 0
+              pageNo:r,
+              centenas:0, pulitos:0,
+              pendingPrizes:[], paidPrizes:[],
+              totalSalidas:0
             });
           }
         }
-        if(!dataStore[dk].overlookExtra) dataStore[dk].overlookExtra = [];
+        // Aseguramos arrays extra
+        if(!dataStore[dk].overlookExtra) dataStore[dk].overlookExtra=[];
       }
 
-      // Mostrar el contenedor principal (ya no se requiere PIN)
-      document.getElementById("mainContainer").classList.remove("hidden");
+      // PIN
+      if(pinValidated){
+        document.getElementById("pinOverlay").style.display="none";
+        document.getElementById("mainContainer").classList.remove("hidden");
+      }
 
-      // Configurar fechas en la sidebar
+      // Fechas en la barra lateral => mm/dd/yyyy
       let startOfWeek = findMondayOfCurrentWeek();
-      dayMappings.forEach((dm, index) => {
+      dayMappings.forEach((dm,index)=>{
         let thisDate = new Date(startOfWeek.getTime());
         thisDate.setDate(thisDate.getDate() + dm.offset);
+
         let dStrTab = formatDateMMDDYYYY(thisDate);
         let dStrTitle = formatDateDDMMM(thisDate);
+
         let btn = document.querySelector(`.sidebar button[data-tab="tabDay${index+1}"]`);
         if(btn) btn.textContent = `${dm.label} (${dStrTab})`;
+
         let h2title = document.getElementById(`titleDay${index+1}`);
         if(h2title) {
           h2title.textContent = `Reporte Diario - ${dm.label} - ${dStrTitle}`;
@@ -954,33 +984,32 @@
       });
 
       initTabs();
+      initPinOverlay();
       initLockButtons();
       initToggleTheme();
 
-      // Evento para expandir la sidebar en móviles al hacer clic en el botón de hamburguesa
-      document.getElementById("btnExpandSidebar").addEventListener("click", () => {
-        document.getElementById("sidebar").classList.add("expanded");
-      });
-
       renderAllDays();
       updateWeeklyView();
+
       addTabKeyNavigation();
+
+      // Sucursal global => reflejar en inputs
       applySucursalToAllFields(dataStore.globalSucursal);
     });
 
-    function formatDateDDMMM(date) {
-      const day = date.getDate().toString().padStart(2, '0');
+    function formatDateDDMMM(date){
+      const day = date.getDate().toString().padStart(2,'0');
       const monthAbbrs = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-      let m = monthAbbrs[date.getMonth()] || "???";
+      let m = monthAbbrs[ date.getMonth() ] || "???";
       return `${day}/${m}`;
     }
-    function formatDateMMDDYYYY(date) {
-      let mm = (date.getMonth() + 1).toString().padStart(2, "0");
-      let dd = date.getDate().toString().padStart(2, "0");
+    function formatDateMMDDYYYY(date){
+      let mm = (date.getMonth()+1).toString().padStart(2,"0");
+      let dd = date.getDate().toString().padStart(2,"0");
       let yyyy = date.getFullYear();
       return `${mm}/${dd}/${yyyy}`;
     }
-    function findMondayOfCurrentWeek() {
+    function findMondayOfCurrentWeek(){
       let now = new Date();
       let dayOfWeek = now.getDay();
       let diff = (dayOfWeek + 6) % 7;
@@ -989,57 +1018,69 @@
       return monday;
     }
 
+    function initPinOverlay(){
+      document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
+        let val = document.getElementById("pinInput").value.trim();
+        if(val===REAL_PIN){
+          localStorage.setItem("pinValidated","true");
+          pinValidated = true;
+          document.getElementById("pinOverlay").style.display="none";
+          document.getElementById("mainContainer").classList.remove("hidden");
+        } else {
+          alert("PIN incorrecto");
+        }
+      });
+    }
+
     function initTabs(){
       let tabBtns = document.querySelectorAll(".sidebar .tabBtn");
-      tabBtns.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          tabBtns.forEach(b => b.classList.remove("active"));
+      tabBtns.forEach(btn=>{
+        btn.addEventListener("click",(e)=>{
+          tabBtns.forEach(b=> b.classList.remove("active"));
           e.currentTarget.classList.add("active");
           let targetId = e.currentTarget.dataset.tab;
-          document.querySelectorAll(".tabContent").forEach(tc => tc.classList.remove("active"));
+          document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
           document.getElementById(targetId).classList.add("active");
-          // Contraer la sidebar al seleccionar una pestaña
-          document.getElementById("sidebar").classList.remove("expanded");
         });
       });
     }
 
     function initLockButtons(){
-      for(let i = 1; i <= 7; i++){
-        let b = document.getElementById("lockDay" + i + "Btn");
-        b.addEventListener("click", (e) => {
+      for(let i=1;i<=7;i++){
+        let b=document.getElementById("lockDay"+i+"Btn");
+        b.addEventListener("click",(e)=>{
           let dk = e.currentTarget.dataset.day;
-          lockedDays[dk] = !lockedDays[dk];
+          lockedDays[dk]=!lockedDays[dk];
           b.classList.toggle("locked", lockedDays[dk]);
           b.innerHTML = lockedDays[dk] ? "<i>🔒</i>" : "<i>🔓</i>";
           renderDay(dk);
         });
       }
-      document.getElementById("lockAllBtn").addEventListener("click", () => {
-        lockedAll = true;
-        for(let i = 1; i <= 7; i++){
-          lockedDays["day" + i] = true;
-          let b = document.getElementById(`lockDay${i}Btn`);
+      document.getElementById("lockAllBtn").addEventListener("click", ()=>{
+        lockedAll=true;
+        for(let i=1;i<=7;i++){
+          lockedDays["day"+i]=true;
+          let b=document.getElementById(`lockDay${i}Btn`);
           b.classList.add("locked");
-          b.innerHTML = "<i>🔒</i>";
+          b.innerHTML="<i>🔒</i>";
         }
         renderAllDays();
       });
-      document.getElementById("unlockAllBtn").addEventListener("click", () => {
-        lockedAll = false;
-        for(let i = 1; i <= 7; i++){
-          lockedDays["day" + i] = false;
-          let b = document.getElementById(`lockDay${i}Btn`);
+      document.getElementById("unlockAllBtn").addEventListener("click", ()=>{
+        lockedAll=false;
+        for(let i=1;i<=7;i++){
+          lockedDays["day"+i]=false;
+          let b=document.getElementById(`lockDay${i}Btn`);
           b.classList.remove("locked");
-          b.innerHTML = "<i>🔓</i>";
+          b.innerHTML="<i>🔓</i>";
         }
         renderAllDays();
       });
     }
 
     function initToggleTheme(){
-      document.getElementById("btnToggleTheme").addEventListener("click", () => {
-        isDarkMode = !isDarkMode;
+      document.getElementById("btnToggleTheme").addEventListener("click", ()=>{
+        isDarkMode=!isDarkMode;
         if(isDarkMode){
           document.body.classList.remove("light-mode");
         } else {
@@ -1054,7 +1095,7 @@
       applySucursalToAllFields(val);
     }
     function applySucursalToAllFields(val){
-      document.querySelectorAll(".sucursalGlobalInput").forEach(inp => {
+      document.querySelectorAll(".sucursalGlobalInput").forEach(inp=>{
         if(inp.value !== val){
           inp.value = val;
         }
@@ -1062,21 +1103,21 @@
     }
 
     function renderAllDays(){
-      for(let i = 1; i <= 7; i++){
-        renderDay("day" + i);
+      for(let i=1;i<=7;i++){
+        renderDay("day"+i);
       }
       storeData();
       updateWeeklyView();
     }
 
     function renderDay(dayKey){
-      let container = document.getElementById(dayKey + "Container");
+      let container = document.getElementById(dayKey+"Container");
       if(!container) return;
       let dayData = dataStore[dayKey];
       let locked = lockedDays[dayKey] || lockedAll;
 
-      // Genera la tabla de páginas (igual a tu código original)
-      let html = `
+      // Tabla de páginas (igual que tu código original)
+      let html=`
         <table class="report-table">
           <thead>
             <tr>
@@ -1089,53 +1130,73 @@
           </thead>
           <tbody>
       `;
-      dayData.pages.forEach((p, idx) => {
-        let cVal = (p.centenas !== 0 ? p.centenas : "");
-        let puVal = (p.pulitos !== 0 ? p.pulitos : "");
+      dayData.pages.forEach((p,idx)=>{
+        let cVal = (p.centenas!==0 ? p.centenas : "");
+        let puVal= (p.pulitos!==0 ? p.pulitos : "");
         let totalCP = (p.centenas + p.pulitos);
-        let sumPend = (p.pendingPrizes || []).reduce((a, v) => a + v, 0);
-        let hasPending = (sumPend > 0);
-        let salidasColor = hasPending ? "var(--purple-color)" : "var(--danger-color)";
+        let sumPend = (p.pendingPrizes||[]).reduce((a,v)=>a+v,0);
+        let hasPending = (sumPend>0);
+        let salidasColor = hasPending? "var(--purple-color)" : "var(--danger-color)";
         let salidasVal = p.totalSalidas.toFixed(2);
+
         html += `
           <tr>
             <td>
-              <button class="pageBtn" onclick="deletePageRow('${dayKey}', ${idx})" ${locked ? 'disabled' : ''}>${p.pageNo}</button>
+              <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})" ${locked?'disabled':''}>${p.pageNo}</button>
             </td>
             <td>
-              <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas" max="900000" value="${cVal}" onchange="updatePageField(this)" ${locked ? 'disabled' : ''}>
+              <input type="number" 
+                     data-day="${dayKey}" 
+                     data-pindex="${idx}"
+                     data-field="centenas"
+                     max="900000"
+                     value="${cVal}"
+                     onchange="updatePageField(this)"
+                     ${locked?'disabled':''}>
             </td>
             <td>
-              <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos" max="900000" value="${puVal}" onchange="updatePageField(this)" ${locked ? 'disabled' : ''}>
+              <input type="number"
+                     data-day="${dayKey}" 
+                     data-pindex="${idx}"
+                     data-field="pulitos"
+                     max="900000"
+                     value="${puVal}"
+                     onchange="updatePageField(this)"
+                     ${locked?'disabled':''}>
             </td>
-            <td style="cursor:pointer; color:${salidasColor};" onclick="openPrizesModal('${dayKey}', ${idx})">
+            <td style="cursor:pointer; color:${salidasColor};" onclick="openPrizesModal('${dayKey}',${idx})">
               $${salidasVal}
             </td>
             <td>$${totalCP.toFixed(2)}</td>
           </tr>
         `;
       });
-      html += "</tbody></table>";
+      html+="</tbody></table>";
 
-      let totalCredPend = (dayData.creditTracker.pending || []).reduce((acc, obj) => acc + (obj.amount || 0), 0);
+      // Créditos Pendientes => suman a dayData.credito
+      let totalCredPend = (dayData.creditTracker.pending||[]).reduce((acc,obj)=>acc+(obj.amount||0),0);
       dayData.credito = totalCredPend;
 
+      // total pending prizes
       let totalPending = 0;
-      dayData.pages.forEach(p => {
-        totalPending += p.pendingPrizes.reduce((acc, v) => acc + v, 0);
+      dayData.pages.forEach(p=>{
+        totalPending += p.pendingPrizes.reduce((acc,v)=>acc+v,0);
       });
 
+      // Cálculos de totales
       let t = calcDayTotals(dayKey);
       let subT = t.totalVentas - t.totalSalidas;
       let sumOptional = (dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets);
       let netBal = subT - sumOptional + totalPending;
       let nbColor = "#000";
-      if(netBal < 0) nbColor = "#0f0";
-      else if(netBal > 0) nbColor = "#f33";
+      if(netBal < 0) nbColor="#0f0";
+      else if(netBal > 0) nbColor="#f33";
 
-      let ovVal = (dayData.overlook !== 0 ? dayData.overlook : "");
+      // Overlook principal
+      let ovVal = (dayData.overlook!==0 ? dayData.overlook : "");
       let ovNote = dayData.overlookNote || "";
 
+      // Sección de Totales, con Overlook principal + nota + ADD/DEL
       html += `
         <div class="totals-section">
           <h3>Totales</h3>
@@ -1147,30 +1208,84 @@
             <label>Total Pulitos</label>
             <input type="text" readonly value="$${t.totalPulitos.toFixed(2)}">
           </div>
+
+          <!-- Overlook principal + nota, con ADD/DEL a la derecha -->
           <div class="form-group" style="align-items:center;">
             <label>Overlook</label>
-            <input type="number" data-day="${dayKey}" data-field="overlook" max="900000" value="${ovVal}" onchange="updateDayField(this)" ${locked ? 'disabled' : ''}>
-            <input type="text" data-day="${dayKey}" data-field="overlookNote" style="margin-left:8px;width:400px;" placeholder="Nota Overlook" value="${ovNote}" oninput="updateDayNoteField(this)" ${locked ? 'disabled' : ''}>
-            <button class="pageBtn" style="background:green;margin-left:8px;" onclick="addOverlookRow('${dayKey}')" ${locked ? 'disabled' : ''}>Add</button>
-            <button class="pageBtn" style="background:red;margin-left:8px;" onclick="clearMainOverlook('${dayKey}')" ${locked ? 'disabled' : ''}>Del</button>
+            <input type="number"
+                   data-day="${dayKey}"
+                   data-field="overlook"
+                   max="900000"
+                   value="${ovVal}"
+                   onchange="updateDayField(this)"
+                   ${locked?'disabled':''}>
+            <input type="text"
+                   data-day="${dayKey}"
+                   data-field="overlookNote"
+                   style="margin-left:8px;width:400px;"
+                   placeholder="Nota Overlook"
+                   value="${ovNote}"
+                   oninput="updateDayNoteField(this)"
+                   ${locked?'disabled':''}>
+            <!-- Botón verde Add -->
+            <button class="pageBtn" style="background:green;margin-left:8px;"
+                    onclick="addOverlookRow('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Add
+            </button>
+            <!-- Botón rojo Del (para “borrar” Overlook principal) -->
+            <button class="pageBtn" style="background:red;margin-left:8px;"
+                    onclick="clearMainOverlook('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Del
+            </button>
           </div>
+
+          <!-- Aquí se listan las filas extra de Overlook -->
           <div id="overlookExtraContainer_${dayKey}">
       `;
-      dayData.overlookExtra.forEach((row, idx) => {
-        let val = (row.amount !== 0 ? row.amount : "");
+      dayData.overlookExtra.forEach((row, idx)=>{
+        let val = (row.amount!==0 ? row.amount : "");
         let note = row.note || "";
         html += `
           <div class="form-group" style="align-items:center;">
             <label>Overlook</label>
-            <input type="number" data-day="${dayKey}" data-oidx="${idx}" data-field="amount" max="900000" value="${val}" oninput="updateOverlookExtra(this)" onblur="updateOverlookExtraBlur(this)" ${locked ? 'disabled' : ''}>
-            <input type="text" data-day="${dayKey}" data-oidx="${idx}" data-field="note" style="margin-left:8px;width:400px;" placeholder="Nota Overlook" value="${note}" oninput="updateOverlookExtra(this)" ${locked ? 'disabled' : ''}>
-            <button class="pageBtn" style="background:green;margin-left:8px;" onclick="addOverlookRow('${dayKey}')" ${locked ? 'disabled' : ''}>Add</button>
-            <button class="pageBtn" style="background:red;margin-left:8px;" onclick="deleteOverlookRow('${dayKey}', ${idx})" ${locked ? 'disabled' : ''}>Del</button>
+            <input type="number"
+                   data-day="${dayKey}"
+                   data-oidx="${idx}"
+                   data-field="amount"
+                   max="900000"
+                   value="${val}"
+                   oninput="updateOverlookExtra(this)"
+                   ${locked?'disabled':''}>
+            <input type="text"
+                   data-day="${dayKey}"
+                   data-oidx="${idx}"
+                   data-field="note"
+                   style="margin-left:8px;width:400px;"
+                   placeholder="Nota Overlook"
+                   value="${note}"
+                   oninput="updateOverlookExtra(this)"
+                   ${locked?'disabled':''}>
+            <!-- Botón verde Add (para insertar otra fila) -->
+            <button class="pageBtn" style="background:green;margin-left:8px;"
+                    onclick="addOverlookRow('${dayKey}')"
+                    ${locked?'disabled':''}>
+              Add
+            </button>
+            <!-- Botón rojo Del (para esta fila) -->
+            <button class="pageBtn" style="background:red;margin-left:8px;"
+                    onclick="deleteOverlookRow('${dayKey}', ${idx})"
+                    ${locked?'disabled':''}>
+              Del
+            </button>
           </div>
         `;
       });
+
       html += `
           </div>
+
           <div class="form-group">
             <label>Total Salidas</label>
             <input type="text" readonly style="color:var(--danger-color);" value="$${t.totalSalidas.toFixed(2)}">
@@ -1182,8 +1297,9 @@
         </div>
       `;
 
-      let isCuadreOpen = accordionStates[dayKey + "_cuadre"] ? "block" : "none";
-      let isCreditOpen = accordionStates[dayKey + "_credit"] ? "block" : "none";
+      // Cuadre y créditos
+      let isCuadreOpen = accordionStates[dayKey+"_cuadre"] ? "block" : "none";
+      let isCreditOpen = accordionStates[dayKey+"_credit"] ? "block" : "none";
 
       html += `
         <div class="accordion">
@@ -1209,23 +1325,47 @@
               </div>
               <div class="form-group">
                 <label>Cash</label>
-                <input type="number" data-day="${dayKey}" data-field="cash" max="900000" value="${(dayData.cash || "")}" onchange="updateDayField(this)" ${locked ? 'disabled' : ''}>
+                <input type="number"
+                       data-day="${dayKey}"
+                       data-field="cash"
+                       max="900000"
+                       value="${(dayData.cash||"")}"
+                       onchange="updateDayField(this)"
+                       ${locked?'disabled':''}>
               </div>
               <div class="form-group">
                 <label>Sucursal</label>
-                <input type="number" data-day="${dayKey}" data-field="sucursal" max="900000" value="${(dayData.sucursal || "")}" onchange="updateDayField(this)" ${locked ? 'disabled' : ''}>
+                <input type="number"
+                       data-day="${dayKey}"
+                       data-field="sucursal"
+                       max="900000"
+                       value="${(dayData.sucursal||"")}"
+                       onchange="updateDayField(this)"
+                       ${locked?'disabled':''}>
               </div>
               <div class="form-group">
                 <label>Crédito</label>
-                <input type="number" readonly value="${dayData.credito || 0}" style="color:var(--purple-color);">
+                <input type="number" readonly value="${dayData.credito||0}" style="color:var(--purple-color);">
               </div>
               <div class="form-group">
                 <label>Descuento</label>
-                <input type="number" data-day="${dayKey}" data-field="descuento" max="900000" value="${(dayData.descuento || "")}" onchange="updateDayField(this)" ${locked ? 'disabled' : ''}>
+                <input type="number"
+                       data-day="${dayKey}"
+                       data-field="descuento"
+                       max="900000"
+                       value="${(dayData.descuento||"")}"
+                       onchange="updateDayField(this)"
+                       ${locked?'disabled':''}>
               </div>
               <div class="form-group">
                 <label>Tickets</label>
-                <input type="number" data-day="${dayKey}" data-field="tickets" max="900000" value="${(dayData.tickets || "")}" onchange="updateDayField(this)" ${locked ? 'disabled' : ''}>
+                <input type="number"
+                       data-day="${dayKey}"
+                       data-field="tickets"
+                       max="900000"
+                       value="${(dayData.tickets||"")}"
+                       onchange="updateDayField(this)"
+                       ${locked?'disabled':''}>
               </div>
               <div class="form-group">
                 <label>Net Balance</label>
@@ -1242,56 +1382,67 @@
           </div>
         </div>
       `;
+
       container.innerHTML = html;
     }
 
     function toggleAccordion(key){
       accordionStates[key] = !accordionStates[key];
-      renderAllDays();
+      renderAllDays(); 
     }
 
     function createCreditSection(dayKey, locked){
       let c = dataStore[dayKey].creditTracker;
-      let pendingHTML = "";
-      c.pending.forEach((item, idx) => {
+      let pendingHTML="";
+      c.pending.forEach((item, idx)=>{
         pendingHTML += `
           <tr>
             <td>
-              <button class="pageBtn" style="font-size:1rem;" onclick="deleteCreditRow('${dayKey}','pending', ${idx})" ${locked ? 'disabled' : ''}>
-                ${idx + 1}
+              <button class="pageBtn" style="font-size:1rem;"
+                onclick="deleteCreditRow('${dayKey}','pending',${idx})" ${locked?'disabled':''}>
+                ${idx+1}
               </button>
             </td>
             <td>
-              <input type="text" maxlength="10" value="${item.client || ""}" onchange="updateCreditItem('${dayKey}','pending', ${idx}, 'client', this.value)" style="width:100px;" ${locked ? 'disabled' : ''}>
+              <input type="text" maxlength="10" value="${item.client||""}"
+                     onchange="updateCreditItem('${dayKey}','pending',${idx},'client',this.value)"
+                     style="width:100px;" ${locked?'disabled':''}>
             </td>
             <td>
-              <input type="number" max="900000" value="${item.amount || ""}" onchange="updateCreditItem('${dayKey}','pending', ${idx}, 'amount', this.value)" style="width:100px;" ${locked ? 'disabled' : ''}>
+              <input type="number" max="900000" value="${item.amount||""}"
+                     onchange="updateCreditItem('${dayKey}','pending',${idx},'amount',this.value)"
+                     style="width:100px;" ${locked?'disabled':''}>
             </td>
             <td>
-              <button class="paidBtn" onclick="moveCreditItem('${dayKey}', ${idx}, 'pending')" ${locked ? 'disabled' : ''}>
+              <button class="paidBtn" onclick="moveCreditItem('${dayKey}',${idx},'pending')" ${locked?'disabled':''}>
                 →Pagado
               </button>
             </td>
           </tr>
         `;
       });
-      let paidHTML = "";
-      c.paid.forEach((item, idx) => {
+      let paidHTML="";
+      c.paid.forEach((item, idx)=>{
         paidHTML += `
           <tr>
             <td>
-              <button class="pageBtn" style="font-size:1rem;" onclick="deleteCreditRow('${dayKey}','paid', ${idx})" ${locked ? 'disabled' : ''}>
-                ${idx + 1}
+              <button class="pageBtn" style="font-size:1rem;"
+                onclick="deleteCreditRow('${dayKey}','paid',${idx})" ${locked?'disabled':''}>
+                ${idx+1}
               </button>
             </td>
             <td>
-              <input type="text" maxlength="10" value="${item.client || ""}" onchange="updateCreditItem('${dayKey}','paid', ${idx}, 'client', this.value)" style="width:100px;" ${locked ? 'disabled' : ''}>
+              <input type="text" maxlength="10" value="${item.client||""}"
+                     onchange="updateCreditItem('${dayKey}','paid',${idx},'client',this.value)"
+                     style="width:100px;" ${locked?'disabled':''}>
             </td>
             <td>
-              <input type="number" max="900000" value="${item.amount || ""}" onchange="updateCreditItem('${dayKey}','paid', ${idx}, 'amount', this.value)" style="width:100px;" ${locked ? 'disabled' : ''}>
+              <input type="number" max="900000" value="${item.amount||""}"
+                     onchange="updateCreditItem('${dayKey}','paid',${idx},'amount',this.value)"
+                     style="width:100px;" ${locked?'disabled':''}>
             </td>
             <td>
-              <button class="pendingBtn" onclick="moveCreditItem('${dayKey}', ${idx}, 'paid')" ${locked ? 'disabled' : ''}>
+              <button class="pendingBtn" onclick="moveCreditItem('${dayKey}',${idx},'paid')" ${locked?'disabled':''}>
                 →Pend
               </button>
             </td>
@@ -1299,8 +1450,8 @@
         `;
       });
 
-      let totalPend = c.pending.reduce((acc, obj) => acc + (obj.amount || 0), 0);
-      let totalPaid = c.paid.reduce((acc, obj) => acc + (obj.amount || 0), 0);
+      let totalPend = c.pending.reduce((acc,obj)=>acc+(obj.amount||0),0);
+      let totalPaid = c.paid.reduce((acc,obj)=>acc+(obj.amount||0),0);
 
       return `
         <div style="padding:1rem;">
@@ -1315,9 +1466,10 @@
                   ${pendingHTML}
                 </tbody>
               </table>
-              <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')" ${locked ? 'disabled' : ''}>+ Pendiente</button>
+              <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')" ${locked?'disabled':''}>+ Pendiente</button>
               <p>Total Pendiente: <strong style="color:var(--purple-color);">$${totalPend.toFixed(2)}</strong></p>
             </div>
+
             <div style="flex:1; min-width:220px;">
               <h4 style="color:var(--danger-color);margin-bottom:0.5rem;">Pagados</h4>
               <table style="width:100%;border-collapse:collapse;">
@@ -1328,7 +1480,9 @@
                   ${paidHTML}
                 </tbody>
               </table>
-              <button class="addPrizeBtn" style="color:var(--danger-color);border-color:var(--danger-color);" onclick="addCreditItem('${dayKey}','paid')" ${locked ? 'disabled' : ''}>+ Pagado</button>
+              <button class="addPrizeBtn"
+                style="color:var(--danger-color);border-color:var(--danger-color);"
+                onclick="addCreditItem('${dayKey}','paid')" ${locked?'disabled':''}>+ Pagado</button>
               <p>Total Pagado: <strong style="color:var(--danger-color);">$${totalPaid.toFixed(2)}</strong></p>
             </div>
           </div>
@@ -1352,11 +1506,11 @@
     function updateCreditItem(dayKey, type, idx, field, valStr){
       let c = dataStore[dayKey].creditTracker;
       let item = c[type][idx];
-      if(field === "client"){
-        item.client = valStr.substring(0, 10);
-      } else if(field === "amount"){
-        let n = parseFloat(valStr) || 0;
-        if(n > 900000) n = 900000;
+      if(field==="client"){
+        item.client = valStr.substring(0,10);
+      } else if(field==="amount"){
+        let n = parseFloat(valStr)||0;
+        if(n>900000)n=900000;
         item.amount = n;
       }
       storeData();
@@ -1366,7 +1520,7 @@
       let c = dataStore[dayKey].creditTracker;
       let item = c[fromType][idx];
       c[fromType].splice(idx,1);
-      if(fromType === "pending"){
+      if(fromType==="pending"){
         c.paid.push(item);
       } else {
         c.pending.push(item);
@@ -1380,15 +1534,17 @@
      ****************************************************/
     function calcDayTotals(dayKey){
       let d = dataStore[dayKey];
-      let tc = 0, tp = 0, ts = 0;
-      d.pages.forEach(p => {
-        tc += (p.centenas || 0);
-        tp += (p.pulitos || 0);
-        ts += (p.totalSalidas || 0);
+      let tc=0, tp=0, ts=0;
+      d.pages.forEach(p=>{
+        tc+=(p.centenas||0);
+        tp+=(p.pulitos||0);
+        ts+=(p.totalSalidas||0);
       });
-      ts += (d.overlook || 0);
-      d.overlookExtra.forEach(ov => {
-        ts += (ov.amount || 0);
+      // Sumar Overlook principal
+      ts += (d.overlook||0);
+      // Sumar Overlook extra
+      d.overlookExtra.forEach(ov=>{
+        ts += (ov.amount||0);
       });
       return {
         totalCentenas: tc,
@@ -1404,11 +1560,11 @@
     function updatePageField(input){
       let dayKey = input.dataset.day;
       let idx = parseInt(input.dataset.pindex);
-      let field = input.dataset.field;
+      let field= input.dataset.field;
       let valStr = input.value.trim();
-      let val = (valStr === "" ? 0 : parseFloat(valStr));
-      if(isNaN(val)) val = 0;
-      if(val > 900000) val = 900000;
+      let val = (valStr===""?0:parseFloat(valStr));
+      if(isNaN(val)) val=0;
+      if(val>900000) val=900000;
       dataStore[dayKey].pages[idx][field] = val;
       storeData();
       renderDay(dayKey);
@@ -1418,35 +1574,37 @@
       let dayKey = input.dataset.day;
       let field = input.dataset.field;
       let valStr = input.value.trim();
-      let val = (valStr === "" ? 0 : parseFloat(valStr));
-      if(isNaN(val)) val = 0;
-      if(val > 900000) val = 900000;
+      let val = (valStr===""?0:parseFloat(valStr));
+      if(isNaN(val)) val=0;
+      if(val>900000) val=900000;
       dataStore[dayKey][field] = val;
       storeData();
       renderDay(dayKey);
       updateWeeklyView();
     }
+    // Para la nota principal de Overlook
     function updateDayNoteField(input){
       let dayKey = input.dataset.day;
       dataStore[dayKey].overlookNote = input.value;
       storeData();
     }
+
     function deletePageRow(dayKey, idx){
       if(!confirm("¿Eliminar esta página?")) return;
-      dataStore[dayKey].pages.splice(idx, 1);
-      dataStore[dayKey].pages.forEach((p, i) => p.pageNo = i + 1);
+      dataStore[dayKey].pages.splice(idx,1);
+      dataStore[dayKey].pages.forEach((p,i)=> p.pageNo=i+1);
       storeData();
       renderDay(dayKey);
       updateWeeklyView();
     }
     function addPageRow(dayKey){
       let d = dataStore[dayKey];
-      let nextNo = d.pages.length + 1;
+      let nextNo = d.pages.length+1;
       d.pages.push({
         pageNo: nextNo,
-        centenas: 0, pulitos: 0,
-        pendingPrizes: [], paidPrizes: [],
-        totalSalidas: 0
+        centenas:0, pulitos:0,
+        pendingPrizes:[], paidPrizes:[],
+        totalSalidas:0
       });
       storeData();
       renderDay(dayKey);
@@ -1457,6 +1615,7 @@
      * OVERLOOK EXTRA: Add, Delete, Update
      ****************************************************/
     function addOverlookRow(dayKey){
+      // Agrega una nueva fila de Overlook
       dataStore[dayKey].overlookExtra.push({ amount:0, note:"" });
       storeData();
       renderDay(dayKey);
@@ -1464,28 +1623,30 @@
     }
     function deleteOverlookRow(dayKey, idx){
       if(!confirm("¿Eliminar esta fila Overlook?")) return;
-      dataStore[dayKey].overlookExtra.splice(idx, 1);
+      dataStore[dayKey].overlookExtra.splice(idx,1);
       storeData();
       renderDay(dayKey);
       updateWeeklyView();
     }
-    function updateOverlookExtraBlur(input){
+    function updateOverlookExtra(input){
       let dayKey = input.dataset.day;
       let idx = parseInt(input.dataset.oidx);
-      let field = input.dataset.field;
-      let row = dataStore[dayKey].overlookExtra[idx] || { amount: 0, note: "" };
-      if(field === "amount"){
-        let val = parseFloat(input.value) || 0;
-        if(val > 900000) val = 900000;
+      let field= input.dataset.field;
+      let valStr = input.value.trim();
+      let row = dataStore[dayKey].overlookExtra[idx] || { amount:0, note:"" };
+      if(field==="amount"){
+        let val = parseFloat(valStr)||0;
+        if(val>900000) val=900000;
         row.amount = val;
       } else {
-        row.note = input.value;
+        row.note = valStr;
       }
       dataStore[dayKey].overlookExtra[idx] = row;
       storeData();
       renderDay(dayKey);
       updateWeeklyView();
     }
+    // Eliminar Overlook principal (ponerlo en 0 y sin nota)
     function clearMainOverlook(dayKey){
       dataStore[dayKey].overlook = 0;
       dataStore[dayKey].overlookNote = "";
@@ -1497,48 +1658,56 @@
     /****************************************************
      * SALIDAS (MODAL)
      ****************************************************/
-    let currentModalDayKey = "";
-    let currentModalIndex = 0;
+    let currentModalDayKey="";
+    let currentModalIndex=0;
+
     function openPrizesModal(dayKey, idx){
-      currentModalDayKey = dayKey;
-      currentModalIndex = idx;
-      document.getElementById("modalOverlay").style.display = "flex";
+      currentModalDayKey=dayKey;
+      currentModalIndex=idx;
+      document.getElementById("modalOverlay").style.display="flex";
       let pageData = dataStore[dayKey].pages[idx];
       document.getElementById("prizeModalPageNo").textContent = pageData.pageNo;
       paintPrizeLists();
     }
-    document.getElementById("closePrizeModal").addEventListener("click", () => {
-      document.getElementById("modalOverlay").style.display = "none";
+    document.getElementById("closePrizeModal").addEventListener("click", ()=>{
+      document.getElementById("modalOverlay").style.display="none";
     });
+
     function paintPrizeLists(){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
       let pendingTbody = document.getElementById("pendingTbody");
       let paidTbody = document.getElementById("paidTbody");
-      let pendHTML = "";
-      pageData.pendingPrizes.forEach((v, i) => {
-        pendHTML += `
+
+      let pendHTML="";
+      pageData.pendingPrizes.forEach((v,i)=>{
+        pendHTML+=`
           <tr>
             <td>
-              <input type="number" max="900000" value="${v || ""}" onchange="updatePrizeValue(${i}, 'pending', this.value)">
+              <input type="number" max="900000"
+                     value="${v||""}"
+                     onchange="updatePrizeValue(${i},'pending',this.value)">
             </td>
             <td>
-              <button class="paidBtn" onclick="movePrize(${i}, 'pending')">→Pagado</button>
-              <button class="paidBtn" onclick="deletePrize(${i}, 'pending')">X</button>
+              <button class="paidBtn" onclick="movePrize(${i},'pending')">→Pagado</button>
+              <button class="paidBtn" onclick="deletePrize(${i},'pending')">X</button>
             </td>
           </tr>
         `;
       });
       pendingTbody.innerHTML = pendHTML;
-      let paidHTML = "";
-      pageData.paidPrizes.forEach((v, i) => {
-        paidHTML += `
+
+      let paidHTML="";
+      pageData.paidPrizes.forEach((v,i)=>{
+        paidHTML+=`
           <tr>
             <td>
-              <input type="number" max="900000" value="${v || ""}" onchange="updatePrizeValue(${i}, 'paid', this.value)">
+              <input type="number" max="900000"
+                     value="${v||""}"
+                     onchange="updatePrizeValue(${i},'paid',this.value)">
             </td>
             <td>
-              <button class="pendingBtn" onclick="movePrize(${i}, 'paid')">→Pend</button>
-              <button class="paidBtn" onclick="deletePrize(${i}, 'paid')">X</button>
+              <button class="pendingBtn" onclick="movePrize(${i},'paid')">→Pend</button>
+              <button class="paidBtn" onclick="deletePrize(${i},'paid')">X</button>
             </td>
           </tr>
         `;
@@ -1547,7 +1716,7 @@
     }
     function addPrizeRow(type){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(type === "pending") pageData.pendingPrizes.push(0);
+      if(type==="pending") pageData.pendingPrizes.push(0);
       else pageData.paidPrizes.push(0);
       paintPrizeLists();
       recalcPageSalidas();
@@ -1555,33 +1724,33 @@
     }
     function updatePrizeValue(idx, type, valStr){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      let n = parseFloat(valStr) || 0;
-      if(n > 900000) n = 900000;
-      if(type === "pending"){
-        pageData.pendingPrizes[idx] = n;
+      let n = parseFloat(valStr)||0;
+      if(n>900000)n=900000;
+      if(type==="pending"){
+        pageData.pendingPrizes[idx]=n;
       } else {
-        pageData.paidPrizes[idx] = n;
+        pageData.paidPrizes[idx]=n;
       }
       recalcPageSalidas();
       storeData();
     }
     function deletePrize(idx, type){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(type === "pending") pageData.pendingPrizes.splice(idx, 1);
-      else pageData.paidPrizes.splice(idx, 1);
+      if(type==="pending") pageData.pendingPrizes.splice(idx,1);
+      else pageData.paidPrizes.splice(idx,1);
       paintPrizeLists();
       recalcPageSalidas();
       storeData();
     }
     function movePrize(idx, fromType){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(fromType === "pending"){
+      if(fromType==="pending"){
         let val = pageData.pendingPrizes[idx];
-        pageData.pendingPrizes.splice(idx, 1);
+        pageData.pendingPrizes.splice(idx,1);
         pageData.paidPrizes.push(val);
       } else {
         let val = pageData.paidPrizes[idx];
-        pageData.paidPrizes.splice(idx, 1);
+        pageData.paidPrizes.splice(idx,1);
         pageData.pendingPrizes.push(val);
       }
       paintPrizeLists();
@@ -1590,8 +1759,8 @@
     }
     function recalcPageSalidas(){
       let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      let sumPend = pageData.pendingPrizes.reduce((acc, v) => acc + v, 0);
-      let sumPaid = pageData.paidPrizes.reduce((acc, v) => acc + v, 0);
+      let sumPend = pageData.pendingPrizes.reduce((acc,v)=>acc+v,0);
+      let sumPaid = pageData.paidPrizes.reduce((acc,v)=>acc+v,0);
       pageData.totalSalidas = sumPend + sumPaid;
       storeData();
       renderDay(currentModalDayKey);
@@ -1604,29 +1773,32 @@
     function updateWeeklyView(){
       let wCont = document.getElementById("weeklyContainer");
       if(!wCont) return;
-      let dayTotals = [];
-      let sumCent = 0, sumPul = 0, sumSal = 0, sumVent = 0;
-      for(let i = 1; i <= 7; i++){
-        let dk = "day" + i;
-        let t = calcDayTotals(dk);
-        sumCent += t.totalCentenas;
+      let dayTotals=[];
+      let sumCent=0, sumPul=0, sumSal=0, sumVent=0;
+      for(let i=1;i<=7;i++){
+        let dk="day"+i;
+        let t=calcDayTotals(dk);
+        sumCent+= t.totalCentenas;
         sumPul += t.totalPulitos;
         sumSal += t.totalSalidas;
-        sumVent += t.totalVentas;
+        sumVent+= t.totalVentas;
         dayTotals.push(t);
       }
-      let c25 = sumCent * 0.25;
-      let p10 = sumPul * 0.10;
-      let totalCom = c25 + p10;
-      let subTotal = sumVent - (sumSal + totalCom);
-      let caidas = dataStore.weekly.caidas || 0;
-      let adelanto = dataStore.weekly.adelantoOficina || 0;
-      let balOfic = subTotal - caidas - adelanto;
-      let boColor = "#000";
-      if(balOfic > 0) boColor = "#f33";
-      else if(balOfic < 0) boColor = "#0f0";
-      const dayNames = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-      let html = `
+      let c25= sumCent*0.25;
+      let p10= sumPul*0.10;
+      let totalCom= c25+p10;
+      let subTotal= sumVent - (sumSal+totalCom);
+      let caidas= dataStore.weekly.caidas||0;
+      let adelanto= dataStore.weekly.adelantoOficina||0;
+      let balOfic= subTotal - caidas - adelanto;
+
+      let boColor="#000";
+      if(balOfic>0) boColor="#f33";
+      else if(balOfic<0) boColor="#0f0";
+
+      const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+
+      let html=`
         <table class="weekly-table">
           <thead>
             <tr>
@@ -1639,8 +1811,8 @@
           </thead>
           <tbody>
       `;
-      for(let i = 0; i < 7; i++){
-        html += `
+      for(let i=0;i<7;i++){
+        html+=`
           <tr>
             <td>${dayNames[i]}</td>
             <td>$${dayTotals[i].totalCentenas.toFixed(2)}</td>
@@ -1650,7 +1822,7 @@
           </tr>
         `;
       }
-      html += `
+      html+=`
           <tr style="font-weight:bold;">
             <td>Totales</td>
             <td>$${sumCent.toFixed(2)}</td>
@@ -1658,8 +1830,9 @@
             <td style="color:var(--danger-color);">$${sumSal.toFixed(2)}</td>
             <td>$${sumVent.toFixed(2)}</td>
           </tr>
-          </tbody>
+        </tbody>
         </table>
+
         <div class="cuadre-section">
           <h3>Cuadre Semanal</h3>
           <div class="form-group">
@@ -1683,12 +1856,20 @@
             <input type="text" readonly style="color:var(--danger-color);" value="${sumSal.toFixed(2)}">
           </div>
           <div class="form-group">
+            <label>Sub Total</label>
+            <input type="text" readonly style="color:var(--purple-strong);" value="${subTotal.toFixed(2)}">
+          </div>
+          <div class="form-group">
             <label>Caídas (20%)</label>
-            <input type="number" max="900000" value="${(caidas || "")}" onchange="updateWeeklyField('caidas', this.value)">
+            <input type="number" max="900000"
+                   value="${(caidas||"")}"
+                   onchange="updateWeeklyField('caidas', this.value)">
           </div>
           <div class="form-group">
             <label>Adelanto Oficina</label>
-            <input type="number" max="900000" value="${(adelanto || "")}" onchange="updateWeeklyField('adelantoOficina', this.value)">
+            <input type="number" max="900000"
+                   value="${(adelanto||"")}"
+                   onchange="updateWeeklyField('adelantoOficina', this.value)">
           </div>
           <div class="form-group">
             <label>Balance Oficina</label>
@@ -1699,10 +1880,10 @@
       wCont.innerHTML = html;
     }
     function updateWeeklyField(field, valStr){
-      let n = (valStr.trim() === "" ? 0 : parseFloat(valStr));
-      if(isNaN(n)) n = 0;
-      if(n > 900000) n = 900000;
-      dataStore.weekly[field] = n;
+      let n = (valStr.trim()==="")? 0 : parseFloat(valStr);
+      if(isNaN(n)) n=0;
+      if(n>900000)n=900000;
+      dataStore.weekly[field]=n;
       storeData();
       updateWeeklyView();
     }
@@ -1711,7 +1892,7 @@
      * BOTONES SEND / RESET
      ****************************************************/
     function sendDayToSheets(dayKey){
-      alert("Guardando datos del día " + dayKey + " (placeholder).");
+      alert("Guardando datos del día "+dayKey+" (placeholder).");
     }
     function resetDay(dayKey){
       if(!confirm("¿Resetear todos los datos del día?")) return;
@@ -1723,11 +1904,10 @@
         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
         creditTracker:{pending:[], paid:[]}
       };
-      for(let r = 1; r <= 20; r++){
+      for(let r=1;r<=20;r++){
         dataStore[dayKey].pages.push({
-          pageNo: r, centenas:0, pulitos:0,
-          pendingPrizes:[], paidPrizes:[],
-          totalSalidas:0
+          pageNo:r, centenas:0, pulitos:0,
+          pendingPrizes:[], paidPrizes:[], totalSalidas:0
         });
       }
       storeData();
@@ -1739,18 +1919,17 @@
     }
     function resetWeek(){
       if(!confirm("¿Resetear toda la semana?")) return;
-      for(let i = 1; i <= 7; i++){
-        let dk = "day" + i;
+      for(let i=1;i<=7;i++){
+        let dk="day"+i;
         dataStore[dk] = {
           pages:[], overlook:0, overlookNote:"", overlookExtra:[],
           cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
           creditTracker:{pending:[], paid:[]}
         };
-        for(let r = 1; r <= 20; r++){
+        for(let r=1;r<=20;r++){
           dataStore[dk].pages.push({
-            pageNo: r, centenas:0, pulitos:0,
-            pendingPrizes:[], paidPrizes:[],
-            totalSalidas:0
+            pageNo:r, centenas:0, pulitos:0,
+            pendingPrizes:[], paidPrizes:[], totalSalidas:0
           });
         }
       }
@@ -1770,34 +1949,36 @@
     /****************************************************
      * EXPORT PDF
      ****************************************************/
-    document.getElementById("btnExportPDF").addEventListener("click", () => {
-      let activeTab = document.querySelector(".tabContent.active");
+    document.getElementById("btnExportPDF").addEventListener("click", ()=>{
+      let activeTab= document.querySelector(".tabContent.active");
       if(!activeTab){
         alert("No hay pestaña activa.");
         return;
       }
       let accordions = activeTab.querySelectorAll(".accordion");
-      accordions.forEach(a => a.style.display = "none");
-      setTimeout(() => {
-        html2canvas(activeTab, { scale: 2 }).then(canvas => {
-          accordions.forEach(a => a.style.display = "");
-          let link = document.createElement("a");
-          link.download = "Reporte.png";
-          link.href = canvas.toDataURL("image/png");
+      accordions.forEach(a=> a.style.display="none");
+
+      setTimeout(()=>{
+        html2canvas(activeTab, { scale: 2 }).then(canvas=>{
+          // Restaurar
+          accordions.forEach(a=> a.style.display="");
+          let link= document.createElement("a");
+          link.download="Reporte.png";
+          link.href= canvas.toDataURL("image/png");
           link.click();
-        }).catch(err => {
+        }).catch(err=>{
           console.error(err);
           alert("Error al generar la captura.");
-          accordions.forEach(a => a.style.display = "");
+          accordions.forEach(a=> a.style.display="");
         });
-      }, 200);
+      },200);
     });
 
     /****************************************************
      * EXPORT EXCEL => CSV
      ****************************************************/
-    document.getElementById("btnExportExcel").addEventListener("click", () => {
-      let activeTab = document.querySelector(".tabContent.active");
+    document.getElementById("btnExportExcel").addEventListener("click", ()=>{
+      let activeTab= document.querySelector(".tabContent.active");
       if(!activeTab){
         alert("No hay pestaña activa para exportar.");
         return;
@@ -1810,20 +1991,21 @@
       let dayKey = "day" + tabId.replace("tabDay","");
       let dayData = dataStore[dayKey];
       if(!dayData) {
-        alert("No hay data en " + dayKey);
+        alert("No hay data en "+dayKey);
         return;
       }
       let lines = [];
       lines.push("Página,Centenas,Pulitos");
-      dayData.pages.forEach(p => {
+      dayData.pages.forEach(p=>{
         lines.push(`${p.pageNo},${p.centenas},${p.pulitos}`);
       });
       let csv = lines.join("\n");
       let blob = new Blob([csv], { type:"text/csv" });
       let url = URL.createObjectURL(blob);
-      let a = document.createElement("a");
-      a.href = url;
-      a.download = "Reporte_" + dayKey + ".csv";
+
+      let a=document.createElement("a");
+      a.href=url;
+      a.download="Reporte_"+dayKey+".csv";
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -1832,18 +2014,19 @@
      * TAB/ENTER NAVIGATION
      ****************************************************/
     function addTabKeyNavigation(){
-      document.addEventListener("keydown", (e) => {
-        if(e.key !== "Enter" && e.key !== "Tab") return;
+      document.addEventListener("keydown",(e)=>{
+        if(e.key!=="Enter" && e.key!=="Tab") return;
         let el = e.target;
         if(!el.matches("input[type='number']")) return;
         if(!el.dataset.day) return;
+
         e.preventDefault();
         let dayKey = el.dataset.day;
         let inputs = Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
         let idx = inputs.indexOf(el);
-        if(idx < 0) return;
-        let nextIdx = idx + 1;
-        if(nextIdx >= inputs.length) nextIdx = 0;
+        if(idx<0) return;
+        let nextIdx = idx+1;
+        if(nextIdx>=inputs.length) nextIdx=0;
         inputs[nextIdx].focus();
         inputs[nextIdx].select();
       });
