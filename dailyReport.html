@@ -1030,8 +1030,8 @@
 
       // Evento para expandir la sidebar en móviles al hacer clic en el botón de hamburguesa
       document.getElementById("btnExpandSidebar").addEventListener("click", () => {
-        document.getElementById("sidebar").classList.add("expanded");
-      });
+  document.getElementById("sidebar").classList.toggle("expanded");
+});
 
       renderAllDays();
       updateWeeklyView();
