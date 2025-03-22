@@ -618,13 +618,10 @@
       .sidebar.expanded {
         width: 240px; /* ancho expandido */
       }
-      /* Área principal: se ajusta el ancho según el ancho de la sidebar */
+      /* Área principal: se ajusta el espacio restante de forma flexible */
       .main-content {
-        width: calc(100vw - 60px);
-        transition: width 0.3s ease;
-      }
-      .sidebar.expanded ~ .main-content {
-        width: calc(100vw - 240px);
+        flex: 1;
+        transition: all 0.3s ease;
       }
       .sidebar button {
         text-align: left;
@@ -632,7 +629,6 @@
         font-size: 0.9rem;
       }
     }
-   
   </style>
 </head>
 <body>
