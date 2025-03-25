@@ -335,101 +335,109 @@
     }
 
     /* =============== TABLA PÁGINAS (DIARIO) =============== */
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-      color: var(--main-text);
-    }
-    .report-table thead th,
-    .report-table tbody td {
-      font-size: 1rem; 
-      text-align: center;
-      border-bottom: 1px solid #444;
-      vertical-align: middle;
-      padding: 0.2rem 0.4rem;
-    }
-    .report-table thead th {
-      background: rgba(0,0,0,0.4);
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-    }
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: var(--main-text);
+}
 
-    @media (min-width: 792px) {
-      .report-table thead th:nth-child(1),
-      .report-table tbody td:nth-child(1) { width: 5%; }
-      .report-table thead th:nth-child(2),
-      .report-table tbody td:nth-child(2) { width: 5%; }
-      .report-table thead th:nth-child(3),
-      .report-table tbody td:nth-child(3) { width: 5%; }
-      .report-table thead th:nth-child(4),
-      .report-table tbody td:nth-child(4) { width: 5%; }
-      .report-table thead th:nth-child(5),
-      .report-table tbody td:nth-child(5) { width: 5%; }
-     
-         } 
+/* Celdas de la tabla: fuente algo más pequeña, padding reducido para acercar columnas */
+.report-table thead th,
+.report-table tbody td {
+  font-size: 1rem; 
+  text-align: center;
+  border-bottom: 1px solid #444;
+  vertical-align: middle;
+  padding: 0.2rem 0.3rem; /* Menos espacio horizontal que antes */
+}
 
-    input[type="number"], 
-    input[type="text"] {
-      background: #000;
-      color: var(--accent-color);
-      border: 1px solid var(--accent-color);
-      border-radius: 4px;
-      text-align: center;
-      box-shadow: inset 0 0 5px var(--accent-color);
-      width: 120px; /* Más ancho para evitar corte */
-      font-size: 1.2rem;
-      line-height: 1.3;
-      padding: 0.20rem;
-    }
-    input[type="number"]:focus, 
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #fff;
-    }
+/* Encabezados de la tabla: color y sombra */
+.report-table thead th {
+  background: rgba(0,0,0,0.4);
+  color: var(--accent-color);
+  border-bottom: 2px solid var(--accent-color);
+  text-shadow: 0 0 3px var(--accent-color);
+}
 
-    .pageBtn {
-      background: var(--danger-color);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.2rem 0.3rem;
-      cursor: pointer;
-      font-size: 1.2rem;
-      box-shadow: 0 0 5px var(--danger-color);
-      transition: transform 0.2s;
-    }
-    .pageBtn:hover {
-      background: #f66;
-      transform: scale(1.05);
-    }
+/* Ajusta anchos en pantallas >= 792px (puedes modificar o eliminar si deseas) */
+@media (min-width: 792px) {
+  .report-table thead th:nth-child(1),
+  .report-table tbody td:nth-child(1) { width: 4%; }
+  .report-table thead th:nth-child(2),
+  .report-table tbody td:nth-child(2) { width: 5%; }
+  .report-table thead th:nth-child(3),
+  .report-table tbody td:nth-child(3) { width: 5%; }
+  .report-table thead th:nth-child(4),
+  .report-table tbody td:nth-child(4) { width: 5%; }
+  .report-table thead th:nth-child(5),
+  .report-table tbody td:nth-child(5) { width: 5%; }
+}
 
-    .totals-section, .cuadre-section {
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      background: #000;
-      box-shadow: 0 0 8px var(--accent-color);
-    }
-    .totals-section h3, .cuadre-section h3 {
-      color: var(--accent-color);
-      margin-bottom: 1rem;
-      text-shadow: 0 0 3px var(--accent-color);
-    }
+/* Inputs dentro de la tabla: alineados al centro, algo más compactos */
+input[type="number"], 
+input[type="text"] {
+  background: #000;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: inset 0 0 5px var(--accent-color);
+  width: 120px; /* Ajusta según necesites */
+  font-size: 1rem;
+  line-height: 1.2;
+  padding: 0.2rem; /* Menos padding => menos altura */
+}
+input[type="number"]:focus, 
+input[type="text"]:focus {
+  outline: none;
+  border-color: #fff;
+}
 
-    .form-group {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .form-group label {
-      width: 150px; 
-      font-weight: bold;
-      margin-right: 0.5rem;
-      text-shadow: none;
-    }
+/* Botón #Página más compacto (reduce font-size y padding) */
+.pageBtn {
+  background: var(--danger-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.3rem;
+  cursor: pointer;
+  font-size: 1rem; /* Bajado desde 1.2rem para que no ensanche la columna */
+  box-shadow: 0 0 5px var(--danger-color);
+  transition: transform 0.2s;
+}
+.pageBtn:hover {
+  background: #f66;
+  transform: scale(1.05);
+}
+
+/* Secciones de Totales y Cuadre */
+.totals-section, .cuadre-section {
+  border: 2px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background: #000;
+  box-shadow: 0 0 8px var(--accent-color);
+}
+.totals-section h3, .cuadre-section h3 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 3px var(--accent-color);
+}
+
+/* Ajuste de las filas de formularios */
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.form-group label {
+  width: 150px; 
+  font-weight: bold;
+  margin-right: 0.5rem;
+  text-shadow: none;
+}
 
     /* =============== TABLA SEMANAL =============== */
     .weekly-table {
