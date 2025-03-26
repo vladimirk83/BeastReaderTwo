@@ -431,7 +431,22 @@ input[type="text"] {
   /* Un poco de padding lateral, pero sin padding vertical para no desalinear */
   padding: 0 0.4rem; 
 }
-
+   
+.sucursalGlobalInput {
+  display: inline-block;
+  width: 250px;       /* o el ancho que gustes */
+  height: 2rem;       /* altura fija */
+  line-height: 2rem;  /* para centrar verticalmente el texto */
+  text-align: center; 
+  font-size: 1rem;
+  
+  background: #000;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  box-shadow: inset 0 0 3px var(--accent-color);
+  padding: 0 0.4rem;  /* padding horizontal */
+}
 
 /* Botón #Página más compacto (reduce font-size y padding) */
 .pageBtn {
@@ -703,7 +718,6 @@ input[type="text"] {
           <div style="margin: 0.5rem 0;">
             <label style="font-weight:bold;">Sucursal:</label>
             <input type="text" id="sucursalGlobal1" class="sucursalGlobalInput"
-                   style="width:250px;padding:0.4rem;"
                    oninput="updateSucursal(this.value)">
           </div>
 
